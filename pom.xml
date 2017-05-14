@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>net.eulerframework</groupId>
+    <artifactId>demo</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <jdk.version>1.7</jdk.version> 
+        <euler-framework.version>0.4.0-SNAPSHOT</euler-framework.version>
+        <mysqljdbc.version>5.1.38</mysqljdbc.version>
+    </properties>
+
+    <dependencies>
+        <!-- J2EE -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <scope>provided</scope>
+            <version>3.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet.jsp</groupId>
+            <artifactId>jsp-api</artifactId>
+            <scope>provided</scope>
+            <version>2.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>net.eulerframework</groupId>
+            <artifactId>euler-web-core</artifactId>
+            <version>${euler-framework.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.eulerframework</groupId>
+            <artifactId>euler-web-authentication</artifactId>
+            <version>${euler-framework.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.eulerframework</groupId>
+            <artifactId>euler-web-authentication-impl</artifactId>
+            <version>${euler-framework.version}</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>${mysqljdbc.version}</version>
+        </dependency>
+
+    </dependencies>
+
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.3</version>
+                <configuration>
+                    <source>${jdk.version}</source>
+                    <target>${jdk.version}</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>2.7</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.6</version>
+                <configuration>
+                    <archive>
+                        <addMavenDescriptor>false</addMavenDescriptor>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>2.6</version>
+                <configuration>
+                    <archive>
+                        <addMavenDescriptor>false</addMavenDescriptor>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+        
+        <resources>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+        <testResources>
+            <testResource>
+                <directory>${project.basedir}/src/test/resources</directory>
+                <filtering>true</filtering>
+            </testResource>
+        </testResources>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>develop</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <mvn.mode>develop</mvn.mode>
+                <mvn.log.level>info</mvn.log.level>
+                <mvn.buildtimestamp>${maven.build.timestamp}</mvn.buildtimestamp>
+                <mvn.db.url><![CDATA[jdbc:mysql://192.168.8.62:3306/test?useUnicode=true&characterEncoding=utf-8]]></mvn.db.url>
+                <mvn.db.username>root</mvn.db.username>
+                <mvn.db.password>root</mvn.db.password>
+                <mvn.db.showsql>true</mvn.db.showsql>
+            </properties>
+            <build>
+                <finalName>demo</finalName>
+            </build>
+        </profile>
+        <profile>
+            <id>debug</id>
+            <properties>
+                <mvn.mode>debug</mvn.mode>
+                <mvn.log.level>info</mvn.log.level>
+                <mvn.buildtimestamp>${maven.build.timestamp}</mvn.buildtimestamp>
+                <mvn.db.url><![CDATA[jdbc:mysql://127.0.0.1:3306/test?useUnicode=true&characterEncoding=utf-8]]></mvn.db.url>
+                <mvn.db.username>username</mvn.db.username>
+                <mvn.db.password>password</mvn.db.password>
+                <mvn.db.showsql>false</mvn.db.showsql>
+            </properties>
+            <build>
+                <finalName>euler-framework-demo-${project.version}-debug</finalName>
+            </build>
+        </profile>
+        <profile>
+            <id>release</id>
+            <properties>
+                <mvn.mode>release</mvn.mode>
+                <mvn.log.level>warn</mvn.log.level>
+                <mvn.buildtimestamp>${maven.build.timestamp}</mvn.buildtimestamp>
+                <mvn.db.url><![CDATA[jdbc:mysql://127.0.0.1:3306/test?useUnicode=true&characterEncoding=utf-8]]></mvn.db.url>
+                <mvn.db.username>username</mvn.db.username>
+                <mvn.db.password>password</mvn.db.password>
+                <mvn.db.showsql>false</mvn.db.showsql>
+            </properties>
+            <build>
+                <finalName>euler-framework-demo-${project.version}-release</finalName>
+            </build>
+        </profile>
+    </profiles>
+
+</project>

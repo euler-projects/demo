@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+    xmlns:beans="http://www.springframework.org/schema/beans"
+    xmlns:oauth2="http://www.springframework.org/schema/security/oauth2"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+                                 http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+                                 http://www.springframework.org/schema/security
+                                 http://www.springframework.org/schema/security/spring-security-4.0.xsd
+                                 http://www.springframework.org/schema/security/oauth2
+                                 http://www.springframework.org/schema/security/spring-security-oauth2.xsd">
+
+    <http use-expressions="true">
+
+        <!-- 错误页面,所有用户都应该能访问 -->
+        <intercept-url pattern="/error-**" access="permitAll" />
+
+        <!-- 登录注册页面,所有用户都应该能访问 -->
+        <intercept-url pattern="/signin" access="permitAll" />
+        <intercept-url pattern="/signup" access="permitAll" />
+
+        <!-- 文件上传下载页面或Ajax,所有用户都应该能访问 -->
+        <intercept-url pattern="/file/**" access="permitAll" />
+        <intercept-url pattern="/uploadFile" access="permitAll" />
+
+        <!-- 忘记密码相关页面或Ajax,所有用户都应该能访问 -->
+        <intercept-url pattern="/reset-password" access="permitAll" />
+        <intercept-url pattern="/reset-password-email" access="permitAll" />
+        <intercept-url pattern="/getPasswordResetSMS_ajax" access="permitAll" />
+        
+        <!-- 用户个人管理相关页面或Ajax,所有已登录用户可访问 -->
+        <intercept-url pattern="/settings/profile/**" access="isFullyAuthenticated()" />
+        <intercept-url pattern="/settings/account/**" access="isFullyAuthenticated()" />
+
+        <!-- 后台管理相关页面,只能被管理员访问 -->
+        <intercept-url pattern="${web.admin.rootPath}/**" access="hasAnyAuthority('ADMIN','ROOT')" />
+        
+        <!-- 根目录,所有用户均可访问 -->
+        <intercept-url pattern="/" access="permitAll" />
+        
+        <!-- 其他未配置页面,禁止所有用户访问 -->
+        <intercept-url pattern="/**" access="denyAll" />
+
+        <form-login login-page="/signin"
+            login-processing-url="/signin" authentication-failure-url="/signin?error"
+            default-target-url="/" username-parameter="username"
+            password-parameter="password" />
+        <logout logout-url="/signout" logout-success-url="/"
+            invalidate-session="true" delete-cookies="JSESSIONID" />
+
+        <session-management invalid-session-url="/"
+            session-fixation-protection="migrateSession">
+            <concurrency-control max-sessions="20"
+                error-if-maximum-exceeded="false" session-registry-ref="sessionRegistry" />
+        </session-management>
+
+        <headers>
+            <cache-control />
+            <content-type-options />
+            <hsts />
+            <frame-options policy="SAMEORIGIN" />
+            <xss-protection />
+        </headers>
+
+        <csrf disabled="true" />
+
+    </http>
+
+</beans:beans>
