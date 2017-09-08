@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import net.eulerframework.web.config.WebConfig;
 import net.eulerframework.web.core.annotation.ApiEndpoint;
 import net.eulerframework.web.core.base.controller.AbstractApiEndpoint;
-import net.eulerframework.web.module.authentication.service.IAuthenticationService;
 
 /**
  * @author cFrost
@@ -18,9 +17,6 @@ import net.eulerframework.web.module.authentication.service.IAuthenticationServi
 @ApiEndpoint
 @RequestMapping("/")
 public class AuthenticationApi extends AbstractApiEndpoint {
-
-    @Resource
-    private IAuthenticationService authenticationService;
     
     @RequestMapping(value = "clean") 
     public void clean() {

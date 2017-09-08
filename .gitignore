@@ -1,5 +1,13 @@
-/target/
-.classpath
+target
+
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+
+#Eclipse
 .project
+.classpath
 .settings
-src/main/resources/rsa
+
+#IDEA
+.idea/
+*.iml

@@ -14,7 +14,7 @@
            http://www.springframework.org/schema/tx/spring-tx-2.5.xsd">  
            
            
-    <bean id="userProfileService"
+    <!-- <bean id="userProfileService"
         class="net.eulerframework.web.module.authentication.service.UserProfileService">
         <property name="userProfileDaos">
             <list>
@@ -23,5 +23,5 @@
     </bean>
     
     <import resource="beans-database.xml"/>
-    <import resource="beans-schedule.xml"/>
+    <import resource="beans-schedule.xml"/> -->
 </beans>

@@ -8,8 +8,8 @@
     <packaging>war</packaging>
 
     <properties>
-        <jdk.version>1.7</jdk.version> 
-        <euler-framework.version>0.4.0-SNAPSHOT</euler-framework.version>
+        <jdk.version>1.8</jdk.version> 
+        <euler-framework.version>2.0.0-SNAPSHOT</euler-framework.version>
         <mysqljdbc.version>5.1.38</mysqljdbc.version>
     </properties>
 
@@ -33,14 +33,9 @@
             <artifactId>euler-web-core</artifactId>
             <version>${euler-framework.version}</version>
         </dependency>
-        <dependency>
+        <!-- <dependency>
             <groupId>net.eulerframework</groupId>
             <artifactId>euler-web-authentication</artifactId>
-            <version>${euler-framework.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>net.eulerframework</groupId>
-            <artifactId>euler-web-authentication-impl</artifactId>
             <version>${euler-framework.version}</version>
         </dependency>
         
@@ -48,7 +43,7 @@
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>${mysqljdbc.version}</version>
-        </dependency>
+        </dependency> -->
 
     </dependencies>
 
