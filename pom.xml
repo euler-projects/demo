@@ -33,13 +33,13 @@
             <artifactId>euler-web-core</artifactId>
             <version>${euler-framework.version}</version>
         </dependency>
-        <!-- <dependency>
+        <dependency>
             <groupId>net.eulerframework</groupId>
             <artifactId>euler-web-authentication</artifactId>
             <version>${euler-framework.version}</version>
         </dependency>
         
-        <dependency>
+        <!-- <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>${mysqljdbc.version}</version>

@@ -3,9 +3,8 @@
  */
 package net.eulerframework.web.module.demo.controller.api;
 
-import javax.annotation.Resource;
-
 import org.springframework.web.bind.annotation.RequestMapping;
+
 import net.eulerframework.web.config.WebConfig;
 import net.eulerframework.web.core.annotation.ApiEndpoint;
 import net.eulerframework.web.core.base.controller.AbstractApiEndpoint;
