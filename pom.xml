@@ -35,7 +35,7 @@
         </dependency>
         <dependency>
             <groupId>net.eulerframework</groupId>
-            <artifactId>euler-web-authentication</artifactId>
+            <artifactId>euler-web-authentication-impl-hibernate</artifactId>
             <version>${euler-framework.version}</version>
         </dependency>
         
