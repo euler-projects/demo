@@ -7,10 +7,6 @@
 <title>${__SITENAME}</title>
 </head>
 <body>
-Hello World!
-<br>
-<a href="${__CONTEXT_PATH}/settings/account/change-password">Change Password</a>
-<br>
-<a href="${__CONTEXT_PATH}/signout">Sign Out</a>
+Success
 </body>
 </html>

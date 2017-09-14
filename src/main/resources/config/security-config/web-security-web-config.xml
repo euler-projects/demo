@@ -59,7 +59,7 @@
             <xss-protection />
         </headers>
 
-        <csrf disabled="false" />
+        <csrf disabled="true" />
 
     </http>
 
