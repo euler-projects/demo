@@ -1,14 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans:beans xmlns="http://www.springframework.org/schema/security"
-    xmlns:beans="http://www.springframework.org/schema/beans"
-    xmlns:oauth2="http://www.springframework.org/schema/security/oauth2"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.springframework.org/schema/beans
-                                 http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.springframework.org/schema/beans
+                                 http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
                                  http://www.springframework.org/schema/security
-                                 http://www.springframework.org/schema/security/spring-security-4.0.xsd
-                                 http://www.springframework.org/schema/security/oauth2
-                                 http://www.springframework.org/schema/security/spring-security-oauth2.xsd">
+                                 http://www.springframework.org/schema/security/spring-security-4.2.xsd">
 
     <http use-expressions="true">
 
@@ -36,7 +33,7 @@
         <intercept-url pattern="${web.admin.rootPath}/**" access="hasAnyAuthority('ADMIN','ROOT')" />
         
         <!-- 根目录,所有用户均可访问 -->
-        <intercept-url pattern="/" access="permitAll" />
+        <intercept-url pattern="/" access="isFullyAuthenticated()" />
         
         <!-- 其他未配置页面,禁止所有用户访问 -->
         <intercept-url pattern="/**" access="denyAll" />
@@ -62,7 +59,7 @@
             <xss-protection />
         </headers>
 
-        <csrf disabled="true" />
+        <csrf disabled="false" />
 
     </http>
 

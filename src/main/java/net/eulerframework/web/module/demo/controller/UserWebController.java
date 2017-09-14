@@ -1,10 +1,10 @@
 package net.eulerframework.web.module.demo.controller;
 
 import org.springframework.web.bind.annotation.RequestMapping;
-import net.eulerframework.web.core.annotation.WebController;
+import net.eulerframework.web.core.annotation.JspController;
 import net.eulerframework.web.core.base.controller.JspSupportWebController;
 
-@WebController("designUserWebController")
+@JspController("designUserWebController")
 @RequestMapping("/")
 public class UserWebController extends JspSupportWebController {
     
