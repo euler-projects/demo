@@ -7,7 +7,7 @@
                                  http://www.springframework.org/schema/security
                                  http://www.springframework.org/schema/security/spring-security-4.2.xsd">
 
-    <http use-expressions="true">
+    <http use-expressions="true" auto-config="false" entry-point-ref="authenticationEntryPoint">
 
         <!-- 错误页面,所有用户都应该能访问 -->
         <intercept-url pattern="/error-**" access="permitAll" />
@@ -23,7 +23,7 @@
         <!-- 忘记密码相关页面或Ajax,所有用户都应该能访问 -->
         <intercept-url pattern="/reset-password" access="permitAll" />
         <intercept-url pattern="/reset-password-email" access="permitAll" />
-        <intercept-url pattern="/getPasswordResetSMS_ajax" access="permitAll" />
+        <intercept-url pattern="/reset-password-sms" access="permitAll" />
         
         <!-- 用户个人管理相关页面或Ajax,所有已登录用户可访问 -->
         <intercept-url pattern="/settings/profile/**" access="isFullyAuthenticated()" />
@@ -33,15 +33,16 @@
         <intercept-url pattern="${web.admin.rootPath}/**" access="hasAnyAuthority('ADMIN','ROOT')" />
         
         <!-- 根目录,所有用户均可访问 -->
-        <intercept-url pattern="/" access="isFullyAuthenticated()" />
+        <intercept-url pattern="/" access="permitAll" />
         
         <!-- 其他未配置页面,禁止所有用户访问 -->
         <intercept-url pattern="/**" access="denyAll" />
 
-        <form-login login-page="/signin"
+        <custom-filter position="FORM_LOGIN_FILTER" ref="formLoginFilter" />
+        <!-- <form-login login-page="/signin"
             login-processing-url="/signin" authentication-failure-url="/signin?error"
             default-target-url="/" username-parameter="username"
-            password-parameter="password" />
+            password-parameter="password" /> -->
         <logout logout-url="/signout" logout-success-url="/"
             invalidate-session="true" delete-cookies="JSESSIONID" />
 

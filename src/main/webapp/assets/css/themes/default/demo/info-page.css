@@ -1,0 +1,77 @@
+body {
+    color: #333;
+    font-family: verdana,'Helvetica Neue',Helvetica,Arial,"PingFang SC","Microsoft YaHei","微软雅黑",sans-serif;
+}
+
+a,a:hover,a:visited{
+    color: #333;
+}
+
+a,a:visited{
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration:underline;
+}
+
+body {
+    text-align: center;
+    padding: 20px;
+}
+
+pre {    
+    color: #333;
+    font-size: 12px;
+    color: #24292e;
+    line-height: 20px;
+    vertical-align: middle;
+    margin: 0;
+    padding: 0;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+}
+
+div {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.title {
+    font-size: 1.5em;
+}
+
+.title.success {
+    color: #48D4AE;
+}
+
+.title.error {
+    color: #D8504D;
+}
+
+.info {
+    font-size: 0.8em;
+}
+
+.target-list {
+    font-size: 1em;
+}
+
+.target-list>span {
+    display: inline-block;
+    padding: 0 6px 0 6px;
+}
+
+.exception {
+    text-align: left;
+    font-size: 0.8em;
+}
+
+.exception>div {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.exception label {
+    font-weight: bold;
+    padding-right: 6px;
+}

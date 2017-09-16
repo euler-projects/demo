@@ -18,6 +18,8 @@ Hello World!<br>
 |  |--account 账号相关<br>
 |  |  |--<a href="${__CONTEXT_PATH}/settings/account/change-password">change-password</a> 修改密码<br>
 |--error-{errorCode} 错误页面<br>
+|<br>
+|--<a href="${__CONTEXT_PATH}/admin/">admin/</a> 后台管理<br>
 </code>
 </body>
 </html>
