@@ -7,10 +7,17 @@
 <title>${__SITENAME}</title>
 </head>
 <body>
-Hello World!
-<br>
-<a href="${__CONTEXT_PATH}/settings/account/change-password">Change Password</a>
-<br>
-<a href="${__CONTEXT_PATH}/signout">Sign Out</a>
+Hello World!<br>
+<code>
+/<br>
+|--signup 注册<br>
+|--signin 登录<br>
+|--<a href="${__CONTEXT_PATH}/signout">signout</a> 注销<br>
+|--<a href="${__CONTEXT_PATH}/reset-password">reset-password</a> 重置密码<br>
+|--settings 设置相关<br>
+|  |--account 账号相关<br>
+|  |  |--<a href="${__CONTEXT_PATH}/settings/account/change-password">change-password</a> 修改密码<br>
+|--error-{errorCode} 错误页面<br>
+</code>
 </body>
 </html>

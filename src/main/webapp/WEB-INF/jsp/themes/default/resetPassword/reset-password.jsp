@@ -7,11 +7,8 @@
 <title>${__SITENAME}</title>
 </head>
 <body>
-<div class="title error">ERROR</div>
-<div class="info">${e:i18n('_ERROR_MESSAGE')}:&nbsp;${__error_description}</div>
-<div class="info">${e:i18n('_ERROR_CODE')}:&nbsp;${__error} (${__code})</div>
-<div class="target-list">
-    <span><a href="${__CONTEXT_PATH}/">${e:i18n('_GO_HOME')}</a></span>
-</div>
+<a href="${__CONTEXT_PATH}/reset-password?type=SMS">通过短信验证码重置</a><br>
+<a href="${__CONTEXT_PATH}/reset-password?type=EMAIL">通过密码重置邮件重置</a><br>
+</code>
 </body>
 </html>
