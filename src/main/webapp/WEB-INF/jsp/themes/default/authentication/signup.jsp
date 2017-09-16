@@ -12,13 +12,7 @@
 
 </head>
 <body>
-    <form action="${__CONTEXT_PATH}/signin" method="post">
-        <c:if test="${param.error != null}">
-            <p>Invalid username and password.</p>
-        </c:if>
-        <c:if test="${param.logout != null}">
-            <p>You have been logged out.</p>
-        </c:if>
+    <form action="${__CONTEXT_PATH}/signup" method="post">
         <p>
             <label for="username">Username</label> <input type="text"
                 id="username" name="username" />
@@ -27,9 +21,7 @@
             <label for="password">Password</label> <input
                 type="password" id="password" name="password" />
         </p>
-        <input type="hidden" name="${_csrf.parameterName}"
-            value="${_csrf.token}" />
-        <button type="submit" class="btn">Log in</button>
+        <button type="submit" class="btn">${e:i18n('_SIGN_UP')}</button>
     </form>
 </body>
 </html>

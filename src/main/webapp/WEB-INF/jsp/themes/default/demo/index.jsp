@@ -10,8 +10,8 @@
 Hello World!<br>
 <code>
 /<br>
-|--signup 注册<br>
-|--signin 登录<br>
+|--<a href="${__CONTEXT_PATH}/signup">signup</a> 注册<br>
+|--<a href="${__CONTEXT_PATH}/signin">signin</a> 登录<br>
 |--<a href="${__CONTEXT_PATH}/signout">signout</a> 注销<br>
 |--<a href="${__CONTEXT_PATH}/reset-password">reset-password</a> 重置密码<br>
 |--settings 设置相关<br>

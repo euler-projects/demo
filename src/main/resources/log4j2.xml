@@ -8,13 +8,13 @@
 
     <Appenders>
         <Console name="console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%-5p %d - %msg @%l%n" />
+            <PatternLayout pattern="%-5p %d - %msg @ %l%n" />
         </Console>
 
         <RollingRandomAccessFile name="errorLog"
             fileName="${logPath}/${logFileName}.log"
             filePattern="${logPath}/${logFileName}.%d{yyyy-MM-dd}.log">
-            <PatternLayout pattern="%-5p %d - %msg @%l%n" />
+            <PatternLayout pattern="%-5p %d - %msg @ %l%n" />
             <Policies>
                 <TimeBasedTriggeringPolicy />
                 <SizeBasedTriggeringPolicy
