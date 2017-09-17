@@ -38,6 +38,11 @@
             <artifactId>euler-web-authentication-impl-hibernate</artifactId>
             <version>${euler-framework.version}</version>
         </dependency>
+        <dependency>
+            <groupId>net.eulerframework</groupId>
+            <artifactId>euler-web-cmf</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
         
         <dependency>
             <groupId>mysql</groupId>

@@ -32,10 +32,10 @@
     <div id="menu-zone" data-options="region:'west',split:false,collapsible:false">
         <div id="menu"> 
             <ul>
-                <li><a href="javascript:void(0)" onclick="addTab('design/work', '作品管理')">作品管理</a></li>
-                <li><a href="javascript:void(0)" onclick="addTab('design/workType', '作品类型管理')">作品类型管理</a></li>
-                <li><a href="javascript:void(0)" onclick="addTab('design/rating', '评审管理')">评审管理</a></li>
-                <li><a href="javascript:void(0)" onclick="addTab('design/raterGroup', '评委组管理')">评委组管理</a></li>
+                <li><a href="javascript:void(0)" onclick="addTab('cmf/slide/slideManage', '图片管理')">图片管理</a></li>
+                <li><a href="javascript:void(0)" onclick="addTab('cmf/slide/typeManage', '图片类型管理')">图片类型管理</a></li>
+                <li><a href="javascript:void(0)" onclick="addTab('cmf/post/postManage', '文章管理')">文章管理</a></li>
+                <li><a href="javascript:void(0)" onclick="addTab('cmf/post/typeManage', '文章类型管理')">文章类型管理</a></li>
             </ul>
             <ul>
                 <li><a href="javascript:void(0)" onclick="addTab('security/user', '账号管理')">账号管理</a></li>
