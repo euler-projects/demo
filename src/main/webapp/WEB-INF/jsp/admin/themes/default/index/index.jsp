@@ -33,7 +33,7 @@
         <div id="menu"> 
             <ul>
                 <li><a href="javascript:void(0)" onclick="addTab('cmf/slide/slideManage', '图片管理')">图片管理</a></li>
-                <li><a href="javascript:void(0)" onclick="addTab('cmf/slide/typeManage', '图片类型管理')">图片类型管理</a></li>
+                <li><a href="javascript:void(0)" onclick="addTab('cmf/slide/slideTypeManage', '图片类型管理')">图片类型管理</a></li>
                 <li><a href="javascript:void(0)" onclick="addTab('cmf/post/postManage', '文章管理')">文章管理</a></li>
                 <li><a href="javascript:void(0)" onclick="addTab('cmf/post/typeManage', '文章类型管理')">文章类型管理</a></li>
             </ul>

@@ -23,6 +23,16 @@
     height:20px;
 }
 
+#footer-zone a,a:visited,
+#header-zone a,a:visited {
+    text-decoration: none;
+}
+
+#footer-zone a:hover,
+#header-zone a:hover {
+    text-decoration:underline;
+}
+
 /**************************************************************************/
 
 #main-content #welcome-tab {

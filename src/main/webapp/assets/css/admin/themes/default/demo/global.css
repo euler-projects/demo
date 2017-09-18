@@ -4,14 +4,14 @@ body {
 }
 
 a,a:hover,a:visited{
-    color: #333;
+    color: #0088CC;
 }
 
-a,a:visited{
+a:visited{
     text-decoration: none;
 }
 
-a:hover {
+a,a:hover {
     text-decoration:underline;
 }
 
