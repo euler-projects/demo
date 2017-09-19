@@ -16,15 +16,16 @@
             <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" onclick="onSearch()"><i class="fa fa-refresh"></i>刷新</a>
             <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" onclick="onAdd()"><i class="fa fa-plus"></i>新建</a>
             <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" onclick="onDelete()"><i class="fa fa-remove"></i>删除</a>
-            <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" onclick="onSort()"><i class="fa fa-sort"></i>排序</a>
+            <%-- <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" onclick="onSort()"><i class="fa fa-sort"></i>排序</a> --%>
         </div>
         <div class="searcher">
             <input id="e-dg-tb-searcher" class="easyui-searchbox" style="width:280px"
             data-options="searcher:onSearch ,prompt:'搜索',menu:'#ss-menu'"></input>
             <div id="ss-menu" style="width:30px">
                 <div data-options="name:'_all'">全部</div>
-                <div data-options="name:'username'">类型名称</div>
-                <div data-options="name:'fullName'">类型代码</div>
+                <div data-options="name:'type'">类型标识</div>
+                <div data-options="name:'name'">类型名称</div>
+                <div data-options="name:'description'">类型描述</div>
             </div>
         </div>
     </div>
@@ -37,10 +38,11 @@
             rownumbers:true,
             remoteSort:false,
             pagination:true,
-            singleSelect:true,
+            singleSelect:false,
             onClickRow:onClickRow">
         <thead>
             <tr>
+                <th data-options="field:'ck',checkbox:true"></th>
                 <th data-options="field:'type',align:'center'">类型标识</th>
                 <th data-options="field:'name',align:'center'">类型名称</th>
                 <th data-options="field:'description',align:'center', width:'600px'">类型描述</th>
@@ -94,7 +96,7 @@
     </div>    
     <div data-dlg="#e-ds-dlg-add-slide-type" class="e-ds-dlg-btns">
         <a href="javascript:void(0)" class="easyui-linkbutton e-ds-dlg-btn" onclick="addSlideType()"><i class="fa fa-save"></i>${e:i18n('_ADMIN_DASH_DLG_SAVE')}</a>
-        <a href="javascript:void(0)" class="easyui-linkbutton e-ds-dlg-btn" onclick="$('#e-ds-dlg-add-user').dialog('close')"><i class="fa fa-close"></i>${e:i18n('_ADMIN_DASH_DLG_CANCEL')}</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton e-ds-dlg-btn" onclick="$('#e-ds-dlg-add-slide-type').dialog('close')"><i class="fa fa-close"></i>${e:i18n('_ADMIN_DASH_DLG_CANCEL')}</a>
     </div>
     <%-- --%>
 </div>
@@ -105,6 +107,7 @@
 <script>
 
 function onAdd() {
+    $('#e-ds-dlg-add-slide-type').dialog('close');
     $('#e-ds-dlg-add-slide-type').dialog('open').dialog('setTitle', "${e:i18n('_ADMIN_DASH_DLG_ADD')}");
 }
 
@@ -142,6 +145,8 @@ function clearAddSlideTypeDlg() {
 }
 
 function onClickRow(rowIndex, rowData) {
+    $('#e-dg').datagrid('clearSelections');
+    $('#e-dg').datagrid('selectRow', rowIndex);
     $('#e-ds-dlg-add-slide-type').dialog('close');
     var userId = getDashboardDataId();
     if(rowData.id == userId) {
@@ -154,6 +159,38 @@ function onClickRow(rowIndex, rowData) {
     
     $('#e-ds-dlg-add-slide-type-fm_enabled').combobox('clear');           
     $('#e-ds-dlg-add-slide-type-fm_enabled').combobox('select', rowData.enabled+"");
+}
+
+function onDelete() {
+    var row = $('#e-dg').datagrid('getSelections');
+
+    if(row == null || row.length < 1){
+        euler.msg.error("请选择要删除的图片类型");
+    } else if(row){
+        euler.msg.confirm("确定删除选定图片类型?", function(r) {
+            if(r) {
+                var formData = new FormData();
+                for(var i = 0; i < row.length; i++){
+                    formData.append("slideTypes", row[i].id);
+                }
+                $.ajax({
+                    url:'${__ADMIN_PATH}/ajax/cmf/slide/deleteSlideTypes',
+                    type:'POST',
+                    async:true,
+                    contentType: false,
+                    cache: false,
+                    processData: false,
+                    data: formData,
+                    error:function(XMLHttpRequest, textStatus, errorThrown) {
+                        euler.msg.response.error(XMLHttpRequest);
+                    },
+                    success:function(data, textStatus) {
+                        onSearch();
+                    }
+                });
+            }
+        });
+    }  
 }
 
 </script>

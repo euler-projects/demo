@@ -95,7 +95,11 @@ table.e-ds-dlg-fm-table tr {
     height:33px;
 }
 
-table.e-ds-dlg-fm-table td {
+table.e-ds-dlg-fm-table th {
+    text-align: center;
+}
+
+table.e-ds-dlg-fm-table td,th {
     border:1px solid #e0e0e0;
     padding-left:6px;
     padding-right:6px;
