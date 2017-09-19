@@ -17,6 +17,7 @@
         <intercept-url pattern="/signup" access="permitAll" />
 
         <!-- 文件上传下载页面或Ajax,所有用户都应该能访问 -->
+        <intercept-url pattern="/plupload" access="permitAll" />
         <intercept-url pattern="/file/**" access="permitAll" />
         <intercept-url pattern="/uploadFile" access="permitAll" />
 
