@@ -13,7 +13,7 @@
 <link href="${__ASSETS_PATH}/lib/thinkCmf/themes/flat/theme.min.css"
     rel="stylesheet">
 <link href="${__ASSETS_PATH}/lib/thinkCmf/css/simplebootadmin.css" rel="stylesheet">
-<link href="${__ASSETS_PATH}/lib/thinkCmf/artDialog/skins/default.css" rel="stylesheet" />
+<link href="${__ASSETS_PATH}/lib/thinkCmf/js/artDialog/skins/default.css" rel="stylesheet" />
 <link rel="stylesheet" href="${__ASSETS_PATH}/lib/font-awesome-4.7.0/css/font-awesome.min.css">
 <style>
 form .input-order {
@@ -36,10 +36,9 @@ form .input-order {
 <script type="text/javascript">
     //全局变量
     var GV = {
-        ROOT: "/",
-        WEB_ROOT: "",
-        JS_ROOT: "${__ASSETS_PATH}/lib/",
-        APP:'Asset'/*当前应用名*/
+        WEB_ROOT: "${__CONTEXT_PATH}",
+        JS_ROOT: "${__ASSETS_PATH}",
+        APP:'Euler'/*当前应用名*/
     };
     </script>
 <script src="${__ASSETS_PATH}/lib/jquery/jquery-1.12.4.min.js"></script>

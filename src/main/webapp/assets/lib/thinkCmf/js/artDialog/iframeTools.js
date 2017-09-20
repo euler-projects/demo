@@ -57,7 +57,7 @@ _topDialog = _top.artDialog;
 
 // 获取顶层页面对话框叠加值
 _zIndex = function () {
-	return _topDialog.defaults.zIndex;
+	return 999999;//_topDialog.defaults.zIndex;
 };
 
 

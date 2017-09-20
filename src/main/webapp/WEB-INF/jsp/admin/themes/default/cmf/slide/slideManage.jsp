@@ -5,8 +5,21 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
+<%-- <link href="${__ASSETS_PATH}/lib/thinkCmf/themes/flat/theme.min.css"
+    rel="stylesheet">
+<link href="${__ASSETS_PATH}/lib/thinkCmf/css/simplebootadmin.css" rel="stylesheet"> --%>
+<link href="${__ASSETS_PATH}/lib/thinkCmf/js/artDialog/skins/default.css" rel="stylesheet" />
+<%-- <link rel="stylesheet" href="${__ASSETS_PATH}/lib/font-awesome-4.7.0/css/font-awesome.min.css"> --%>
 <%@ include file="/WEB-INF/jsp/admin/themes/default/common/css-global.jsp"%>
 <%@ include file="/WEB-INF/jsp/admin/themes/default/common/css-dash.jsp"%>
+<script>
+    //全局变量
+    var GV = {
+        WEB_ROOT: "${__CONTEXT_PATH}",
+        JS_ROOT: "${__ASSETS_PATH}",
+        APP:'Euler'/*当前应用名*/
+    };
+</script>
 <title>${__ADMIN_DASHBOARD_BRAND_TEXT}</title>
 </head>
 <body class="easyui-layout">
@@ -92,7 +105,8 @@
                 <tbody>
                     <tr>
                         <th style="width:50px;">分类</th>
-                        <td style="width:620px;"><select class="easyui-combobox e-ds-dlg-input" name="enabled" id="e-ds-dlg-add-slide-type-fm_enabled"
+                        <td style="width:620px;">
+                        <select class="easyui-combobox e-ds-dlg-input" name="enabled" id="e-ds-dlg-add-slide-type-fm_enabled"
                             data-options="
                                 required:true,
                                 panelHeight:'auto',
@@ -109,7 +123,8 @@
                                     <tr><th>上传图片</th></tr>
                                     <tr>
                                         <td style="text-align:center;padding:6px;border-bottom:0px;">
-                                            <a href="javascript:void(0)"><img src="${__ASSETS_PATH}/lib/euler-cmf/images/default-thumbnail.png" id="thumb-preview" width="135" style="cursor: hand"></a>
+                                            <input type="hidden" name="smeta[thumb]" id="thumb" value="">
+                                            <a href="javascript:upload_one_image('图片上传', '#thumb')"><img src="${__ASSETS_PATH}/lib/euler-cmf/images/default-thumbnail.png" id="thumb-preview" width="135" style="cursor: hand"></a>
                                         </td>
                                     </tr>
                                     <tr>
@@ -200,6 +215,8 @@
 
 <%@ include file="/WEB-INF/jsp/admin/themes/default/common/js-global.jsp"%>
 <%@ include file="/WEB-INF/jsp/admin/themes/default/common/js-dash.jsp"%>
+<script src="${__ASSETS_PATH}/lib/thinkCmf/js/common.js"></script>
+<script src="${__ASSETS_PATH}/lib/thinkCmf/js/wind.js"></script>
 <script>
 
 function onAdd() {
