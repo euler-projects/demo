@@ -7,13 +7,13 @@ a,a:hover,a:visited{
     color: #0088CC;
 }
 
-a:visited{
+a,a:hover,a:visited{
     text-decoration: none;
 }
 
-a,a:hover {
+/* a,a:hover {
     text-decoration:underline;
-}
+} */
 
 .window-mask{
     width:100%;

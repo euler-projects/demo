@@ -63,6 +63,18 @@
         }
     }
     
+    function urlFormatter(value, row, index){
+        if(typeof(value) == 'undefined')
+            return '-';
+        return '<a class="operate-link" href="' + value + '" target="_blank">' + value + '</a>'
+    }
+    
+    function viewImgFormatter(value, row, index){
+        if(typeof(value) == 'undefined')
+            return '-';
+        return '<a class="operate-link" href="${__IMAGE_DOWNLOAD_PATH}/' + value + '" target="_blank">查看图片</a>'
+    }
+    
     var euler = {
             table: {
                 loadData: function(table, data) {

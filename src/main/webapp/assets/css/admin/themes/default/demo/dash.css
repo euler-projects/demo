@@ -1,3 +1,10 @@
+.datagrid-row .operate-link {
+    color:#0088CC;
+}
+.datagrid-row-selected .operate-link {
+    color:#fff;
+}
+
 #e-dg-zone {
     height: 342px;
     border: 0;

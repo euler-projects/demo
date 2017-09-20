@@ -19,6 +19,7 @@
         <!-- 文件上传下载页面或Ajax,所有用户都应该能访问 -->
         <intercept-url pattern="/plupload" access="permitAll" />
         <intercept-url pattern="/file/**" access="permitAll" />
+        <intercept-url pattern="/image/**" access="permitAll" />
         <intercept-url pattern="/uploadFile" access="permitAll" />
 
         <!-- 忘记密码相关页面或Ajax,所有用户都应该能访问 -->

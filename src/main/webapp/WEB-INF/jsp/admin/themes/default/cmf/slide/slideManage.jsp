@@ -33,7 +33,7 @@
         </div>
         <div class="filter">
             <span class="e-dg-tb-label">图片类型</span>
-            <select id="e-dg-tb-filter-usertype" class="easyui-combobox e-dg-tb-filter" data-filter-name="groupId" style="width:120px;" 
+            <select id="e-dg-tb-filter-usertype" class="easyui-combobox e-dg-tb-filter" data-filter-name="type" style="width:120px;" 
                 data-options="
                     url:'${__ADMIN_PATH}/ajax/cmf/slide/findAllSlideTypes',
                     method:'get',
@@ -43,7 +43,7 @@
                     textField: 'name'">
             </select>
             <span class="e-dg-tb-label">适用语言</span>
-            <select id="e-dg-tb-filter-usertype" class="easyui-combobox e-dg-tb-filter" data-filter-name="groupId" style="width:120px;" 
+            <select id="e-dg-tb-filter-usertype" class="easyui-combobox e-dg-tb-filter" data-filter-name="locale" style="width:120px;" 
                 data-options="
                     url:'${__ADMIN_PATH}/ajax/cmf/public/findAllSupportLanguagesKV?addAll=true',
                     method:'get',
@@ -58,29 +58,33 @@
             data-options="searcher:onSearch ,prompt:'搜索',menu:'#ss-menu'"></input>
             <div id="ss-menu" style="width:30px">
                 <div data-options="name:'_all'">全部</div>
-                <div data-options="name:'type'">类型标识</div>
-                <div data-options="name:'name'">类型名称</div>
-                <div data-options="name:'description'">类型描述</div>
+                <div data-options="name:'title'">标题</div>
+                <div data-options="name:'uri'">链接</div>
+                <div data-options="name:'description'">描述</div>
+                <div data-options="name:'content'">内容</div>
             </div>
         </div>
     </div>
     <table id="e-dg" class="easyui-datagrid"
         data-options="
             fit:true,
-            url:'${__ADMIN_PATH}/ajax/cmf/slide/findSlideTypeByPage',
+            url:'${__ADMIN_PATH}/ajax/cmf/slide/findSlideByPage',
             toolbar:'#e-dg-tb',
             fitColumns:true,
             rownumbers:true,
             remoteSort:false,
             pagination:true,
-            singleSelect:true,
+            singleSelect:false,
             onClickRow:onClickRow">
         <thead>
             <tr>
-                <th data-options="field:'type',align:'center'">类型标识</th>
-                <th data-options="field:'name',align:'center'">类型名称</th>
-                <th data-options="field:'description',align:'center', width:'600px'">类型描述</th>
-                <th data-options="field:'enabled',align:'center',formatter:yesOrNoFormatter">已生效</th>
+                <th data-options="field:'ck',checkbox:true"></th>
+                <th data-options="field:'type',align:'center'">类型</th>
+                <th data-options="field:'title',align:'center'">标题</th>
+                <th data-options="field:'uri',align:'center',formatter:urlFormatter">链接</th>
+                <th data-options="field:'locale',align:'center'">语言</th>
+                <th data-options="field:'description',align:'center', width:'300px'">描述</th>
+                <th data-options="field:'fileId',align:'center',formatter:viewImgFormatter">查看图片</th>
             </tr>
         </thead>
     </table>
@@ -88,7 +92,7 @@
 <div id="e-ds-zone" data-options="region:'center'">
     <p style="padding-left:20px;"><a href="javascritp:void(0)" onClick="onAdd()">新建</a>或选择项目以编辑</p> 
     <%-- --%>
-    <div id="e-ds-dlg-add-slide-type" class="easyui-dialog e-ds-dlg" title="${e:i18n('_ADMIN_DASH_DLG_ADD')}"
+    <div id="e-ds-dlg-add-slide" class="easyui-dialog e-ds-dlg" title="${e:i18n('_ADMIN_DASH_DLG_ADD')}"
         data-options="
             closed:true,
             closable:true,
@@ -97,17 +101,18 @@
             modal:false,
             inline:true,
             border:false,
-            onClose:onAddSlideTypeDlgClose,
+            onClose:onAddSlideDlgClose,
             maximized:true">
-        <form id="e-ds-dlg-add-slide-type-fm" method="post">
-            <input id="e-ds-dashInputId" type="hidden">
+        <form id="e-ds-dlg-add-slide-fm" method="post">
+            <input id="e-ds-dashInputId" type="hidden" name="id">
+            <input id="e-ds-dashInputId" type="hidden" name="order">
             <table class="e-ds-dlg-fm-table">
                 <tbody>
                     <tr>
                         <th style="width:50px;">分类</th>
                         <td style="width:285px;">
-                            <select class="easyui-combobox e-ds-dlg-input" name="slideType" style="width: 150px"
-                                id="e-ds-dlg-add-slide-type-fm_slidetype"
+                            <select class="easyui-combobox e-ds-dlg-input" name="type" style="width: 150px"
+                                id="e-ds-dlg-add-slide-fm_slidetype"
                                 data-options="
                                     required:true,
                                     panelHeight:'auto',
@@ -120,7 +125,7 @@
                             </select>
                         <th style="width:50px;">语言</th>
                         <td style="width:285px;"><select class="easyui-combobox e-ds-dlg-input" name="locale" style="width: 150px"
-                                id="e-ds-dlg-add-slide-type-fm_locale"
+                                id="e-ds-dlg-add-slide-fm_locale"
                                 data-options="
                                     required:true,
                                     panelHeight:'auto',
@@ -137,7 +142,7 @@
                                     <tr><th>上传图片</th></tr>
                                     <tr>
                                         <td style="text-align:center;padding:6px;border-bottom:0px;">
-                                            <input type="hidden" name="slideFileArchivedId" id="thumb" value="">
+                                            <input type="hidden" name="fileId" id="thumb" value="">
                                             <a href="javascript:upload_one_image('图片上传', '#thumb')"><img src="${__ASSETS_PATH}/lib/euler-cmf/images/default-thumbnail.png" id="thumb-preview" width="135" style="cursor: hand"></a>
                                         </td>
                                     </tr>
@@ -157,12 +162,12 @@
                     </tr>
                     <tr>
                         <th>链接</th>
-                        <td colspan="3"><input class="easyui-textbox e-ds-dlg-input" name="url" style="width:600px"
+                        <td colspan="3"><input class="easyui-textbox e-ds-dlg-input" name="uri" style="width:600px"
                             data-options=""></td>
                     </tr>
                     <tr>
                         <th>描述</th>
-                        <td colspan="3"><input class="easyui-textbox e-ds-dlg-input" name="descript" style="width:600px"
+                        <td colspan="3"><input class="easyui-textbox e-ds-dlg-input" name="description" style="width:600px"
                             data-options=""></td>
                     </tr>
                     <tr>
@@ -174,9 +179,9 @@
             </table>
         </form>
     </div>    
-    <div data-dlg="#e-ds-dlg-add-slide-type" class="e-ds-dlg-btns">
-        <a href="javascript:void(0)" class="easyui-linkbutton e-ds-dlg-btn" onclick="addSlideType()"><i class="fa fa-save"></i>${e:i18n('_ADMIN_DASH_DLG_SAVE')}</a>
-        <a href="javascript:void(0)" class="easyui-linkbutton e-ds-dlg-btn" onclick="$('#e-ds-dlg-add-slide-type').dialog('close')"><i class="fa fa-close"></i>${e:i18n('_ADMIN_DASH_DLG_CANCEL')}</a>
+    <div data-dlg="#e-ds-dlg-add-slide" class="e-ds-dlg-btns">
+        <a href="javascript:void(0)" class="easyui-linkbutton e-ds-dlg-btn" onclick="addSlide()"><i class="fa fa-save"></i>${e:i18n('_ADMIN_DASH_DLG_SAVE')}</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton e-ds-dlg-btn" onclick="$('#e-ds-dlg-add-slide').dialog('close')"><i class="fa fa-close"></i>${e:i18n('_ADMIN_DASH_DLG_CANCEL')}</a>
     </div>
     <%-- --%>
 </div>
@@ -189,19 +194,19 @@
 <script>
 
 function onAdd() {
-    //$('#e-ds-dlg-add-slide-type').dialog('close');
-    $('#e-ds-dlg-add-slide-type').dialog('open').dialog('setTitle', "${e:i18n('_ADMIN_DASH_DLG_ADD')}");
+    $('#e-ds-dlg-add-slide').dialog('close');
+    $('#e-ds-dlg-add-slide').dialog('open').dialog('setTitle', "${e:i18n('_ADMIN_DASH_DLG_ADD')}");
 }
 
-function addSlideType() {
-    if(!$('#e-ds-dlg-add-slide-type-fm').form('validate'))
+function addSlide() {
+    if(!$('#e-ds-dlg-add-slide-fm').form('validate'))
         return;
     
     $('#fm-submit-mask').show();
-    var data = $('#e-ds-dlg-add-slide-type-fm').serialize();
+    var data = $('#e-ds-dlg-add-slide-fm').serialize();
     
     $.ajax({
-        url:'${__ADMIN_PATH}/ajax/cmf/slide/saveSlideType',
+        url:'${__ADMIN_PATH}/ajax/cmf/slide/saveSlide',
         type:'POST',
         async:true,
         data: data,
@@ -216,45 +221,52 @@ function addSlideType() {
     });
 }
 
-function onAddSlideTypeDlgClose() {
-    clearAddSlideTypeDlg();
+function onAddSlideDlgClose() {
+    clearAddSlideDlg();
 }
 
-function clearAddSlideTypeDlg() {
-    var enabled = $('#e-ds-dlg-add-slide-type-fm_enabled').combobox('getValue');
-    $('#e-ds-dlg-add-slide-type-fm_enabled').combobox('unselect', enabled+"");
-    $('#e-ds-dlg-add-slide-type-fm').form('clear');    
+function clearAddSlideDlg() {
+    var slidetype = $('#e-ds-dlg-add-slide-fm_slidetype').combobox('getValue');
+    $('#e-ds-dlg-add-slide-fm_slidetype').combobox('unselect', slidetype+"");
+    
+    var locale = $('#e-ds-dlg-add-slide-fm_locale').combobox('getValue');
+    $('#e-ds-dlg-add-slide-fm_locale').combobox('unselect', locale+"");
+    
+    $('#thumb-preview').attr('src','${__ASSETS_PATH}/lib/euler-cmf/images/default-thumbnail.png');$('#thumb').val('');
+    
+    $('#e-ds-dlg-add-slide-fm').form('clear');    
 }
 
 function onClickRow(rowIndex, rowData) {
-    $('#e-ds-dlg-add-slide-type').dialog('close');
+    $('#e-dg').datagrid('clearSelections');
+    $('#e-dg').datagrid('selectRow', rowIndex);
+    $('#e-ds-dlg-add-slide').dialog('close');
     var userId = getDashboardDataId();
     if(rowData.id == userId) {
         console.log(rowData.id + '的编辑区已打开,忽略此次点击');
         return;        
     }
     setDashboardDataId(rowData.id); 
-    $('#e-ds-dlg-add-slide-type').dialog('open').dialog('setTitle', "${e:i18n('_ADMIN_DASH_DLG_EDIT')} - " + rowData.name);
-    $('#e-ds-dlg-add-slide-type-fm').form('load', rowData);
-    
-    $('#e-ds-dlg-add-slide-type-fm_enabled').combobox('clear');           
-    $('#e-ds-dlg-add-slide-type-fm_enabled').combobox('select', rowData.enabled+"");
+    $('#e-ds-dlg-add-slide').dialog('open').dialog('setTitle', "${e:i18n('_ADMIN_DASH_DLG_EDIT')} - " + rowData.title);
+    $('#e-ds-dlg-add-slide-fm').form('load', rowData);
+
+    $('#thumb-preview').attr('src','${__FILE_DOWNLOAD_PATH}/'+rowData.fileId);
 }
 
 function onDelete() {
     var row = $('#e-dg').datagrid('getSelections');
 
     if(row == null || row.length < 1){
-        euler.msg.error("请选择要删除的图片类型");
+        euler.msg.error("请选择要删除的图片");
     } else if(row){
-        euler.msg.confirm("确定删除选定图片类型?", function(r) {
+        euler.msg.confirm("确定删除选定图片?", function(r) {
             if(r) {
                 var formData = new FormData();
                 for(var i = 0; i < row.length; i++){
-                    formData.append("slideTypes", row[i].id);
+                    formData.append("slideIds", row[i].id);
                 }
                 $.ajax({
-                    url:'${__ADMIN_PATH}/ajax/cmf/slide/deleteSlideTypes',
+                    url:'${__ADMIN_PATH}/ajax/cmf/slide/deleteSlides',
                     type:'POST',
                     async:true,
                     contentType: false,
