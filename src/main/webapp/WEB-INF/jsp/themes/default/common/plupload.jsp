@@ -173,10 +173,13 @@ form .input-order {
                         <a class="btn btn-primary" id="select-files">
                             选择文件 </a>
                     </div>
-                    <span class="num"> <!-- <empty name="multi">
-                        最多上传<em>1</em>个附件, </empty>  -->单文件最大<em>256MB</em>,
+                    <span class="num">
+                        <c:if test="${multi == false}">
+                        最多上传<em>1</em>个附件,
+                        </c:if>
+                        单文件最大<em>${maxFileSize}MB</em>,
                         <em style="cursor: help;"
-                        title="可上传格式：.doc,.docx"
+                        title="可上传格式：${extensions}"
                         data-toggle="tooltip">支持格式？</em>
                     </span>
                 </div>
@@ -193,9 +196,9 @@ form .input-order {
         </div>
     </div>
     <script>
-        var app = 'euler';
-		var multi=1;
-		var mime_type = {"title":"Custom files", "extensions":"html,jpg,jpeg,png"};
+        var app = '${app}';
+		var multi= ${multi};
+		var mime_type = ${mimeType};//{"title":"Custom files", "extensions":"${filetype}"};
 		var extensions = mime_type.extensions.split(/,/);
 		var mimeTypeRegExp=new RegExp('\\.(' + extensions.join('|') + ')$', 'i');
 		var upload_max_filesize_mb = 100;

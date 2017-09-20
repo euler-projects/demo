@@ -591,7 +591,7 @@ function open_upload_dialog(dialog_title,callback,extra_params,multi,filetype,ap
 	multi = multi?1:0;
 	filetype = filetype?filetype:'image';
 	app = app?app:GV.APP;
-    var params = '?multi='+multi+'&filetype='+filetype+'&app='+app ;
+    var params = '?multi='+multi+'&mimeType='+filetype+'&app='+app ;
     Wind.use("artDialog","iframeTools",function(){
         art.dialog.open(GV.WEB_ROOT+'/plupload'  + params, {
 	        title: dialog_title,
@@ -677,7 +677,7 @@ function upload_one_image(dialog_title, input_selector, extra_params, app) {
         $(input_selector).val(files[0].filepath);
         $(input_selector + '-preview').attr('src', files[0].preview_url);
         $(input_selector + '-name').val(files[0].name);
-    }, extra_params, 0, 'image', app);
+    }, extra_params, 0, 'IMAGE_FILES', app);
 }
 
 /**
