@@ -246,6 +246,10 @@ form .input-order {
 					
 					FileUploaded: function(up, file, response) {
 						var data = JSON.parse(response.response).data;
+						var originalFilename = data.originalFilename;
+                        var url = "${__FILE_DOWNLOAD_PATH}/"+data.id;
+						var previewUrl = "${__FILE_DOWNLOAD_PATH}/"+data.id;
+						var filepath = data.id;
 						if(true){
 							if(!multi) {
 								$('#select-files').css('visibility','hidden');
@@ -254,18 +258,18 @@ form .input-order {
 							var $file=$('#'+file.id);
 							$file.addClass('uploaded')
 							.data('id',file.id)
-							.data('url',"${__FILE_DOWNLOAD_PATH}/"+data.id)
-							.data('preview_url',"${__FILE_DOWNLOAD_PATH}/"+data.id)
-							.data('filepath',data.id)
-							.data('name',data.name);
+							.data('url', url)
+							.data('preview_url',previewUrl)
+							.data('filepath',filepath)
+							.data('name',originalFilename);
 							
-							if(data.originalFilename.match(/\.(jpeg|gif|jpg|png|bmp|pic)$/gi)){
+							if(originalFilename.match(/\.(jpeg|gif|jpg|png|bmp|pic)$/gi)){
 								var $img=$('<img/>');
-								$img.attr('src',"${__FILE_DOWNLOAD_PATH}/"+data.id);
+								$img.attr('src',previewUrl);
 								$file.find('.upload-percent')
 								.html($img);
 							}else{
-								$file.find('.upload-percent').attr('title',data.originalFilename).text(data.originalFilename);
+								$file.find('.upload-percent').attr('title',originalFilename).text(originalFilename);
 							}
 						}else{
 							alert(data.message);

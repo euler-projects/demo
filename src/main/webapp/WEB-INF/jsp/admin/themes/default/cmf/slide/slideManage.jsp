@@ -105,17 +105,31 @@
                 <tbody>
                     <tr>
                         <th style="width:50px;">分类</th>
-                        <td style="width:620px;">
-                        <select class="easyui-combobox e-ds-dlg-input" name="enabled" id="e-ds-dlg-add-slide-type-fm_enabled"
-                            data-options="
-                                required:true,
-                                panelHeight:'auto',
-                                panelMaxHeight:'200px',
-                                editable:false,
-                                url:'${__ADMIN_PATH}/ajax/cmf/slide/findAllSlideTypes',
-                                method:'get',
-                                valueField: 'type',
-                                textField: 'name'">
+                        <td style="width:285px;">
+                            <select class="easyui-combobox e-ds-dlg-input" name="slideType" style="width: 150px"
+                                id="e-ds-dlg-add-slide-type-fm_slidetype"
+                                data-options="
+                                    required:true,
+                                    panelHeight:'auto',
+                                    panelMaxHeight:'200px',
+                                    editable:false,
+                                    url:'${__ADMIN_PATH}/ajax/cmf/slide/findAllSlideTypes',
+                                    method:'get',
+                                    valueField: 'type',
+                                    textField: 'name'">
+                            </select>
+                        <th style="width:50px;">语言</th>
+                        <td style="width:285px;"><select class="easyui-combobox e-ds-dlg-input" name="locale" style="width: 150px"
+                                id="e-ds-dlg-add-slide-type-fm_locale"
+                                data-options="
+                                    required:true,
+                                    panelHeight:'auto',
+                                    panelMaxHeight:'200px',
+                                    editable:false,
+                                    url:'${__ADMIN_PATH}/ajax/cmf/public/findAllSupportLanguagesKV',
+                                    method:'get',
+                                    valueField: 'key',
+                                    textField: 'value'">
                             </select></td>
                         <td rowspan="5" style="vertical-align: top;">
                             <table class="e-ds-dlg-fm-table">
@@ -123,13 +137,13 @@
                                     <tr><th>上传图片</th></tr>
                                     <tr>
                                         <td style="text-align:center;padding:6px;border-bottom:0px;">
-                                            <input type="hidden" name="smeta[thumb]" id="thumb" value="">
+                                            <input type="hidden" name="slideFileArchivedId" id="thumb" value="">
                                             <a href="javascript:upload_one_image('图片上传', '#thumb')"><img src="${__ASSETS_PATH}/lib/euler-cmf/images/default-thumbnail.png" id="thumb-preview" width="135" style="cursor: hand"></a>
                                         </td>
                                     </tr>
                                     <tr>
                                         <td style="text-align:center;padding:6px;;border-top:0px;">
-                                            <a href="javascript:void(0)">删除图片</a>
+                                            <a href="javascript:void(0)" onclick="$('#thumb-preview').attr('src','${__ASSETS_PATH}/lib/euler-cmf/images/default-thumbnail.png');$('#thumb').val('');return false;">删除图片</a>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -138,71 +152,26 @@
                     </tr>
                     <tr>
                         <th>标题</th>
-                        <td><input class="easyui-textbox e-ds-dlg-input" name="type" style="width:600px"
+                        <td colspan="3"><input class="easyui-textbox e-ds-dlg-input" name="title" style="width:600px"
                             data-options="required:true"></td>
                     </tr>
                     <tr>
                         <th>链接</th>
-                        <td><input class="easyui-textbox e-ds-dlg-input" name="name" style="width:600px"
-                            data-options="required:true"></td>
+                        <td colspan="3"><input class="easyui-textbox e-ds-dlg-input" name="url" style="width:600px"
+                            data-options=""></td>
                     </tr>
                     <tr>
                         <th>描述</th>
-                        <td><input class="easyui-textbox e-ds-dlg-input" name="name" style="width:600px"
-                            data-options="required:true"></td>
+                        <td colspan="3"><input class="easyui-textbox e-ds-dlg-input" name="descript" style="width:600px"
+                            data-options=""></td>
                     </tr>
                     <tr>
                         <th>内容</th>
-                        <td><input class="easyui-textbox e-ds-dlg-input" name="name" style="width:600px;height:200px;"
-                            data-options="required:true,multiline:true"></td>
+                        <td colspan="3"><input class="easyui-textbox e-ds-dlg-input" name="content" style="width:600px;height:100px;"
+                            data-options="multiline:true"></td>
                     </tr>
                 </tbody>
             </table>
-            <%-- <input id="e-ds-dashInputId" type="hidden">
-            <div class="e-ds-dlg-line">
-                <select class="easyui-combobox e-ds-dlg-input" name="enabled" id="e-ds-dlg-add-slide-type-fm_enabled"
-                data-options="
-                    required:true,
-                    label:'分类',
-                    labelAlign:'right',
-                    panelHeight:'auto',
-                    panelMaxHeight:'200px',
-                    editable:false,
-                    url:'${__ADMIN_PATH}/ajax/cmf/slide/findAllSlideTypes',
-                    method:'get',
-                    valueField: 'type',
-                    textField: 'name'">
-                </select>
-            </div>
-            <div class="e-ds-dlg-line">
-                <input class="easyui-textbox e-ds-dlg-input" name="type" style="width:600px"
-                data-options="required:true,label:'标题',labelAlign:'right'">
-            </div>
-            <div class="e-ds-dlg-line">
-                <input class="easyui-textbox e-ds-dlg-input" name="name" style="width:600px"
-                data-options="required:true,label:'链接',labelAlign:'right'">
-            </div>
-            <div class="e-ds-dlg-line">
-                <input class="easyui-textbox e-ds-dlg-input" name="description" style="width:600px"
-                data-options="label:'描述',labelAlign:'right'">
-            </div>
-            <div class="e-ds-dlg-line">
-                <input class="easyui-textbox e-ds-dlg-input" name="description" style="width:600px;height:240px"
-                data-options="multiline:true,label:'内容',labelAlign:'right'">
-            </div>
-            <div class="e-ds-dlg-line">
-                <select class="easyui-combobox e-ds-dlg-input" name="enabled" id="e-ds-dlg-add-slide-type-fm_enabled"
-                data-options="
-                    required:true,
-                    label:'是否生效',
-                    labelAlign:'right',
-                    panelHeight:'auto',
-                    panelMaxHeight:'200px',
-                    editable:false">
-                    <option value="true">是</option>
-                    <option value="false">否</option>
-                </select>
-            </div> --%>
         </form>
     </div>    
     <div data-dlg="#e-ds-dlg-add-slide-type" class="e-ds-dlg-btns">
