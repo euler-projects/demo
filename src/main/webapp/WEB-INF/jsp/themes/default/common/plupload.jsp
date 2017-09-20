@@ -247,8 +247,14 @@ form .input-order {
 					FileUploaded: function(up, file, response) {
 						var data = JSON.parse(response.response).data;
 						var originalFilename = data.originalFilename;
-                        var url = "${__FILE_DOWNLOAD_PATH}/"+data.id;
-						var previewUrl = "${__FILE_DOWNLOAD_PATH}/"+data.id;
+						
+						var prefixPath = "${__FILE_DOWNLOAD_PATH}/";
+						if(originalFilename.match(/\.(jpeg|gif|jpg|png|bmp|pic)$/gi)) {
+						    prefixPath = "${__IMAGE_DOWNLOAD_PATH}/"
+						}
+						
+                        var url = prefixPath+data.id;
+						var previewUrl = prefixPath+data.id;
 						var filepath = data.id;
 						if(true){
 							if(!multi) {

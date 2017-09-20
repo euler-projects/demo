@@ -5,6 +5,10 @@
     color:#fff;
 }
 
+.datagrid-row .order-editor {
+    width: 30px;
+}
+
 #e-dg-zone {
     height: 342px;
     border: 0;

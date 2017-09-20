@@ -79,6 +79,7 @@
         <thead>
             <tr>
                 <th data-options="field:'ck',checkbox:true"></th>
+                <th data-options="field:'order',align:'center',formatter:orderEditorFormatter">顺序</th>
                 <th data-options="field:'type',align:'center'">类型</th>
                 <th data-options="field:'title',align:'center'">标题</th>
                 <th data-options="field:'uri',align:'center',formatter:urlFormatter">链接</th>
@@ -250,7 +251,7 @@ function onClickRow(rowIndex, rowData) {
     $('#e-ds-dlg-add-slide').dialog('open').dialog('setTitle', "${e:i18n('_ADMIN_DASH_DLG_EDIT')} - " + rowData.title);
     $('#e-ds-dlg-add-slide-fm').form('load', rowData);
 
-    $('#thumb-preview').attr('src','${__FILE_DOWNLOAD_PATH}/'+rowData.fileId);
+    $('#thumb-preview').attr('src','${__IMAGE_DOWNLOAD_PATH}/'+rowData.fileId);
 }
 
 function onDelete() {
@@ -283,6 +284,34 @@ function onDelete() {
             }
         });
     }  
+}
+
+function onSort() {
+    var orderEditor = $('.order-editor');
+    if(typeof(orderEditor) == 'undefined' || orderEditor.length <= 0) {
+        return;
+    }
+    var formData = new FormData();
+    for(var i = 0; i < orderEditor.length; i++) {
+        var order = orderEditor[i];
+        formData.append("slideIds", order.id);
+        formData.append("slideOrders", order.value);
+    }
+    $.ajax({
+        url:'${__ADMIN_PATH}/ajax/cmf/slide/sortSlides',
+        type:'POST',
+        async:true,
+        contentType: false,
+        cache: false,
+        processData: false,
+        data: formData,
+        error:function(XMLHttpRequest, textStatus, errorThrown) {
+            euler.msg.response.error(XMLHttpRequest);
+        },
+        success:function(data, textStatus) {
+            onSearch();
+        }
+    });
 }
 
 </script>

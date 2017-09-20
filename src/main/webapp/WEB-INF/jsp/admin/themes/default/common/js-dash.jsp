@@ -63,6 +63,12 @@
         }
     }
     
+    function orderEditorFormatter(value, row, index){
+        if(typeof(value) == 'undefined')
+            return '<input class="order-editor" id="' + row.id + '">';
+        return '<input class="order-editor" id="' + row.id + '" value="' + value + '">';
+    }
+    
     function urlFormatter(value, row, index){
         if(typeof(value) == 'undefined')
             return '-';
