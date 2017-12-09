@@ -1,4 +1,5 @@
-   
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
     <div id="fm-submit-mask" class="window-mask">
         <div class="mask-wrap" >
             <img class="loading-img" src="${__ASSETS_PATH}/lib/easyui/themes/bootstrap/images/loading.gif">
@@ -8,12 +9,10 @@
     <script src="${__ASSETS_PATH}/lib/euler/js/dict.js"></script>
     <script src="${__ASSETS_PATH}/lib/euler/js/util.js"></script>
     <script src="${__ASSETS_PATH}/lib/euler/js/for_easyui/util.js"></script>
-    <script src="${__ASSETS_PATH}/lib/euler/js/for_easyui/formatter.js"></script>
     
-    <div id="e-iframe-dlg" class="easyui-dialog" style="width:90%; max-width:800px; height:400px"
+    <div id="e-iframe-dlg" class="easyui-dialog" style="overflow: hidden"
         data-options="
             closed:true,
-            iconCls:'icon-search',
             resizable:false,
             modal:true,
             constrain:true,
@@ -23,8 +22,8 @@
             name="e-iframe-dlg-content" 
             width="100%" height="100%" frameborder="no" border="0" marginwidth="0" marginheight="0" allowtransparency="yes"></iframe>  
         <div id="e-iframe-dlg-btns">
-            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="onEulerIframeDlgConfirm()"><i class="fa fa-check"></i>${e:i18n('_ADMIN_DASH_DLG_OK')}</a>
-            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="$('#e-iframe-dlg').dialog('close')"><i class="fa fa-close"></i>${e:i18n('_ADMIN_DASH_DLG_CANCEL')}</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="onEulerIframeDlgConfirm()"><i class="fa fa-check"></i>${e:i18n('_ADMIN_DASHBOARD_DLG_CONFIRM')}</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="$('#e-iframe-dlg').dialog('close')"><i class="fa fa-close"></i>${e:i18n('_ADMIN_DASHBOARD_DLG_CANCEL')}</a>
         </div>
     </div>
     
@@ -46,20 +45,28 @@
     
     </script>
     
-    <script>
-
-    function imgFormatter(value, row, index) {
-        return '<img alt="No Image" style="margin-top:5px;" src="${__CONTEXT_PATH}/upload/'+value+'"  width="200px">'
+    <script> 
+    function unixDatetimeFormatter(value, row, index) {
+        return new Date(value).Format('yyyy-MM-dd hh:mm:ss');
     }
     
-
     function yesOrNoFormatter(value, row, index){
         if(typeof(value) == 'undefined')
             return '-';
         if(value === true) {
-            return "${e:i18n('_ADMIN_DASH_YES')}";            
+            return "${e:i18n('_ADMIN_DASHBOARD_YES')}";            
         } else {
-            return "${e:i18n('_ADMIN_DASH_NO')}";            
+            return "${e:i18n('_ADMIN_DASHBOARD_NO')}";            
+        }
+    }
+    
+    function yesOrNoWithColorFormatter(value, row, index){
+        if(typeof(value) == 'undefined')
+            return '-';
+        if(value === true) {
+            return "<i style='color:#48D4AE;font-style: normal;'>${e:i18n('_ADMIN_DASHBOARD_YES')}</i>";            
+        } else {
+            return "<i style='color:#D8504D;'>${e:i18n('_ADMIN_DASHBOARD_NO')}</i>";            
         }
     }
     
@@ -72,13 +79,19 @@
     function urlFormatter(value, row, index){
         if(typeof(value) == 'undefined')
             return '-';
-        return '<a class="operate-link" href="' + value + '" target="_blank">' + value + '</a>'
+        return '<a class="operate-link" href="' + value + '" target="_blank">' + value + '</a>';
     }
     
     function viewImgFormatter(value, row, index){
         if(typeof(value) == 'undefined')
             return '-';
-        return '<a class="operate-link" href="${__IMAGE_DOWNLOAD_PATH}/' + value + '" target="_blank">查看图片</a>'
+        return '<a class="operate-link" href="${__IMAGE_DOWNLOAD_PATH}/' + value + '" target="_blank">查看图片</a>';
+    }
+    
+    function floatWindowFormatter(value, row, index){
+        if(typeof(value) == 'undefined')
+            return '-';
+        return '<span title="' + value + '">' + value + '</span>';
     }
     
     var euler = {
@@ -133,9 +146,13 @@
                 }
             },
             
-            dialog: function(url, params, title, callback) {
+            dialog: function(url, params, title, callback, options) {
                 eulerIframeDlgCallBackFunction = callback;
+                if(typeof(options) == 'object') {
+                    $('#e-iframe-dlg').dialog(options);
+                }
                 $('#e-iframe-dlg').dialog('open').dialog('setTitle', title);
+                $('#e-iframe-dlg').window('center');
                 $('#e-iframe-dlg-content').attr('src', url + '?' + params);
             }
     }

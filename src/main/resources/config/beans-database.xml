@@ -93,7 +93,7 @@
         <property name="hibernateProperties">
             <props>
                 <prop key="hibernate.dialect">${hibernate.dialect}</prop>
-                <prop key="hibernate.hbm2ddl.auto">${hibernate.hbm2ddl.auto}</prop>
+                <!-- <prop key="hibernate.hbm2ddl.auto">${hibernate.hbm2ddl.auto}</prop> -->
                 <prop key="hibernate.show_sql">${hibernate.show_sql}</prop>
                 <prop key="hiberante.format_sql">${hibernate.format_sql}</prop>
             </props>
@@ -147,9 +147,9 @@
             <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="Exception" name="update*" />
             <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="Exception" name="add*" />
             <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="Exception" name="*RWT" />
-            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="Exception" read-only="true" name="load*" />
-            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="Exception" read-only="true" name="find*" />
-            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="Exception" read-only="true" name="*RT" />
+            <tx:method propagation="REQUIRED" isolation="DEFAULT" no-rollback-for="RuntimeException,Exception" read-only="true" name="load*" />
+            <tx:method propagation="REQUIRED" isolation="DEFAULT" no-rollback-for="RuntimeException,Exception" read-only="true" name="find*" />
+            <tx:method propagation="REQUIRED" isolation="DEFAULT" no-rollback-for="RuntimeException,Exception" read-only="true" name="*RT" />
         </tx:attributes>
     </tx:advice>
     <aop:config>

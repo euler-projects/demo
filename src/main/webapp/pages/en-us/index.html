@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script src="../../dynamic-assets/system.js"></script>
+<script>
+setCookie(systemAttributes.__LOCALE_COOKIE_NAME, "en-us", 3650, systemAttributes.__CONTEXT_PATH + "/");
+
+    function setCookie(name, value, expiredays, path) {
+        var exdate = new Date()
+        exdate.setDate(exdate.getDate() + expiredays)
+        document.cookie = name
+                + "="
+                + escape(value)
+                + ((expiredays == null) ? "" : ";expires="
+                        + exdate.toGMTString()) + ";path=" + path;
+    }
+</script>
+<title>Insert title here</title>
+</head>
+<body>
+Hello FTA
+</body>
+</html>

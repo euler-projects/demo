@@ -15,12 +15,24 @@
         <!-- 登录注册页面,所有用户都应该能访问 -->
         <intercept-url pattern="/signin" access="permitAll" />
         <intercept-url pattern="/signup" access="permitAll" />
+        <intercept-url pattern="/ajax/validUsername" access="permitAll" />
+        <intercept-url pattern="/ajax/validEmail" access="permitAll" />
+        <intercept-url pattern="/ajax/validMobile" access="permitAll" />
+        <intercept-url pattern="/ajax/validPassword" access="permitAll" />
+        <intercept-url pattern="/ajax/validCaptcha" access="permitAll" />
+        
+        <!-- 获取验证码,所有用户都应该能访问 -->
+        <intercept-url pattern="/captcha/**" access="permitAll" />
 
         <!-- 文件上传下载页面或Ajax,所有用户都应该能访问 -->
         <intercept-url pattern="/plupload" access="permitAll" />
         <intercept-url pattern="/file/**" access="permitAll" />
         <intercept-url pattern="/image/**" access="permitAll" />
         <intercept-url pattern="/uploadFile" access="permitAll" />
+        
+        <!-- UEditor相关请求 -->
+        <intercept-url pattern="/ajax/ueditor/**" access="permitAll" />
+        <intercept-url pattern="/ueditor/upload/**" access="permitAll" />
 
         <!-- 忘记密码相关页面或Ajax,所有用户都应该能访问 -->
         <intercept-url pattern="/reset-password" access="permitAll" />
@@ -36,6 +48,12 @@
         
         <!-- 根目录,所有用户均可访问 -->
         <intercept-url pattern="/" access="permitAll" />
+        <!-- 网站地图,所有用户均可访问 -->
+        <intercept-url pattern="/site-map" access="permitAll" />
+        <!-- 动态资源文件,所有用户均可访问 -->
+        <intercept-url pattern="/dynamic-assets/**" access="permitAll" />
+        <!-- 前端页面,所有用户均可访问 -->
+        <intercept-url pattern="/pages/**" access="permitAll" />
         
         <!-- 其他未配置页面,禁止所有用户访问 -->
         <intercept-url pattern="/**" access="denyAll" />
@@ -55,7 +73,7 @@
         </session-management>
 
         <headers>
-            <cache-control />
+            <cache-control disabled="true"/>
             <content-type-options />
             <hsts />
             <frame-options policy="SAMEORIGIN" />

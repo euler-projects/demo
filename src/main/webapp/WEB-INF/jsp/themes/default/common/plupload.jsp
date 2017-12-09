@@ -198,8 +198,8 @@ form .input-order {
     <script>
         var app = '${app}';
 		var multi= ${multi};
-		var mime_type = ${mimeType};//{"title":"Custom files", "extensions":"${filetype}"};
-		var extensions = mime_type.extensions.split(/,/);
+		var fileType = ${fileType};//{"title":"Custom files", "extensions":"${filetype}"};
+		var extensions = fileType.extensions.split(/,/);
 		var mimeTypeRegExp=new RegExp('\\.(' + extensions.join('|') + ')$', 'i');
 		var upload_max_filesize_mb = 100;
 		
@@ -213,7 +213,7 @@ form .input-order {
 				silverlight_xap_url : '${__ASSETS_PATH}/lib/plupload/Moxie.xap',
 				filters : {
 					max_file_size : upload_max_filesize_mb + 'mb'/* ,
-					mime_types: [{$mime_type}] */
+					fileTypes: [{$fileType}] */
 				},
 				multi_selection:app,
 				multipart_params:{
@@ -288,7 +288,7 @@ form .input-order {
 				}
 			});
 			
-			plupload.addFileFilter('mime_types', function(filters, file, cb) {
+			plupload.addFileFilter('fileTypes', function(filters, file, cb) {
 				if (!mimeTypeRegExp.test(file.name)) {
 					this.trigger('Error', {
 						code : plupload.FILE_EXTENSION_ERROR,

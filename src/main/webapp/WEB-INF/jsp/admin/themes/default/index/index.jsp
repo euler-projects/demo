@@ -18,7 +18,9 @@
                 <span class="site-brand-icon"><img src="${__ADMIN_DASHBOARD_BRAND_ICON}"></span><span class="site-brand-text">${__ADMIN_DASHBOARD_BRAND_TEXT}</span>
             </a>
             <span id="user-info">
-                <span>${__USERINFO.username}</span>&nbsp;&nbsp;<span><a href="${__CONTEXT_PATH}/signout">${e:i18n('_SIGN_OUT')}</a></span>
+                <span>${__USER_INFO.username}</span>
+                <%-- <span><a href="${__CONTEXT_PATH}/settings/account/change-password">${e:i18n('_CHANGE_PASSWORD')}</a></span> --%>
+                <span><a href="${__CONTEXT_PATH}/signout">${e:i18n('_SIGN_OUT')}</a></span>
             </span>
         </div>
     </div>
@@ -32,24 +34,28 @@
     <div id="menu-zone" data-options="region:'west',split:false,collapsible:false">
         <div id="menu"> 
             <ul>
-                <li><a href="javascript:void(0)" onclick="addTab('cmf/slide/slideManage', '图片管理')">图片管理</a></li>
-                <li><a href="javascript:void(0)" onclick="addTab('cmf/slide/slideTypeManage', '图片类型管理')">图片类型管理</a></li>
-                <li><a href="javascript:void(0)" onclick="addTab('cmf/post/postManage', '文章管理')">文章管理</a></li>
-                <li><a href="javascript:void(0)" onclick="addTab('cmf/post/typeManage', '文章类型管理')">文章类型管理</a></li>
+                <li><a href="javascript:void(0)" onclick="addTab('cms/slide/slideManage', '图片管理')">图片管理</a></li>
+                <security:authorize access="hasAnyAuthority('ROOT') ">
+                <li><a href="javascript:void(0)" onclick="addTab('cms/slide/slideTypeManage', '图片类型管理')">图片类型管理</a></li>
+                </security:authorize>
+                <li><a href="javascript:void(0)" onclick="addTab('cms/post/postManage', '内容管理')">内容管理</a></li>
+                <security:authorize access="hasAnyAuthority('ROOT') ">
+                <li><a href="javascript:void(0)" onclick="addTab('cms/post/postTypeManage', '内容类型管理')">内容类型管理</a></li>
+                </security:authorize>
             </ul>
             <ul>
-                <li><a href="javascript:void(0)" onclick="addTab('security/user', '账号管理')">账号管理</a></li>
-                <%-- <c:if test="${__DEBUG_MODE}">
-                <li><a href="javascript:void(0)" onclick="addTab('security/group', 'Groups')">用户组管理</a></li>
-                <li><a href="javascript:void(0)" onclick="addTab('security/authority', 'Authorities')">权限管理</a></li>
-                </c:if> --%>
-                <li><a href="${__CONTEXT_PATH}/">返回首页</a></li>
+                <li><a href="javascript:void(0)" onclick="addTab('authentication/user/userManage', '${e:i18n('_ADMIN_USER_MANAGE')}')">${e:i18n('_ADMIN_USER_MANAGE')}</a></li>
+                <c:if test="${__DEBUG_MODE}">
+                <li><a href="javascript:void(0)" onclick="addTab('security/group/groupManage', '${e:i18n('_ADMIN_GROUP_MANAGE')}')">${e:i18n('_ADMIN_GROUP_MANAGE')}</a></li>
+                <li><a href="javascript:void(0)" onclick="addTab('security/authority/authorityManage', '${e:i18n('_ADMIN_AUTHORITY_MANAGE')}')">${e:i18n('_ADMIN_AUTHORITY_MANAGE')}</a></li>
+                </c:if>
+                <li><a href="${__CONTEXT_PATH}/">${e:i18n('_ADMIN_RETURN_HOME')}</a></li>
             </ul>
         </div>
     </div>
     <div id="content-zone"  data-options="region:'center',split:false">
         <div id="main-content" class="easyui-tabs" data-options="collapsible:false" style="width:100%;height:100%;">
-            <div id="welcome-tab" title="欢迎" data-options="closable:true">
+            <div id="welcome-tab" title="${e:i18n('_ADMIN_WELCOME')}" data-options="closable:true">
                 <h3 style="color:#0088CC/* #0099FF */;">${__ADMIN_DASHBOARD_BRAND_TEXT}</h3>
                 <p></p>
             </div>

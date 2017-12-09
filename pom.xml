@@ -8,8 +8,11 @@
     <packaging>war</packaging>
 
     <properties>
+        <mvn.buildtimestamp>${maven.build.timestamp}</mvn.buildtimestamp>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        
         <jdk.version>1.8</jdk.version> 
-        <euler-framework.version>2.0.0-SNAPSHOT</euler-framework.version>
+        <euler-framework.version>1.0.0-SNAPSHOT</euler-framework.version>
         <mysqljdbc.version>5.1.38</mysqljdbc.version>
     </properties>
 
@@ -27,17 +30,7 @@
             <scope>provided</scope>
             <version>2.2</version>
         </dependency>
-
-        <dependency>
-            <groupId>net.eulerframework</groupId>
-            <artifactId>euler-web-core</artifactId>
-            <version>${euler-framework.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>net.eulerframework</groupId>
-            <artifactId>euler-web-authentication-impl-hibernate</artifactId>
-            <version>${euler-framework.version}</version>
-        </dependency>
+        
         <dependency>
             <groupId>net.eulerframework</groupId>
             <artifactId>euler-web-cmf</artifactId>
@@ -117,7 +110,6 @@
             <properties>
                 <mvn.mode>develop</mvn.mode>
                 <mvn.log.level>info</mvn.log.level>
-                <mvn.buildtimestamp>${maven.build.timestamp}</mvn.buildtimestamp>
                 <mvn.db.url><![CDATA[jdbc:mysql://192.168.8.62:3306/test?useUnicode=true&characterEncoding=utf-8]]></mvn.db.url>
                 <mvn.db.username>root</mvn.db.username>
                 <mvn.db.password>root</mvn.db.password>
@@ -132,7 +124,6 @@
             <properties>
                 <mvn.mode>debug</mvn.mode>
                 <mvn.log.level>info</mvn.log.level>
-                <mvn.buildtimestamp>${maven.build.timestamp}</mvn.buildtimestamp>
                 <mvn.db.url><![CDATA[jdbc:mysql://127.0.0.1:3306/test?useUnicode=true&characterEncoding=utf-8]]></mvn.db.url>
                 <mvn.db.username>username</mvn.db.username>
                 <mvn.db.password>password</mvn.db.password>
@@ -147,7 +138,6 @@
             <properties>
                 <mvn.mode>release</mvn.mode>
                 <mvn.log.level>warn</mvn.log.level>
-                <mvn.buildtimestamp>${maven.build.timestamp}</mvn.buildtimestamp>
                 <mvn.db.url><![CDATA[jdbc:mysql://127.0.0.1:3306/test?useUnicode=true&characterEncoding=utf-8]]></mvn.db.url>
                 <mvn.db.username>username</mvn.db.username>
                 <mvn.db.password>password</mvn.db.password>
