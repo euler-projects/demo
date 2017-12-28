@@ -114,6 +114,7 @@
                 <mvn.db.username>root</mvn.db.username>
                 <mvn.db.password>root</mvn.db.password>
                 <mvn.db.showsql>true</mvn.db.showsql>
+                <mvn.web.url>http://localhost:8080</mvn.web.url>
             </properties>
             <build>
                 <finalName>demo</finalName>
@@ -128,6 +129,7 @@
                 <mvn.db.username>username</mvn.db.username>
                 <mvn.db.password>password</mvn.db.password>
                 <mvn.db.showsql>false</mvn.db.showsql>
+                <mvn.web.url>http://localhost:8080</mvn.web.url>
             </properties>
             <build>
                 <finalName>euler-framework-demo-${project.version}-debug</finalName>
@@ -142,6 +144,7 @@
                 <mvn.db.username>username</mvn.db.username>
                 <mvn.db.password>password</mvn.db.password>
                 <mvn.db.showsql>false</mvn.db.showsql>
+                <mvn.web.url>http://localhost:8080</mvn.web.url>
             </properties>
             <build>
                 <finalName>euler-framework-demo-${project.version}-release</finalName>
