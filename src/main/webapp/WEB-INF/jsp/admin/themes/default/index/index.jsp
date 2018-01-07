@@ -18,7 +18,7 @@
                 <span class="site-brand-icon"><img src="${__ADMIN_DASHBOARD_BRAND_ICON}"></span><span class="site-brand-text">${__ADMIN_DASHBOARD_BRAND_TEXT}</span>
             </a>
             <span id="user-info">
-                <span>${__USER_INFO.username}</span>
+                <span>${__USERINFO.username}</span>
                 <%-- <span><a href="${__CONTEXT_PATH}/settings/account/change-password">${e:i18n('_CHANGE_PASSWORD')}</a></span> --%>
                 <span><a href="${__CONTEXT_PATH}/signout">${e:i18n('_SIGN_OUT')}</a></span>
             </span>
@@ -34,13 +34,13 @@
     <div id="menu-zone" data-options="region:'west',split:false,collapsible:false">
         <div id="menu"> 
             <ul>
-                <li><a href="javascript:void(0)" onclick="addTab('cms/slide/slideManage', '图片管理')">图片管理</a></li>
+                <li><a href="javascript:void(0)" onclick="addTab('cms/slide/slideManage', '${e:i18n('_ADMIN_SLIDE_MANAGE')}')">${e:i18n('_ADMIN_SLIDE_MANAGE')}</a></li>
                 <security:authorize access="hasAnyAuthority('ROOT') ">
-                <li><a href="javascript:void(0)" onclick="addTab('cms/slide/slideTypeManage', '图片类型管理')">图片类型管理</a></li>
+                <li><a href="javascript:void(0)" onclick="addTab('cms/slide/slideTypeManage', '${e:i18n('_ADMIN_SLIDE_TYPE_MANAGE')}')">${e:i18n('_ADMIN_SLIDE_TYPE_MANAGE')}</a></li>
                 </security:authorize>
-                <li><a href="javascript:void(0)" onclick="addTab('cms/post/postManage', '内容管理')">内容管理</a></li>
+                <li><a href="javascript:void(0)" onclick="addTab('cms/post/postManage', '${e:i18n('_ADMIN_POST_MANAGE')}')">${e:i18n('_ADMIN_POST_MANAGE')}</a></li>
                 <security:authorize access="hasAnyAuthority('ROOT') ">
-                <li><a href="javascript:void(0)" onclick="addTab('cms/post/postTypeManage', '内容类型管理')">内容类型管理</a></li>
+                <li><a href="javascript:void(0)" onclick="addTab('cms/post/postTypeManage', '${e:i18n('_ADMIN_POST_TYPE_MANAGE')}')">${e:i18n('_ADMIN_POST_TYPE_MANAGE')}</a></li>
                 </security:authorize>
             </ul>
             <ul>
