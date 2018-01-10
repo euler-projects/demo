@@ -116,9 +116,6 @@
             <properties>
                 <mvn.mode>develop</mvn.mode>
                 <mvn.log.level>info</mvn.log.level>
-                <mvn.db.url><![CDATA[jdbc:mysql://192.168.8.62:3306/test?useUnicode=true&characterEncoding=utf-8]]></mvn.db.url>
-                <mvn.db.username>root</mvn.db.username>
-                <mvn.db.password>root</mvn.db.password>
                 <mvn.db.showsql>true</mvn.db.showsql>
                 <mvn.web.url>http://localhost:8080</mvn.web.url>
             </properties>
@@ -131,9 +128,6 @@
             <properties>
                 <mvn.mode>debug</mvn.mode>
                 <mvn.log.level>info</mvn.log.level>
-                <mvn.db.url><![CDATA[jdbc:mysql://127.0.0.1:3306/test?useUnicode=true&characterEncoding=utf-8]]></mvn.db.url>
-                <mvn.db.username>username</mvn.db.username>
-                <mvn.db.password>password</mvn.db.password>
                 <mvn.db.showsql>false</mvn.db.showsql>
                 <mvn.web.url>http://localhost:8080</mvn.web.url>
             </properties>
@@ -146,9 +140,6 @@
             <properties>
                 <mvn.mode>release</mvn.mode>
                 <mvn.log.level>warn</mvn.log.level>
-                <mvn.db.url><![CDATA[jdbc:mysql://127.0.0.1:3306/test?useUnicode=true&characterEncoding=utf-8]]></mvn.db.url>
-                <mvn.db.username>username</mvn.db.username>
-                <mvn.db.password>password</mvn.db.password>
                 <mvn.db.showsql>false</mvn.db.showsql>
                 <mvn.web.url>http://localhost:8080</mvn.web.url>
             </properties>
