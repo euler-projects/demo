@@ -7,5 +7,5 @@
                                  http://www.springframework.org/schema/security
                                  http://www.springframework.org/schema/security/spring-security-4.2.xsd">
     
-    <!-- <http security="none" pattern="/global-award/**" /> -->
+    <http security="none" pattern="/ajax/**" />
 </beans:beans>

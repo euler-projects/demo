@@ -33,8 +33,14 @@
         
         <dependency>
             <groupId>net.eulerframework</groupId>
-            <artifactId>euler-web-cmf</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <artifactId>euler-web-core</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>net.eulerframework</groupId>
+            <artifactId>euler-web-orm-mybatis</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
         
         <dependency>
