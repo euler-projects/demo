@@ -28,7 +28,6 @@
  */
 package net.eulerframework.web.module.demo.repository;
 
-import org.apache.ibatis.annotations.Select;
 import org.springframework.stereotype.Repository;
 
 import net.eulerframework.web.module.demo.entity.User;
@@ -39,6 +38,5 @@ import net.eulerframework.web.module.demo.entity.User;
  */
 @Repository
 public interface UserMapper {
-    @Select("select * from SYS_USER where USERNAME = #{username}")
     User findUser(String username);
 }

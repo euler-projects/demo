@@ -53,15 +53,22 @@
         <!-- <property name="testConnectionOnCheckout"  value="${dataSource.testConnectionOnCheckout}" /> -->
     </bean>
     
-    <bean id="sessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+    <bean id="sessionFactory" class="net.eulerframework.web.core.extend.AliasesPackageMatchingSqlSessionFactoryBean">
         <property name="dataSource" ref="dataSource" />
-        <property name="mapperLocations" value="classpath*:**/web/**/entity/**/*Mapper.xml" /> 
+        <property name="configLocation" value="classpath:config/mybatis-config.xml"/>
+        <property name="mapperLocations" value="classpath*:mapper/**/*Mapper.xml" />
+        <property name="typeAliasesPackages">
+            <array>
+                <value>net.**.web.**.entity</value>
+            </array>
+        </property>
+    </bean>
+
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="**.web.**.repository" />
+        <property name="sqlSessionFactoryBeanName" value="sessionFactory" />
     </bean>
     
-    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
-      <property name="basePackage" value="**.web.**.repository" />
-      <property name="sqlSessionFactoryBeanName" value="sessionFactory" />
-    </bean>
 
     <!-- 事务管理器 -->
     <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
@@ -91,16 +98,16 @@
 
     <tx:advice id="txAdvice" transaction-manager="transactionManager">
         <tx:attributes>
-            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="Exception" name="save*" />
-            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="Exception" name="create*" />
-            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="Exception" name="delete*" />
-            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="Exception" name="remove*" />
-            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="Exception" name="update*" />
-            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="Exception" name="add*" />
-            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="Exception" name="*RWT" />
-            <tx:method propagation="REQUIRED" isolation="DEFAULT" no-rollback-for="RuntimeException,Exception" read-only="true" name="load*" />
-            <tx:method propagation="REQUIRED" isolation="DEFAULT" no-rollback-for="RuntimeException,Exception" read-only="true" name="find*" />
-            <tx:method propagation="REQUIRED" isolation="DEFAULT" no-rollback-for="RuntimeException,Exception" read-only="true" name="*RT" />
+            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="save*" />
+            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="create*" />
+            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="delete*" />
+            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="remove*" />
+            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="update*" />
+            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="add*" />
+            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="*RWT" />
+            <tx:method propagation="REQUIRED" isolation="DEFAULT" no-rollback-for="RuntimeException" read-only="true" name="load*" />
+            <tx:method propagation="REQUIRED" isolation="DEFAULT" no-rollback-for="RuntimeException" read-only="true" name="find*" />
+            <tx:method propagation="REQUIRED" isolation="DEFAULT" no-rollback-for="RuntimeException" read-only="true" name="*RT" />
         </tx:attributes>
     </tx:advice>
     <aop:config>
