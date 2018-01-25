@@ -18,7 +18,7 @@
                 <span class="site-brand-icon"><img src="${__ADMIN_DASHBOARD_BRAND_ICON}"></span><span class="site-brand-text">${__ADMIN_DASHBOARD_BRAND_TEXT}</span>
             </a>
             <span id="user-info">
-                <span>${__USERINFO.username}</span>
+                <span>${__USER_INFO.username}</span>
                 <%-- <span><a href="${__CONTEXT_PATH}/settings/account/change-password">${e:i18n('_CHANGE_PASSWORD')}</a></span> --%>
                 <span><a href="${__CONTEXT_PATH}/signout">${e:i18n('_SIGN_OUT')}</a></span>
             </span>

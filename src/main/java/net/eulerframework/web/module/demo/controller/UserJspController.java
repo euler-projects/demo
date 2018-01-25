@@ -6,7 +6,7 @@ import net.eulerframework.web.core.base.controller.JspSupportWebController;
 
 @JspController("designUserWebController")
 @RequestMapping("/")
-public class UserWebController extends JspSupportWebController {
+public class UserJspController extends JspSupportWebController {
     
 //    @Resource(name="org.springframework.security.authenticationManager")
 //    //@Qualifier("org.springframework.security.authenticationManager")//编辑软件会提示错误
