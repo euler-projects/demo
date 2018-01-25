@@ -118,6 +118,7 @@
                 <mvn.log.level>info</mvn.log.level>
                 <mvn.db.showsql>true</mvn.db.showsql>
                 <mvn.web.url>http://localhost:8080</mvn.web.url>
+                <mvn.core.runtimePath>file://C:/euler-framework</mvn.core.runtimePath>
             </properties>
             <build>
                 <finalName>demo</finalName>
