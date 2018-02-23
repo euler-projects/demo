@@ -1,0 +1,13 @@
+spring:
+  jpa:
+    database: mysql
+    generate-ddl: false
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/dev?useUnicode=true&characterEncoding=utf-8
+    username: root
+    password: root

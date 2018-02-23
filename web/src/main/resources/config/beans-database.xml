@@ -86,7 +86,7 @@
         <property name="password" value="${dataSource.password}" />
     </bean>-->
 
-    <!--  配置hibernate SessionFactory-->
+    <!--  配置hibernate SessionFactory -->
     <bean id="sessionFactory"
         class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
         <property name="dataSource" ref="dataSource" />
@@ -112,9 +112,41 @@
         </property> -->
     </bean>
 
-    <!-- 事务管理器 -->
+    <!-- 配置Spring Data JPA -->
+    <jpa:repositories base-package="net.eulerframework.web.**.repository"/>
+    <bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="jpaVendorAdapter">
+            <bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+                <property name="database" value="MYSQL"/>
+                <property name="generateDdl" value="false"/>
+                <property name="showSql" value="true"/>
+                <property name="databasePlatform" value="org.hibernate.dialect.MySQL5InnoDBDialect"/>
+            </bean>
+        </property>
+        <!-- <property name="jpaProperties"> -->
+            <!-- <props> -->
+                <!--此处的设置可以覆盖jpaVendorAdapter中的相关设置-->
+                <!-- <prop key="hibernate.dialect">${hibernate.dialect}</prop> -->
+                <!--<prop key="hibernate.show_sql">${hibernate.show_sql}</prop> -->
+                <!--<prop key="hiberante.format_sql">${hibernate.format_sql}</prop> -->
+            <!-- </props> -->
+        <!-- </property> -->
+        <property name="packagesToScan">
+            <array>
+                <value>net.eulerframework.web.**.entity</value>
+            </array>
+        </property>
+    </bean>
+
+    <!-- Hibernate 事务管理器 -->
     <bean id="transactionManager" class="org.springframework.orm.hibernate5.HibernateTransactionManager">
         <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+
+    <!-- Spring Data JPA 事务管理器 -->
+    <bean id="JpaTransactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+        <property name="entityManagerFactory" ref="entityManagerFactory" />    
     </bean>
 
     <!-- 事务代理类
@@ -153,9 +185,9 @@
         </tx:attributes>
     </tx:advice>
     <aop:config>
-            <aop:advisor advice-ref="txAdvice" 
-            			 pointcut="execution(* net.eulerframework.web..service..*.*(..)) or
-                                   execution(* com.eulerframework.web..service..*.*(..))" />
+        <aop:advisor advice-ref="txAdvice" 
+            pointcut="execution(* net.eulerframework.web..service..*.*(..)) or
+                      execution(* com.eulerframework.web..service..*.*(..))" />
     </aop:config>
 
 </beans>
