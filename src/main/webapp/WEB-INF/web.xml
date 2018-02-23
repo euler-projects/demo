@@ -7,17 +7,17 @@
   <display-name>Archetype Created Web Application</display-name>
 
     <!-- 资源文件目录 -->
-    <servlet-mapping>
+    <!-- <servlet-mapping>
         <servlet-name>default</servlet-name>
         <url-pattern>/assets/*</url-pattern>
-    </servlet-mapping>
+    </servlet-mapping> -->
     <!-- 静态文件目录 -->
-    <servlet-mapping>
+    <!-- <servlet-mapping>
         <servlet-name>default</servlet-name>
         <url-pattern>/pages/*</url-pattern>
-    </servlet-mapping>
+    </servlet-mapping> -->
     <!-- UEditor文件上传目录 -->
-    <servlet-mapping>
+    <!-- <servlet-mapping>
         <servlet-name>default</servlet-name>
         <url-pattern>/ueditor/upload/*</url-pattern>
     </servlet-mapping>    
@@ -28,7 +28,7 @@
     <servlet-mapping>
         <servlet-name>default</servlet-name>
         <url-pattern>/robot.txt</url-pattern>
-    </servlet-mapping>
+    </servlet-mapping> -->
     <welcome-file-list>
         <welcome-file>index</welcome-file>
     </welcome-file-list>
