@@ -191,8 +191,8 @@
     </tx:advice>
     <aop:config>
         <aop:advisor advice-ref="txAdvice" 
-            pointcut="execution(* net.eulerframework.web..servicej..*.*(..)) or
-                      execution(* com.eulerframework.web..servicej..*.*(..))" />
+            pointcut="execution(* net.eulerframework.web..service..*.*(..)) or
+                      execution(* com.eulerframework.web..service..*.*(..))" />
     </aop:config>
     
     <!-- AOP方式注入Hibernate事务 -->
@@ -212,7 +212,7 @@
     </tx:advice>
     <aop:config>
         <aop:advisor advice-ref="htxAdvice" 
-            pointcut="execution(* net.eulerframework.web..service..*.*(..)) or
-                      execution(* com.eulerframework.web..service..*.*(..))" />
+            pointcut="execution(* net.eulerframework.web..htservice..*.*(..)) or
+                      execution(* com.eulerframework.web..htservice..*.*(..))" />
     </aop:config>
 </beans>

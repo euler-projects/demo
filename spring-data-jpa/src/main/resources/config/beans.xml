@@ -15,7 +15,7 @@
 
     <import resource="beans-database.xml"/>
     <!-- <bean id="userProfileService"
-        class="net.eulerframework.web.module.authentication.service.UserProfileService">
+        class="net.eulerframework.web.module.authentication.htservice.UserProfileService">
         <property name="userProfileDaos">
             <list>
             </list>
