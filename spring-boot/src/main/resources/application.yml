@@ -11,3 +11,7 @@ spring:
     url: jdbc:mysql://127.0.0.1:3306/dev?useUnicode=true&characterEncoding=utf-8
     username: root
     password: root
+  thymeleaf:
+    cache: false
+server:
+  servlet-path: /
