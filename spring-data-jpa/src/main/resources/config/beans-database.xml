@@ -143,13 +143,13 @@
         </property>
     </bean>
 
-    <!-- Hibernate 事务管理器 -->
-    <bean id="transactionManager" class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+    <!-- Hibernate事务管理器 -->
+    <bean id="htransactionManager" class="org.springframework.orm.hibernate5.HibernateTransactionManager">
         <property name="sessionFactory" ref="sessionFactory"/>
     </bean>
 
-    <!-- Spring Data JPA 事务管理器 -->
-    <bean id="JpaTransactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+    <!-- Spring Data JPA事务管理器 -->
+    <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
         <property name="entityManagerFactory" ref="entityManagerFactory" />    
     </bean>
 
@@ -171,9 +171,10 @@
         </property>
     </bean>-->
 
-    <!--启动注解用注解来管理事务-->
-    <tx:annotation-driven transaction-manager="transactionManager"/>
+    <!--启动注解用注解来管理事务(已移至RootContextConfig用注解启用) -->
+    <!-- <tx:annotation-driven transaction-manager="transactionManager"/> -->
 
+    <!-- AOP方式注入Spring Data JPA事务 -->
     <tx:advice id="txAdvice" transaction-manager="transactionManager">
         <tx:attributes>
             <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="save*" />
@@ -190,8 +191,28 @@
     </tx:advice>
     <aop:config>
         <aop:advisor advice-ref="txAdvice" 
+            pointcut="execution(* net.eulerframework.web..servicej..*.*(..)) or
+                      execution(* com.eulerframework.web..servicej..*.*(..))" />
+    </aop:config>
+    
+    <!-- AOP方式注入Hibernate事务 -->
+    <tx:advice id="htxAdvice" transaction-manager="htransactionManager">
+        <tx:attributes>
+            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="save*" />
+            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="create*" />
+            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="delete*" />
+            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="remove*" />
+            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="update*" />
+            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="add*" />
+            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="*RWT" />
+            <tx:method propagation="REQUIRED" isolation="DEFAULT" no-rollback-for="RuntimeException" read-only="true" name="load*" />
+            <tx:method propagation="REQUIRED" isolation="DEFAULT" no-rollback-for="RuntimeException" read-only="true" name="find*" />
+            <tx:method propagation="REQUIRED" isolation="DEFAULT" no-rollback-for="RuntimeException" read-only="true" name="*RT" />
+        </tx:attributes>
+    </tx:advice>
+    <aop:config>
+        <aop:advisor advice-ref="htxAdvice" 
             pointcut="execution(* net.eulerframework.web..service..*.*(..)) or
                       execution(* com.eulerframework.web..service..*.*(..))" />
     </aop:config>
-
 </beans>
