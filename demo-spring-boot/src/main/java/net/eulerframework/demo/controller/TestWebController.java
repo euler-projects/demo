@@ -1,4 +1,4 @@
-package net.eulerframework.startweb.controller;
+package net.eulerframework.demo.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
