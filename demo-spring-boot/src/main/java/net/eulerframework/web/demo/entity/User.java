@@ -1,4 +1,4 @@
-package net.eulerframework.demo.entity;
+package net.eulerframework.web.demo.entity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

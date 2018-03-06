@@ -1,7 +1,7 @@
-package net.eulerframework.demo.controller;
+package net.eulerframework.web.demo.controller;
 
-import net.eulerframework.demo.entity.User;
-import net.eulerframework.demo.repository.UserRepository;
+import net.eulerframework.web.demo.entity.User;
+import net.eulerframework.web.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,7 +18,7 @@ public class TestController {
 
     @GetMapping("demo")
     public String demo() {
-        return "Hello Spring Boot!!";
+        return "Hello Spring Boot!!！";
     }
 
     @GetMapping("demoUser")

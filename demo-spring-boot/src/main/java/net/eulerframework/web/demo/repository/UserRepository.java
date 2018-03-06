@@ -1,6 +1,6 @@
-package net.eulerframework.demo.repository;
+package net.eulerframework.web.demo.repository;
 
-import net.eulerframework.demo.entity.User;
+import net.eulerframework.web.demo.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
