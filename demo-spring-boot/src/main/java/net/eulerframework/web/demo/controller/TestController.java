@@ -1,12 +1,12 @@
 package net.eulerframework.web.demo.controller;
 
-import net.eulerframework.web.conf.WebConfig;
+import net.eulerframework.web.core.conf.AppConfiguration;
+import net.eulerframework.web.core.conf.reader.AppConfigReader;
 import net.eulerframework.web.demo.entity.User;
 import net.eulerframework.web.demo.repository.UserRepository;
+import net.eulerframework.web.demo.vo.TestVO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -27,9 +27,14 @@ public class TestController {
         return this.testRepository.findAll();
     }
 
-    @GetMapping("config")
-    public int config() {
-        return WebConfig.getValue();
+    @GetMapping("configReader")
+    public AppConfigReader configReader() {
+        return AppConfiguration.getReader();
+    }
+
+    @PostMapping("jsonTest")
+    public TestVO post(@RequestBody TestVO data) {
+        return data;
     }
 
 }

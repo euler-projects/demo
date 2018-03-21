@@ -11,6 +11,11 @@ spring:
     url: jdbc:mysql://127.0.0.1:3306/dev?useUnicode=true&characterEncoding=utf-8
     username: root
     password: root
+  jackson:
+    date-format:
 config:
+  date: 12147483647 #12147483647
   test:
-    int: 456
+    int-value: 456
+    str-value: 配置文件中的值
+

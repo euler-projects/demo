@@ -10,4 +10,5 @@ public class StartWebApplication {
         SpringApplication app = new SpringApplication(StartWebApplication.class);
         app.run(args);
     }
+
 }
