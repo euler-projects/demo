@@ -90,31 +90,31 @@
     </bean>-->
 
     <!--  配置hibernate SessionFactory -->
-    <bean id="sessionFactory"
-        class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
-        <property name="dataSource" ref="dataSource" />
-        <property name="hibernateProperties">
-            <props>
-                <prop key="hibernate.dialect">${hibernate.dialect}</prop>
-                <prop key="hibernate.dialect.storage_engine">${hibernate.dialect.storage_engine}</prop>
-                <!-- <prop key="hibernate.hbm2ddl.auto">${hibernate.hbm2ddl.auto}</prop> -->
-                <prop key="hibernate.show_sql">${hibernate.show_sql}</prop>
-                <prop key="hiberante.format_sql">${hibernate.format_sql}</prop>
-            </props>
-        </property>
-        <property name="packagesToScan">
-            <array>
-                <value>net.eulerframework.web.**.entity</value>
-            </array>
-        </property>
-        <!-- <property name="configLocations">
-            <list>
-                <value>
-                    classpath*:mapping.xml
-                </value>
-            </list>
-        </property> -->
-    </bean>
+    <!--<bean id="sessionFactory"-->
+        <!--class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">-->
+        <!--<property name="dataSource" ref="dataSource" />-->
+        <!--<property name="hibernateProperties">-->
+            <!--<props>-->
+                <!--<prop key="hibernate.dialect">${hibernate.dialect}</prop>-->
+                <!--<prop key="hibernate.dialect.storage_engine">${hibernate.dialect.storage_engine}</prop>-->
+                <!--&lt;!&ndash; <prop key="hibernate.hbm2ddl.auto">${hibernate.hbm2ddl.auto}</prop> &ndash;&gt;-->
+                <!--<prop key="hibernate.show_sql">${hibernate.show_sql}</prop>-->
+                <!--<prop key="hiberante.format_sql">${hibernate.format_sql}</prop>-->
+            <!--</props>-->
+        <!--</property>-->
+        <!--<property name="packagesToScan">-->
+            <!--<array>-->
+                <!--<value>net.eulerframework.web.**.entity</value>-->
+            <!--</array>-->
+        <!--</property>-->
+        <!--&lt;!&ndash; <property name="configLocations">-->
+            <!--<list>-->
+                <!--<value>-->
+                    <!--classpath*:mapping.xml-->
+                <!--</value>-->
+            <!--</list>-->
+        <!--</property> &ndash;&gt;-->
+    <!--</bean>-->
 
     <!-- 配置Spring Data JPA -->
     <jpa:repositories base-package="net.eulerframework.web.**.repository"/>
@@ -149,9 +149,9 @@
     </bean>
 
     <!-- Hibernate事务管理器 -->
-    <bean id="htransactionManager" class="org.springframework.orm.hibernate5.HibernateTransactionManager">
-        <property name="sessionFactory" ref="sessionFactory"/>
-    </bean>
+    <!--<bean id="htransactionManager" class="org.springframework.orm.hibernate5.HibernateTransactionManager">-->
+        <!--<property name="sessionFactory" ref="sessionFactory"/>-->
+    <!--</bean>-->
 
     <!-- 事务代理类
     <bean id="transactionBese"
@@ -196,23 +196,23 @@
     </aop:config>
     
     <!-- AOP方式注入Hibernate事务 -->
-    <tx:advice id="htxAdvice" transaction-manager="htransactionManager">
-        <tx:attributes>
-            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="save*" />
-            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="create*" />
-            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="delete*" />
-            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="remove*" />
-            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="update*" />
-            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="add*" />
-            <tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="*RWT" />
-            <tx:method propagation="REQUIRED" isolation="DEFAULT" no-rollback-for="RuntimeException" read-only="true" name="load*" />
-            <tx:method propagation="REQUIRED" isolation="DEFAULT" no-rollback-for="RuntimeException" read-only="true" name="find*" />
-            <tx:method propagation="REQUIRED" isolation="DEFAULT" no-rollback-for="RuntimeException" read-only="true" name="*RT" />
-        </tx:attributes>
-    </tx:advice>
-    <aop:config>
-        <aop:advisor advice-ref="htxAdvice" 
-            pointcut="execution(* net.eulerframework.web..htservice..*.*(..)) or
-                      execution(* com.eulerframework.web..htservice..*.*(..))" />
-    </aop:config>
+    <!--<tx:advice id="htxAdvice" transaction-manager="htransactionManager">-->
+        <!--<tx:attributes>-->
+            <!--<tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="save*" />-->
+            <!--<tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="create*" />-->
+            <!--<tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="delete*" />-->
+            <!--<tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="remove*" />-->
+            <!--<tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="update*" />-->
+            <!--<tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="add*" />-->
+            <!--<tx:method propagation="REQUIRED" isolation="DEFAULT" rollback-for="RuntimeException" name="*RWT" />-->
+            <!--<tx:method propagation="REQUIRED" isolation="DEFAULT" no-rollback-for="RuntimeException" read-only="true" name="load*" />-->
+            <!--<tx:method propagation="REQUIRED" isolation="DEFAULT" no-rollback-for="RuntimeException" read-only="true" name="find*" />-->
+            <!--<tx:method propagation="REQUIRED" isolation="DEFAULT" no-rollback-for="RuntimeException" read-only="true" name="*RT" />-->
+        <!--</tx:attributes>-->
+    <!--</tx:advice>-->
+    <!--<aop:config>-->
+        <!--<aop:advisor advice-ref="htxAdvice" -->
+            <!--pointcut="execution(* net.eulerframework.web..htservice..*.*(..)) or-->
+                      <!--execution(* com.eulerframework.web..htservice..*.*(..))" />-->
+    <!--</aop:config>-->
 </beans>
