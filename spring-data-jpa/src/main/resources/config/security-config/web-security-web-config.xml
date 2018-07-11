@@ -15,6 +15,7 @@
         <!-- 登录注册页面,所有用户都应该能访问 -->
         <intercept-url pattern="/signin" access="permitAll" />
         <intercept-url pattern="/signup" access="permitAll" />
+        <intercept-url pattern="/ajax/signup" access="permitAll" />
         <intercept-url pattern="/ajax/validUsername" access="permitAll" />
         <intercept-url pattern="/ajax/validEmail" access="permitAll" />
         <intercept-url pattern="/ajax/validMobile" access="permitAll" />
