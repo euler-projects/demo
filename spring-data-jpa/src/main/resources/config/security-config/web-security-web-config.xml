@@ -21,6 +21,7 @@
         <intercept-url pattern="/ajax/validMobile" access="permitAll" />
         <intercept-url pattern="/ajax/validPassword" access="permitAll" />
         <intercept-url pattern="/ajax/validCaptcha" access="permitAll" />
+        <intercept-url pattern="/ajax/robotCheck" access="permitAll" />
         
         <!-- 获取验证码,所有用户都应该能访问 -->
         <intercept-url pattern="/captcha/**" access="permitAll" />
