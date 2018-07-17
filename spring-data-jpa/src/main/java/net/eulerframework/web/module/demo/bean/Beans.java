@@ -5,11 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import redis.clients.jedis.JedisPoolConfig;
@@ -43,7 +39,7 @@ public class Beans {
         return new JedisConnectionFactory(redisStandaloneConfiguration);
     }
     
-    @Bean("stringRedisSerializer")
+    @Bean
     public StringRedisSerializer getStringRedisSerializer() {
         return new StringRedisSerializer();
     }
@@ -57,16 +53,6 @@ public class Beans {
         //redisTemplate.setStringSerializer(stringRedisSerializer);
         return stringRedisTemplate;
     }
-    
-//    @Bean
-//    public RedisTemplate<?, ?> getRedisTemplate(
-//            JedisConnectionFactory jedisConnectionFactory,
-//            StringRedisSerializer stringRedisSerializer) {
-//        RedisTemplate<?, ?> redisTemplate= new RedisTemplate<Object, Object>();
-//        redisTemplate.setConnectionFactory(jedisConnectionFactory);
-//        redisTemplate.setStringSerializer(stringRedisSerializer);
-//        return redisTemplate;
-//    }
 
     private final static String EMAIL_SIGN = 
             "<p>------------------</p>"
