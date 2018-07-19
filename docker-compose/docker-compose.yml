@@ -1,0 +1,19 @@
+version: '3'
+services:
+  db:
+    image: mysql:5.6.40
+    restart: always
+    volumes:
+      - ./var/lib/mysql/data:/var/lib/mysql
+      - ./var/lib/mysql/external:/external
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /external/root-passwd
+
+  app:
+    image: eulerproject/demo:1.0.0
+    volumes:
+      - ./var/lib/euler-framework:/var/lib/euler-framework
+    links:
+      - db
+    ports:
+      - "8080:8080"
