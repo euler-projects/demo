@@ -1,19 +1,27 @@
 version: '3'
 services:
-  db:
+  mysql:
     image: mysql:5.6.40
-    restart: always
+    #restart: always
     volumes:
-      - ./var/lib/mysql/data:/var/lib/mysql
-      - ./var/lib/mysql/external:/external
+      - ./volumes/mysql/data:/var/lib/mysql
+      - ./volumes/mysql/external:/external
     environment:
       MYSQL_ROOT_PASSWORD_FILE: /external/root-passwd
 
-  app:
+  redis:
+    image: redis:4.0.10
+    #restart: always
+    volumes:
+      - ./volumes/redis/data:/data
+    command: redis-server --appendonly yes
+
+  app-demo:
     image: eulerproject/demo:1.0.0
     volumes:
-      - ./var/lib/euler-framework:/var/lib/euler-framework
+      - ./volumes/app-demo:/var/lib/euler-framework
     links:
-      - db
+      - mysql
+      - redis
     ports:
       - "8080:8080"
