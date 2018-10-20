@@ -9,7 +9,17 @@ $(function(){
     initDashZone();
     
     function initDgTb() {
-        $('.e-dg-tb-filter').combobox ({onChange: onSearch});
+        $('.e-dg-tb-filter').combobox({onChange: onSearch});
+        $('#e-dg').datagrid({
+            onBeforeLoad: function(param){
+                param.pageIndex = param.page -1;
+                param.pageSize = param.rows;
+                
+                delete param.page;
+                delete param.rows;
+                console.log(param);
+            }
+        });
         console.log("DG-TB init completed");
     }
     
