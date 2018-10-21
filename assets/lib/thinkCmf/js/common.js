@@ -619,38 +619,6 @@ function open_upload_dialog(dialog_title,callback,extra_params,multi,filetype,ap
     });
 }
 
-function cf_open_upload_dialog(dialog_title,callback,extra_params,multi,filetype,app){
-    multi = multi?1:0;
-    filetype = filetype?filetype:'image';
-    app = app?app:GV.APP;
-    var params = '&multi='+multi+'&filetype='+filetype+'&app='+app ;
-    Wind.use("artDialog","iframeTools",function(){
-        art.dialog.open(GV.ROOT+'index.php?g=demo&m=upload&a=plupload'  + params, {
-            title: dialog_title,
-            id: new Date().getTime(),
-            width: '650px',
-            height: '420px',
-            lock: true,
-            fixed: true,
-            background:"#CCCCCC",
-            opacity:0,
-            ok: function() {
-                if (typeof callback =='function') {
-                    var iframewindow = this.iframe.contentWindow;
-                    var files=iframewindow.get_selected_files();
-                    if(files){
-                        callback.apply(this, [this, files,extra_params]);
-                    }else{
-                        return false;
-                    }
-
-                }
-            },
-            cancel: true
-        });
-    });
-}
-
 /**
  * 单个文件上传
   * @param dialog_title 上传对话框标题
