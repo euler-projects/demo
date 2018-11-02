@@ -22,7 +22,7 @@
         </property>  
     </bean>
     
-    <!-- <bean id="XXX" class="net.eulerframework.web.module.oauth2.schedule.SecurityMethodInvokingJobDetailFactoryBean">  
+    <!-- <bean id="XXX" class="org.eulerframework.web.module.oauth2.schedule.SecurityMethodInvokingJobDetailFactoryBean">  
         <property name="targetObject" ref="xxxTask" />
         <property name="targetMethod" value="xxx />
     </bean>

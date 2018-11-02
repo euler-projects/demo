@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.eulerframework.web.module.demo.controller.ajax;
+package org.eulerframework.web.module.demo.controller.ajax;
 
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import net.eulerframework.web.core.annotation.AjaxController;
-import net.eulerframework.web.core.base.controller.ApiSupportWebController;
+import org.eulerframework.web.core.annotation.AjaxController;
+import org.eulerframework.web.core.base.controller.ApiSupportWebController;
 
 @AjaxController
 @RequestMapping("/")

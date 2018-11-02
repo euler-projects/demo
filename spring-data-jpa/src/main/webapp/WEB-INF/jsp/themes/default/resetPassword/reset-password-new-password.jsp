@@ -1,6 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
-<%@ page import = "net.eulerframework.web.module.authentication.enums.ResetPasswordType" %>
+<%@ page import = "org.eulerframework.web.module.authentication.enums.ResetPasswordType" %>
 <!DOCTYPE html>
 <html lang="en">
 

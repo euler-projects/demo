@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.eulerframework.web.module.demo;
+package org.eulerframework.web.module.demo;
 
 import java.text.DecimalFormat;
 import java.util.Random;
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import net.eulerframework.web.module.authentication.service.RobotCheckService;
+import org.eulerframework.web.module.authentication.service.RobotCheckService;
 
 /**
  * @author cFrost

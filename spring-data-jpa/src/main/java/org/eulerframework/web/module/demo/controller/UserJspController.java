@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.eulerframework.web.module.demo.controller;
+package org.eulerframework.web.module.demo.controller;
 
 import org.springframework.web.bind.annotation.RequestMapping;
-import net.eulerframework.web.core.annotation.JspController;
-import net.eulerframework.web.core.base.controller.JspSupportWebController;
+import org.eulerframework.web.core.annotation.JspController;
+import org.eulerframework.web.core.base.controller.JspSupportWebController;
 
 @JspController("designUserWebController")
 @RequestMapping("/")

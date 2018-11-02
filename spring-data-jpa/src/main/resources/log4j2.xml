@@ -30,6 +30,6 @@
             <!-- <appender-ref ref="errorLog"/> -->
             <appender-ref ref="console" />
         </root>
-        <logger name="net.eulerframework" level="${mvn.log.level}" />
+        <logger name="org.eulerframework" level="${mvn.log.level}" />
     </loggers>
 </configuration>

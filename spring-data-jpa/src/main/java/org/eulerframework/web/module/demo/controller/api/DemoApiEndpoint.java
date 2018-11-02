@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.eulerframework.web.module.demo.controller.api;
+package org.eulerframework.web.module.demo.controller.api;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import net.eulerframework.web.core.annotation.ApiEndpoint;
-import net.eulerframework.web.core.base.controller.ApiSupportWebController;
-import net.eulerframework.web.module.demo.MobileCodeRobotCheckService;
+import org.eulerframework.web.core.annotation.ApiEndpoint;
+import org.eulerframework.web.core.base.controller.ApiSupportWebController;
+import org.eulerframework.web.module.demo.MobileCodeRobotCheckService;
 
 @ApiEndpoint
 @RequestMapping("/")
