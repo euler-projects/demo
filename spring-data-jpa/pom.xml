@@ -2,97 +2,210 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.eulerframework</groupId>
-    <artifactId>demo-spring-data-jpa</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <groupId>org.eulerframework.demo</groupId>
+    <artifactId>uc-web</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
     <packaging>war</packaging>
 
     <properties>
-        <mvn.buildtimestamp>${maven.build.timestamp}</mvn.buildtimestamp>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <java.version>1.8</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
         
-        <java.version>1.8</java.version> 
-        <euler-framework.version>1.0.0.M2-SNAPSHOT</euler-framework.version>
+        <jsp.version>2.2</jsp.version>
+        <servlet.version>3.0.1</servlet.version>
+        
+        <euler-common.version>1.0.0.M3-SNAPSHOT</euler-common.version>
+        <euler-framework.version>1.0.0.M4-SNAPSHOT</euler-framework.version>
+        <euler-framework-pages.version>1.0.0.M3.EASYUI-SNAPSHOT</euler-framework-pages.version>
+        
+        <mvn.buildtimestamp>${maven.build.timestamp}</mvn.buildtimestamp>
+
         <mysqljdbc.version>5.1.38</mysqljdbc.version>
+
+        <log4j.version>1.2.17</log4j.version>
+        <log4j2.version>2.5</log4j2.version>
+        <jboss.logging.version>3.3.0.Final</jboss.logging.version>
+        <commons-logging.version>1.2</commons-logging.version>
     </properties>
+    
+    <dependencyManagement>
+        <dependencies>
+            <!-- J2EE -->
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>javax.servlet-api</artifactId>
+                <scope>provided</scope>
+                <version>${servlet.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>javax.servlet.jsp</groupId>
+                <artifactId>jsp-api</artifactId>
+                <scope>provided</scope>
+                <version>${jsp.version}</version>
+            </dependency>
+        
+            <dependency>
+                <groupId>org.eulerframework</groupId>
+                <artifactId>euler-web-core-pages</artifactId>
+                <version>${euler-framework-pages.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eulerframework</groupId>
+                <artifactId>euler-web-authentication-pages</artifactId>
+                <version>${euler-framework-pages.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.eulerframework</groupId>
+                <artifactId>euler-common-logging</artifactId>
+                <version>${euler-common.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eulerframework</groupId>
+                <artifactId>euler-web-authentication-impl-jpa</artifactId>
+                <version>${euler-framework.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.eulerframework</groupId>
+                <artifactId>euler-web-oauth2-server</artifactId>
+                <version>${euler-framework.version}</version>
+            </dependency>
+    
+            <dependency>
+                <groupId>org.eulerframework</groupId>
+                <artifactId>euler-web-oauth2-util</artifactId>
+                <version>${euler-framework.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
-        <!-- J2EE -->
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
             <scope>provided</scope>
-            <version>3.0.1</version>
         </dependency>
         <dependency>
             <groupId>javax.servlet.jsp</groupId>
             <artifactId>jsp-api</artifactId>
             <scope>provided</scope>
-            <version>2.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.security.oauth</groupId>
+            <artifactId>spring-security-oauth2</artifactId>
+            <version>2.3.4.RELEASE</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>spring-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>spring-context</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>spring-beans</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>spring-webmvc</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework.security</groupId>
+                    <artifactId>spring-security-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework.security</groupId>
+                    <artifactId>spring-security-config</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework.security</groupId>
+                    <artifactId>spring-security-web</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-codec</groupId>
+                    <artifactId>commons-codec</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eulerframework</groupId>
+            <artifactId>euler-web-core-pages</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eulerframework</groupId>
+            <artifactId>euler-web-authentication-pages</artifactId>
         </dependency>
 
         <dependency>
             <groupId>org.eulerframework</groupId>
             <artifactId>euler-web-authentication-impl-jpa</artifactId>
-            <version>${euler-framework.version}</version>
         </dependency>
-        
-        <!--<dependency>-->
-            <!--<groupId>org.eulerframework</groupId>-->
-            <!--<artifactId>euler-web-cmf</artifactId>-->
-            <!--<version>1.0.0.M1-SNAPSHOT</version>-->
-        <!--</dependency>-->
-        
+
+        <dependency>
+            <groupId>org.eulerframework</groupId>
+            <artifactId>euler-web-oauth2-server</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eulerframework</groupId>
+            <artifactId>euler-web-oauth2-util</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>${mysqljdbc.version}</version>
         </dependency>
 
+        <!-- Loggers -->
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging</artifactId>
+            <version>${jboss.logging.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+            <version>${commons-logging.version}</version>
+        </dependency>
+
+        <!-- 核心log4j2jar包 -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>${log4j2.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>${log4j2.version}</version>
+        </dependency>
+        <!-- 用于与slf4j保持桥接 -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
+            <version>${log4j2.version}</version>
+        </dependency>
+        <!-- web工程需要包含log4j-web，非web工程不需要 -->
+        <!-- <dependency> <groupId>org.apache.logging.log4j</groupId> <artifactId>log4j-web</artifactId> <version>${log4j2.version}</version> 
+            <scope>runtime</scope> </dependency> -->
+
+        <!-- 需要使用log4j2的AsyncLogger需要包含disruptor -->
+        <!-- <dependency> <groupId>com.lmax</groupId> <artifactId>disruptor</artifactId> <version>3.2.0</version> </dependency> -->
     </dependencies>
 
-
     <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <!--<version>3.3</version>-->
-                <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <!--<version>2.7</version>-->
-                <configuration>
-                    <encoding>UTF-8</encoding>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <!--<version>2.6</version>-->
-                <configuration>
-                    <archive>
-                        <addMavenDescriptor>false</addMavenDescriptor>
-                    </archive>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>2.6</version>
-                <configuration>
-                    <archive>
-                        <addMavenDescriptor>false</addMavenDescriptor>
-                    </archive>
-                </configuration>
-            </plugin>
-        </plugins>
-        
         <resources>
             <resource>
                 <directory>${project.basedir}/src/main/resources</directory>
@@ -109,6 +222,50 @@
 
     <profiles>
         <profile>
+            <id>cdb</id>
+            <dependencies>
+                <dependency>
+                    <groupId>com.dmagico</groupId>
+                    <artifactId>uc-plugin-cdb</artifactId>
+                    <version>0.1.0-SNAPSHOT</version>
+                </dependency>
+            </dependencies>
+            <properties>
+                <mvn.mode>release</mvn.mode>
+                <mvn.log.level>warn</mvn.log.level>
+                <mvn.db.showsql>false</mvn.db.showsql>
+                <mvn.web.url>https://uc.cdb.dmagico.com</mvn.web.url>
+                <mvn.security.signup.enableMobileAutoSignup>false</mvn.security.signup.enableMobileAutoSignup>
+                <mvn.security.signup.enableInterestingUsernamePrefix>true</mvn.security.signup.enableInterestingUsernamePrefix>
+            </properties>
+            <build>
+                <finalName>uc-web-${project.version}-cdb-release</finalName>
+            </build>
+        </profile>
+
+        <profile>
+            <id>star</id>
+            <dependencies>
+                <dependency>
+                    <groupId>com.dmagico</groupId>
+                    <artifactId>uc-plugin-star</artifactId>
+                    <version>0.1.0-SNAPSHOT</version>
+                </dependency>
+            </dependencies>
+            <properties>
+                <mvn.mode>release</mvn.mode>
+                <mvn.log.level>warn</mvn.log.level>
+                <mvn.db.showsql>false</mvn.db.showsql>
+                <mvn.web.url>https://uc.star.dmagico.com</mvn.web.url>
+                <mvn.security.signup.enableMobileAutoSignup>true</mvn.security.signup.enableMobileAutoSignup>
+                <mvn.security.signup.enableInterestingUsernamePrefix>false</mvn.security.signup.enableInterestingUsernamePrefix>
+            </properties>
+            <build>
+                <finalName>uc-web-${project.version}-star-release</finalName>
+            </build>
+        </profile>
+
+        <profile>
             <id>develop</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
@@ -118,9 +275,11 @@
                 <mvn.log.level>info</mvn.log.level>
                 <mvn.db.showsql>true</mvn.db.showsql>
                 <mvn.web.url>http://localhost:8080</mvn.web.url>
+                <mvn.security.signup.enableMobileAutoSignup>false</mvn.security.signup.enableMobileAutoSignup>
+                <mvn.security.signup.enableInterestingUsernamePrefix>true</mvn.security.signup.enableInterestingUsernamePrefix>
             </properties>
             <build>
-                <finalName>demo</finalName>
+                <finalName>uc</finalName>
             </build>
         </profile>
         <profile>
@@ -130,9 +289,11 @@
                 <mvn.log.level>info</mvn.log.level>
                 <mvn.db.showsql>false</mvn.db.showsql>
                 <mvn.web.url>http://localhost:8080</mvn.web.url>
+                <mvn.security.signup.enableMobileAutoSignup>false</mvn.security.signup.enableMobileAutoSignup>
+                <mvn.security.signup.enableInterestingUsernamePrefix>true</mvn.security.signup.enableInterestingUsernamePrefix>
             </properties>
             <build>
-                <finalName>euler-framework-demo-${project.version}-debug</finalName>
+                <finalName>uc-web-${project.version}-debug</finalName>
             </build>
         </profile>
         <profile>
@@ -142,11 +303,26 @@
                 <mvn.log.level>warn</mvn.log.level>
                 <mvn.db.showsql>false</mvn.db.showsql>
                 <mvn.web.url>http://localhost:8080</mvn.web.url>
+                <mvn.security.signup.enableMobileAutoSignup>false</mvn.security.signup.enableMobileAutoSignup>
+                <mvn.security.signup.enableInterestingUsernamePrefix>true</mvn.security.signup.enableInterestingUsernamePrefix>
             </properties>
             <build>
-                <finalName>euler-framework-demo-${project.version}-release</finalName>
+                <finalName>uc-web-${project.version}-release</finalName>
             </build>
         </profile>
     </profiles>
 
+    <repositories>
+        <repository>
+            <id>euler-snapshots</id>
+            <name>Euler Snapshots</name>
+            <url>https://repo.eulerproject.io/repository/maven-snapshots/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 </project>

@@ -7,5 +7,12 @@
                                  http://www.springframework.org/schema/security
                                  http://www.springframework.org/schema/security/spring-security-4.2.xsd">
     
-    <!-- <http security="none" pattern="/global-award/**" /> -->
+    <http security="none" pattern="${web.api.rootPath}/sendSmsCode" />
+    <http security="none" pattern="${web.api.rootPath}/validCaptcha" />
+    <http security="none" pattern="${web.api.rootPath}/validPassword" />
+    <http security="none" pattern="${web.api.rootPath}/validMobile" />
+    <http security="none" pattern="${web.api.rootPath}/validEmail" />
+    <http security="none" pattern="${web.api.rootPath}/validUsername" />
+    <http security="none" pattern="${web.api.rootPath}/signup" />
+    <http security="none" pattern="${web.api.rootPath}/robotCheck" />
 </beans:beans>

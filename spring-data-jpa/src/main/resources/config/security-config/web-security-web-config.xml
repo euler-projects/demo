@@ -6,6 +6,7 @@
                                  http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
                                  http://www.springframework.org/schema/security
                                  http://www.springframework.org/schema/security/spring-security-4.2.xsd">
+    <beans:import resource="rest-security-oauth-config.xml" />
 
     <http use-expressions="true" auto-config="false" entry-point-ref="authenticationEntryPoint">
 
@@ -21,6 +22,7 @@
         <intercept-url pattern="/ajax/validMobile" access="permitAll" />
         <intercept-url pattern="/ajax/validPassword" access="permitAll" />
         <intercept-url pattern="/ajax/validCaptcha" access="permitAll" />
+        <intercept-url pattern="/ajax/sendSmsCode" access="permitAll" />
         <intercept-url pattern="/ajax/robotCheck" access="permitAll" />
         
         <!-- 获取验证码,所有用户都应该能访问 -->
@@ -85,5 +87,12 @@
         <csrf disabled="true" />
 
     </http>
+
+    <beans:bean id="customAuthenticationProvider" 
+        class="org.eulerframework.web.module.authentication.provider.SmsCodeAuthenticationProvider">
+        <beans:property name="smsCodeValidator" ref="smsCodeValidator" />
+        <beans:property name="userDetailsService" ref="userDetailsService" />
+        <beans:property name="userRegistService" ref="userRegistService" />
+    </beans:bean>
 
 </beans:beans>
