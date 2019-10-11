@@ -1,0 +1,7 @@
+spring:
+  application:
+   name: euler-boot-demo
+
+euler:
+  application:
+    runtime-path: test
