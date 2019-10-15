@@ -3,11 +3,13 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.eulerframework.demo</groupId>
-    <artifactId>uc-web</artifactId>
+    <artifactId>uc</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <packaging>war</packaging>
 
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        
         <java.version>1.8</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
@@ -221,50 +223,6 @@
     </build>
 
     <profiles>
-        <profile>
-            <id>cdb</id>
-            <dependencies>
-                <dependency>
-                    <groupId>com.dmagico</groupId>
-                    <artifactId>uc-plugin-cdb</artifactId>
-                    <version>0.1.0-SNAPSHOT</version>
-                </dependency>
-            </dependencies>
-            <properties>
-                <mvn.mode>release</mvn.mode>
-                <mvn.log.level>warn</mvn.log.level>
-                <mvn.db.showsql>false</mvn.db.showsql>
-                <mvn.web.url>https://uc.cdb.dmagico.com</mvn.web.url>
-                <mvn.security.signup.enableMobileAutoSignup>false</mvn.security.signup.enableMobileAutoSignup>
-                <mvn.security.signup.enableInterestingUsernamePrefix>true</mvn.security.signup.enableInterestingUsernamePrefix>
-            </properties>
-            <build>
-                <finalName>uc-web-${project.version}-cdb-release</finalName>
-            </build>
-        </profile>
-
-        <profile>
-            <id>star</id>
-            <dependencies>
-                <dependency>
-                    <groupId>com.dmagico</groupId>
-                    <artifactId>uc-plugin-star</artifactId>
-                    <version>0.1.0-SNAPSHOT</version>
-                </dependency>
-            </dependencies>
-            <properties>
-                <mvn.mode>release</mvn.mode>
-                <mvn.log.level>warn</mvn.log.level>
-                <mvn.db.showsql>false</mvn.db.showsql>
-                <mvn.web.url>https://uc.star.dmagico.com</mvn.web.url>
-                <mvn.security.signup.enableMobileAutoSignup>true</mvn.security.signup.enableMobileAutoSignup>
-                <mvn.security.signup.enableInterestingUsernamePrefix>false</mvn.security.signup.enableInterestingUsernamePrefix>
-            </properties>
-            <build>
-                <finalName>uc-web-${project.version}-star-release</finalName>
-            </build>
-        </profile>
-
         <profile>
             <id>develop</id>
             <activation>
