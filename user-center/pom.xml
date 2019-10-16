@@ -3,8 +3,8 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.eulerframework.demo</groupId>
-    <artifactId>uc</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <artifactId>user-center</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>war</packaging>
 
     <properties>
@@ -17,9 +17,9 @@
         <jsp.version>2.2</jsp.version>
         <servlet.version>3.0.1</servlet.version>
         
-        <euler-common.version>1.0.0.M3-SNAPSHOT</euler-common.version>
-        <euler-framework.version>1.0.0.M4-SNAPSHOT</euler-framework.version>
-        <euler-framework-pages.version>1.0.0.M3.EASYUI-SNAPSHOT</euler-framework-pages.version>
+        <euler-common.version>1.0.0.M7-SNAPSHOT</euler-common.version>
+        <euler-framework.version>1.0.0.M7-SNAPSHOT</euler-framework.version>
+        <euler-framework-pages.version>1.0.0.M7.EASYUI-SNAPSHOT</euler-framework-pages.version>
         
         <mvn.buildtimestamp>${maven.build.timestamp}</mvn.buildtimestamp>
 
