@@ -23,6 +23,7 @@
         
         <mvn.buildtimestamp>${maven.build.timestamp}</mvn.buildtimestamp>
 
+        <lettuce.version>5.1.8.RELEASE</lettuce.version>
         <mysqljdbc.version>5.1.38</mysqljdbc.version>
 
         <log4j.version>1.2.17</log4j.version>
@@ -157,6 +158,12 @@
         <dependency>
             <groupId>org.eulerframework</groupId>
             <artifactId>euler-web-oauth2-util</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.lettuce</groupId>
+            <artifactId>lettuce-core</artifactId>
+            <version>${lettuce.version}</version>
         </dependency>
 
         <dependency>
