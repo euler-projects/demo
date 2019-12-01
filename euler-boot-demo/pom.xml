@@ -14,10 +14,6 @@
     <name>euler-boot-demo</name>
     <description>Demo project for Euler Boot</description>
 
-    <properties>
-        <java.version>1.8</java.version>
-    </properties>
-
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -52,4 +48,17 @@
         </plugins>
     </build>
 
+    <repositories>
+        <repository>
+            <id>euler-repo-maven-snapshots</id>
+            <name>Snapshot Repository for Euler Projects</name>
+            <url>https://repo.eulerproject.io/repository/maven-snapshots/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 </project>
