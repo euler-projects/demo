@@ -11,7 +11,7 @@ ENV EULER_JAVA_OPTS="-Dlogging.path=${app_log_path} \
 -Dserver.port=${app_port} \
 -Dspring.application.name=${app_name} \
 -Dspring.config.additional-location=file:${app_conf_path}/ \
--Dyunxiao.application.runtime-path=${app_runtime_path}"
+-Deuler.application.runtime-path=${app_runtime_path}"
 
 EXPOSE ${app_port}
 
