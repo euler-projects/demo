@@ -16,20 +16,17 @@
 package org.eulerframework.demo.controller;
 
 import org.eulerframework.web.core.base.controller.ApiSupportWebController;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Date;
 
 @RestController
 @RequestMapping("helloWorld")
 public class HelloWorldApi extends ApiSupportWebController {
 
     @GetMapping
-    public String helloWorld(@RequestParam Date date) {
-        return "Hello World! " + date;
+    public String helloWorld(@RequestParam String name) {
+        return "Hello " + name + "!";
     }
 }

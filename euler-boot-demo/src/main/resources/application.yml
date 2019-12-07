@@ -1,12 +1,3 @@
 spring:
-#  application:
-#   name: euler-boot-demo
-  servlet:
-    multipart:
-      location:
-
-euler:
   application:
-    runtime-path: test
-  cache:
-    ram-cache-pool-clean-freq: 2m
+   name: euler-boot-demo
