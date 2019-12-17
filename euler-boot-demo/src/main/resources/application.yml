@@ -5,10 +5,3 @@ spring:
     multipart:
       max-request-size: 100MB
       max-file-size: 50MB
-
-euler:
-  cache:
-    ram-cache-pool-clean-freq: 1h
-  web:
-    site:
-      url: http://localhost:8080

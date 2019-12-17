@@ -239,7 +239,7 @@
                 <mvn.mode>develop</mvn.mode>
                 <mvn.log.level>info</mvn.log.level>
                 <mvn.db.showsql>true</mvn.db.showsql>
-                <mvn.web.url>http://localhost:8080</mvn.web.url>
+                <mvn.web.site.url>http://localhost:8080</mvn.web.site.url>
                 <mvn.security.signup.enableMobileAutoSignup>false</mvn.security.signup.enableMobileAutoSignup>
                 <mvn.security.signup.enableInterestingUsernamePrefix>true</mvn.security.signup.enableInterestingUsernamePrefix>
             </properties>
@@ -248,26 +248,12 @@
             </build>
         </profile>
         <profile>
-            <id>debug</id>
-            <properties>
-                <mvn.mode>debug</mvn.mode>
-                <mvn.log.level>info</mvn.log.level>
-                <mvn.db.showsql>false</mvn.db.showsql>
-                <mvn.web.url>http://localhost:8080</mvn.web.url>
-                <mvn.security.signup.enableMobileAutoSignup>false</mvn.security.signup.enableMobileAutoSignup>
-                <mvn.security.signup.enableInterestingUsernamePrefix>true</mvn.security.signup.enableInterestingUsernamePrefix>
-            </properties>
-            <build>
-                <finalName>uc-web-${project.version}-debug</finalName>
-            </build>
-        </profile>
-        <profile>
             <id>release</id>
             <properties>
                 <mvn.mode>release</mvn.mode>
                 <mvn.log.level>warn</mvn.log.level>
                 <mvn.db.showsql>false</mvn.db.showsql>
-                <mvn.web.url>http://localhost:8080</mvn.web.url>
+                <mvn.web.site.url>http://localhost:8080</mvn.web.site.url>
                 <mvn.security.signup.enableMobileAutoSignup>false</mvn.security.signup.enableMobileAutoSignup>
                 <mvn.security.signup.enableInterestingUsernamePrefix>true</mvn.security.signup.enableInterestingUsernamePrefix>
             </properties>
