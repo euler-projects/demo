@@ -8,7 +8,10 @@ spring:
 
 euler:
   cache:
-    ram-cache-pool-clean-freq: 1h
+    ram-cache-pool-clean-freq: 2h
   web:
     site:
       url: http://localhost:8080
+    i18n:
+      default-language: en_GB
+      support-languages: en_GB, zh_CN, zh_TW, en_US

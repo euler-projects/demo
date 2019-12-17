@@ -1,5 +1,6 @@
 package org.eulerframework.demo.controller;
 
+import org.eulerframework.web.config.MultipartConfig;
 import org.eulerframework.web.config.WebConfig;
 import org.eulerframework.web.core.base.controller.ApiSupportWebController;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,5 +31,25 @@ public class WebConfigApi extends ApiSupportWebController {
     @GetMapping("supportLanguages")
     public Locale[] supportLanguages() {
         return WebConfig.getSupportLanguages();
+    }
+
+    @GetMapping("multipart/location")
+    public String multipartLocation() {
+        return WebConfig.getMultipartConfig().getLocation();
+    }
+
+    @GetMapping("multipart/fileSizeThreshold")
+    public long multipartFileSizeThreshold() {
+        return WebConfig.getMultipartConfig().getFileSizeThreshold().toBytes();
+    }
+
+    @GetMapping("multipart/maxRequestSize")
+    public long multipartMaxRequestSize() {
+        return WebConfig.getMultipartConfig().getMaxRequestSize().toBytes();
+    }
+
+    @GetMapping("multipart/maxFileSize")
+    public long multipartMaxFileSize() {
+        return WebConfig.getMultipartConfig().getMaxFileSize().toBytes();
     }
 }
