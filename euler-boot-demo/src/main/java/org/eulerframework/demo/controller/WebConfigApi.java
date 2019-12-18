@@ -28,6 +28,11 @@ public class WebConfigApi extends ApiSupportWebController {
         return WebConfig.getTempPath();
     }
 
+    @GetMapping("additionalConfigPath")
+    public String additionalConfigPath() {
+        return WebConfig.getAdditionalConfigPath();
+    }
+
     @GetMapping("supportLanguages")
     public Locale[] supportLanguages() {
         return WebConfig.getSupportLanguages();

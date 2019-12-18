@@ -15,18 +15,80 @@
  */
 package org.eulerframework.demo.controller;
 
+import org.eulerframework.constant.EulerSysAttributes;
+import org.eulerframework.web.config.WebConfig;
 import org.eulerframework.web.core.base.controller.ApiSupportWebController;
+import org.eulerframework.web.util.ServletUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.WebApplicationContext;
+
+import javax.servlet.http.HttpSession;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping("helloWorld")
 public class HelloWorldApi extends ApiSupportWebController {
 
-    @GetMapping
-    public String helloWorld(@RequestParam String name) {
-        return "Hello " + name + "!";
+    @RequestMapping
+    public Object helloWorld() {
+        Map<String, Object> m = new HashMap<>();
+
+        Set<String> eulerSysAttributeNames = EulerSysAttributes.getEulerSysAttributeNames();
+
+        Enumeration<String> attributeNames = ServletUtils.getServletContext().getAttributeNames();
+        while(attributeNames.hasMoreElements()) {
+            String arrtibuteName = attributeNames.nextElement();
+            if(eulerSysAttributeNames.contains(arrtibuteName)) {
+                m.put(arrtibuteName, this.getServletContext().getAttribute(arrtibuteName));
+            }
+        }
+
+        HttpSession session = this.getRequest().getSession();
+
+        if(session != null) {
+            attributeNames = this.getRequest().getSession().getAttributeNames();
+            while(attributeNames.hasMoreElements()) {
+                String arrtibuteName = attributeNames.nextElement();
+                if(eulerSysAttributeNames.contains(arrtibuteName)) {
+                    m.put(arrtibuteName, this.getRequest().getSession().getAttribute(arrtibuteName));
+                }
+            }
+        }
+
+        attributeNames = this.getRequest().getAttributeNames();
+        while(attributeNames.hasMoreElements()) {
+            String arrtibuteName = attributeNames.nextElement();
+            if(eulerSysAttributeNames.contains(arrtibuteName)) {
+                m.put(arrtibuteName, this.getRequest().getAttribute(arrtibuteName));
+            }
+        }
+
+        Map<String, List<String>> headerMap = new LinkedHashMap<>();
+        Enumeration<String> headerNames = this.getRequest().getHeaderNames();
+        while (headerNames.hasMoreElements()) {
+            String headerName = headerNames.nextElement();
+            Enumeration<String> headers = this.getRequest().getHeaders(headerName);
+            List<String> headerList = new ArrayList<>();
+            while (headers.hasMoreElements()) {
+                headerList.add(headers.nextElement());
+            }
+            headerMap.put(headerName, headerList);
+        }
+
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("systemAttributes", m);
+        result.put("headers", headerMap);
+        return result;
     }
 }
