@@ -236,7 +236,7 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <mvn.mode>develop</mvn.mode>
+                <mvn.mode>debug</mvn.mode>
                 <mvn.log.level>info</mvn.log.level>
                 <mvn.db.showsql>true</mvn.db.showsql>
                 <mvn.web.site.url>http://localhost:8080</mvn.web.site.url>
