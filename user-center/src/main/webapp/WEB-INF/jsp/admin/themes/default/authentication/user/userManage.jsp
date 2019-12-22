@@ -335,6 +335,37 @@ var userManage = {
 
     userAuthorityManageCallback: function(data) {
         console.log(data);
+
+
+        let selectedGroupCodes = "";
+        if(data != null && data.selectedGroupCodes != null) {
+            for(const selectedGroupCode of data.selectedGroupCodes) {
+                selectedGroupCodes += "," + selectedGroupCode;
+            }
+        }
+
+        if(selectedGroupCodes.startsWith(",")) {
+            selectedGroupCodes = selectedGroupCodes.substring(1)
+        }
+
+        $.ajax({
+            url:'${__ADMIN_PATH}/ajax/authentication/group/updateUserGroup',
+            type:'POST',
+            async:true,
+            data: {
+                userId: data.userId,
+                groupCodes: selectedGroupCodes
+            },
+            error:function(XMLHttpRequest, textStatus, errorThrown) {
+                $('#fm-submit-mask').hide();
+                euler.msg.response.error(XMLHttpRequest);
+            },
+            success:function(data, textStatus) {
+                $('#fm-submit-mask').hide();
+                onSearch();
+            }
+        });
+
         return true;
     }
 };
