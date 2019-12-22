@@ -56,7 +56,45 @@
 <script>
     $('.add-btn').linkbutton({
         height: '25px',
-        width: '25px'
+        width: '25px',
+    });
+
+    $('#rm-selected').linkbutton({
+        onClick: function() {
+            const checked = $('#dl-authority-active').datalist('getChecked');
+            console.log(checked);
+            for(const checkedItem of checked) {
+                const rowIndex = $('#dl-authority-active').datalist('getRowIndex', checkedItem);
+                console.log(rowIndex);
+                $('#dl-authority-active').datalist('deleteRow', rowIndex);
+            }
+        }
+    });
+
+    $('#rm-all').linkbutton({
+        onClick: function() {
+            $('#dl-authority-active').datalist('loadData', {rows:[]});
+        }
+    });
+
+    $('#add-selected').linkbutton({
+        onClick: function() {
+            const checked = $('#dl-authority-available').datalist('getChecked');
+            console.log(checked);
+            for(const checkedItem of checked) {
+                const rowIndex = $('#dl-authority-active').datalist('getRowIndex', checkedItem);
+                if(rowIndex < 0) {
+                    $('#dl-authority-active').datalist('insertRow', {row: checkedItem});
+                }
+            }
+        }
+    });
+
+    $('#add-all').linkbutton({
+        onClick: function() {
+            const data = $('#dl-authority-available').datalist('getData');
+            $('#dl-authority-active').datalist('loadData', data);
+        }
     });
 
     $('#dl-authority-available').datalist({
