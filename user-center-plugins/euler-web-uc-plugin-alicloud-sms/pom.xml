@@ -3,20 +3,20 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>euler-uc-plugins</artifactId>
         <groupId>org.eulerframework.uc.plugins</groupId>
-        <version>1.0.0-SNAPSHOT</version>
+        <artifactId>euler-web-uc-plugin-parent</artifactId>
+        <version>${revision}</version>
+        <relativePath>../euler-web-uc-plugin-parent</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>euler-uc-plugin-alicloud-sms</artifactId>
+    <artifactId>euler-web-uc-plugin-alicloud-sms</artifactId>
 
     <dependencies>
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
             <scope>provided</scope>
-            <version>3.0.1</version>
         </dependency>
 
         <dependency>
@@ -28,12 +28,10 @@
         <dependency>
             <groupId>org.eulerframework</groupId>
             <artifactId>euler-web-core</artifactId>
-            <version>1.0.0.M7-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.eulerframework</groupId>
             <artifactId>euler-web-authentication</artifactId>
-            <version>1.0.0.M7-SNAPSHOT</version>
         </dependency>
     </dependencies>
 </project>

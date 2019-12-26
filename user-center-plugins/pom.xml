@@ -4,18 +4,38 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <groupId>org.eulerframework</groupId>
+        <artifactId>euler-parent</artifactId>
+        <version>5-SNAPSHOT</version>
+    </parent>
+
     <groupId>org.eulerframework.uc.plugins</groupId>
-    <artifactId>euler-uc-plugins</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
-    <modules>
-        <module>euler-uc-plugin-alicloud-sms</module>
-    </modules>
+    <artifactId>user-center-plugins</artifactId>
+    <version>${revision}</version>
     <packaging>pom</packaging>
 
-
     <properties>
-        <java.version>1.8</java.version>
-        <maven.compiler.source>${java.version}</maven.compiler.source>
-        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <revision>1.0.0.M1-SNAPSHOT</revision>
+        <main.basedir>${basedir}</main.basedir>
     </properties>
+
+    <modules>
+        <module>euler-web-uc-plugin-parent</module>
+        <module>euler-web-uc-plugin-alicloud-sms</module>
+    </modules>
+
+    <repositories>
+        <repository>
+            <id>euler-snapshot</id>
+            <name>euler-snapshot</name>
+            <url>https://repo.eulerproject.io/repository/maven-snapshots/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 </project>
