@@ -21,8 +21,9 @@
     </properties>
 
     <modules>
-        <module>euler-web-uc-plugin-parent</module>
+        <module>euler-web-uc-plugin-dependencies</module>
         <module>euler-web-uc-plugin-alicloud-sms</module>
+        <module>euler-web-uc-plugin-parent</module>
     </modules>
 
     <repositories>

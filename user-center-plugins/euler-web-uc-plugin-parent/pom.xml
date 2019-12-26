@@ -3,95 +3,34 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>user-center-plugins</artifactId>
+        <artifactId>euler-web-uc-plugin-dependencies</artifactId>
         <groupId>org.eulerframework.uc.plugins</groupId>
         <version>${revision}</version>
+        <relativePath>../euler-web-uc-plugin-dependencies</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-    <packaging>pom</packaging>
 
     <artifactId>euler-web-uc-plugin-parent</artifactId>
+    <packaging>pom</packaging>
+    <description>Parent pom for Euler User Center plugins</description>
 
     <properties>
-        <main.basedir>${basedir}/..</main.basedir>
-        <servlet-api.verison>3.0.1</servlet-api.verison>
-        <euler-framework.verison>1.0.0.M7-SNAPSHOT</euler-framework.verison>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <build-helper-maven-plugin.version>3.0.0</build-helper-maven-plugin.version>
-        <flatten-maven-plugin.version>1.1.0</flatten-maven-plugin.version>
-        <xml-maven-plugin.version>1.0.2</xml-maven-plugin.version>
+        <java.version>1.8</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
     </properties>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>javax.servlet</groupId>
-                <artifactId>javax.servlet-api</artifactId>
-                <version>${servlet-api.verison}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.eulerframework</groupId>
-                <artifactId>euler-web-core</artifactId>
-                <version>${euler-framework.verison}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eulerframework</groupId>
-                <artifactId>euler-web-authentication</artifactId>
-                <version>${euler-framework.verison}</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>flatten-maven-plugin</artifactId>
-                    <version>${flatten-maven-plugin.version}</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>xml-maven-plugin</artifactId>
-                    <version>${xml-maven-plugin.version}</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>build-helper-maven-plugin</artifactId>
-                    <version>${build-helper-maven-plugin.version}</version>
-                </plugin>
-            </plugins>
-        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
-                <inherited>false</inherited>
+                <inherited>true</inherited>
                 <executions>
                     <execution>
-                        <!-- Create an effective POM (with versions expanded) for the CLI and
-                            documentation -->
-                        <id>flatten-effective-pom</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>flatten</goal>
-                        </goals>
-                        <configuration>
-                            <updatePomFile>false</updatePomFile>
-                            <outputDirectory>${project.build.directory}/effective-pom</outputDirectory>
-                            <flattenedPomFilename>euler-boot-dependencies.xml</flattenedPomFilename>
-                            <flattenMode>oss</flattenMode>
-                            <pomElements>
-                                <dependencyManagement>expand</dependencyManagement>
-                                <pluginManagement>expand</pluginManagement>
-                                <properties>remove</properties>
-                                <repositories>remove</repositories>
-                            </pomElements>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <!-- Flatten and simplify our own POM for install/deploy -->
+                        <!-- Tidy up all POMs before they are published -->
                         <id>flatten</id>
                         <phase>process-resources</phase>
                         <goals>
@@ -99,10 +38,10 @@
                         </goals>
                         <configuration>
                             <updatePomFile>true</updatePomFile>
-                            <flattenMode>bom</flattenMode>
+                            <flattenMode>oss</flattenMode>
                             <pomElements>
-                                <pluginManagement>keep</pluginManagement>
-                                <properties>keep</properties>
+                                <parent>expand</parent>
+                                <distributionManagement>remove</distributionManagement>
                                 <repositories>remove</repositories>
                             </pomElements>
                         </configuration>
@@ -113,60 +52,6 @@
                         <goals>
                             <goal>clean</goal>
                         </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>xml-maven-plugin</artifactId>
-                <inherited>false</inherited>
-                <executions>
-                    <execution>
-                        <!-- Cleanup the effective POM -->
-                        <id>post-process-effective-pom</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>transform</goal>
-                        </goals>
-                        <configuration>
-                            <transformationSets>
-                                <transformationSet>
-                                    <dir>${project.build.directory}/effective-pom</dir>
-                                    <outputDir>${project.build.directory}/effective-pom</outputDir>
-                                    <stylesheet>src/main/xslt/post-process-flattened-pom.xsl</stylesheet>
-                                    <outputProperties>
-                                        <outputProperty>
-                                            <name>indent</name>
-                                            <value>yes</value>
-                                        </outputProperty>
-                                    </outputProperties>
-                                </transformationSet>
-                            </transformationSets>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <!-- Cleanup the flattened project POM -->
-                        <id>post-process-flattened-pom</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>transform</goal>
-                        </goals>
-                        <configuration>
-                            <transformationSets>
-                                <transformationSet>
-                                    <dir>${project.basedir}</dir>
-                                    <outputDir>${project.basedir}</outputDir>
-                                    <includes>.flattened-pom.xml</includes>
-                                    <stylesheet>src/main/xslt/post-process-flattened-pom.xsl</stylesheet>
-                                    <outputProperties>
-                                        <outputProperty>
-                                            <name>indent</name>
-                                            <value>yes</value>
-                                        </outputProperty>
-                                    </outputProperties>
-                                </transformationSet>
-                            </transformationSets>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>

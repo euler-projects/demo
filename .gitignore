@@ -14,3 +14,5 @@ pom.xml.versionsBackup
 .DS_Store
 docker-compose/volumes/mysql/data
 docker-compose/volumes/redis/data
+
+.flattened-pom.xml
