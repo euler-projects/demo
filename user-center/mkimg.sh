@@ -24,7 +24,9 @@ version=`mvn -q -N exec:exec -Dexec.executable="echo" -Dexec.args='${project.ver
 
 image_name=eulerproject/${app_name}:${version}
 
-mvn -U clean package -Dmaven.test.skip
+args=$@;
+echo "exec mvn -U clean package -Dmaven.test.skip ${args}"
+mvn -U clean package -Dmaven.test.skip ${args}
 
 if test ! -d ${absolute_artifact_path}
 then

@@ -238,11 +238,7 @@
 
     <profiles>
         <profile>
-            <id>develop</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-
+            <id>plugin-alicloud-sms</id>
             <dependencies>
                 <dependency>
                     <groupId>org.eulerframework.uc.plugins</groupId>
@@ -250,6 +246,23 @@
                     <version>1.0.0.M1-SNAPSHOT</version>
                 </dependency>
             </dependencies>
+        </profile>
+        <profile>
+            <id>plugin-hengrun</id>
+            <dependencies>
+                <dependency>
+                    <groupId>cn.sxhengrun</groupId>
+                    <artifactId>uc-plugin-hengrun</artifactId>
+                    <version>1.0.0-SNAPSHOT</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>develop</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
 
             <properties>
                 <mvn.mode>debug</mvn.mode>
