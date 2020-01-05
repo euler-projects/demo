@@ -25,20 +25,16 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <artifactId>euler-web-dependencies</artifactId>
+                <groupId>org.eulerframework</groupId>
+                <version>${euler-framework.verison}</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+            <dependency>
                 <groupId>javax.servlet</groupId>
                 <artifactId>javax.servlet-api</artifactId>
                 <version>${servlet-api.verison}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.eulerframework</groupId>
-                <artifactId>euler-web-core</artifactId>
-                <version>${euler-framework.verison}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eulerframework</groupId>
-                <artifactId>euler-web-authentication</artifactId>
-                <version>${euler-framework.verison}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
