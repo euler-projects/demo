@@ -27,7 +27,7 @@
         <mysqljdbc.version>5.1.38</mysqljdbc.version>
 
         <log4j.version>1.2.17</log4j.version>
-        <log4j2.version>2.5</log4j2.version>
+        <log4j2.version>2.16.0</log4j2.version>
         <jboss.logging.version>3.3.0.Final</jboss.logging.version>
         <commons-logging.version>1.2</commons-logging.version>
     </properties>
