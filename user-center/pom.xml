@@ -24,7 +24,7 @@
         <mvn.buildtimestamp>${maven.build.timestamp}</mvn.buildtimestamp>
 
         <lettuce.version>5.1.8.RELEASE</lettuce.version>
-        <mysqljdbc.version>5.1.38</mysqljdbc.version>
+        <mysqljdbc.version>8.0.28</mysqljdbc.version>
 
         <log4j.version>1.2.17</log4j.version>
         <log4j2.version>2.5</log4j2.version>
