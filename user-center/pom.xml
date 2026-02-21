@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.8</version>
+        <version>4.0.3</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>org.eulerframework</groupId>
@@ -15,8 +15,8 @@
     <description>user-center</description>
     <properties>
         <java.version>17</java.version>
-        <spring-cloud.version>2025.0.0</spring-cloud.version>
-        <euler-boot.version>1.0.0.M1.JDK17-SNAPSHOT</euler-boot.version>
+        <spring-cloud.version>2025.1.1</spring-cloud.version>
+        <euler-boot.version>2.0.0-SNAPSHOT</euler-boot.version>
 
         <apt-maven-plugin.version>1.1.3</apt-maven-plugin.version>
     </properties>
