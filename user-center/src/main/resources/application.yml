@@ -1,0 +1,102 @@
+spring:
+  application:
+    name: user-center
+  datasource:
+    url: jdbc:mysql://localhost:3306/euler_uc
+    username: root
+  jpa:
+    hibernate:
+      ddl-auto: none
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  messages:
+    basename: classpath*:language/**/*
+    use-code-as-default-message: true
+  security:
+    oauth2:
+      authorizationserver:
+        client:
+          default:
+            registration:
+              client-id: default
+              client-secret: '{noop}123'
+              client-authentication-methods:
+                - client_secret_basic
+              authorization-grant-types:
+                - authorization_code
+                - password
+                - refresh_token
+                - urn:ietf:params:oauth:grant-type:device_code
+                - wechat_authorization_code
+              scopes:
+                - openid
+              redirect-uris:
+                - http://localhost:8080/code
+            require-authorization-consent: true
+            token:
+              access-token-time-to-live: 5m
+              refresh-token-time-to-live: 7d
+              reuse-refresh-tokens: false
+          admin:
+            require-proof-key: true
+            registration:
+              client-id: admin
+              client-secret: '{noop}admin'
+              client-authentication-methods:
+                - none
+              authorization-grant-types:
+                - authorization_code
+              redirect-uris:
+                - http://localhost:3000/callback
+              scopes:
+                - openid
+                - granted-authorities
+            token:
+              access-token-time-to-live: 1h
+
+euler:
+  application:
+    runtime-path: @basedir@/var/run
+    temp-path: @basedir@/var/tmp
+  copyright:
+    holder:
+      website: 'http://www.eulerproject.io'
+      name: 'Euler Projects'
+  web:
+    site:
+      name: 'Euler Projects'
+    page:
+      show-stack-trace: true
+  security:
+    web:
+      enabled: true
+      endpoint:
+        csrf:
+          enabled: true
+        user:
+          login-page: /signin
+          login-processing-url: /doLogin
+          logout-page: /signout
+          logout-processing-url: /doLogout
+        password:
+          enabled: true
+          change-password-page: /change-pw
+          change-password-processing-url: /doChangePw
+        signup:
+          enabled: true
+          signup-page: /create-account
+          signup-processing-url: /doSignup
+    oauth2:
+      authorizationserver:
+        authorization-store-type: redis
+        redis-key-prefix: 'euler:oauth2:auth'
+      resourceserver:
+        url-patterns:
+          - /api/**
+server:
+  error:
+    include-stacktrace: always
+    include-message: always
+    include-exception: true

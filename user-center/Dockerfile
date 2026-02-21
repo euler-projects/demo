@@ -1,5 +1,16 @@
-FROM tomcat:9-jdk8
+FROM openjdk:17.0.2
 
-RUN rm -rf ${CATALINA_HOME}/webapps/*
+RUN mkdir /app
 
-COPY target/uc*.war ${CATALINA_HOME}/webapps/ROOT.war
+COPY target/*.jar /app/app.jar
+COPY run.sh /app/run.sh
+
+RUN chmod -R 755 /app
+
+EXPOSE 8080
+
+WORKDIR /app
+
+ENTRYPOINT [ "./run.sh" ]
+
+# docker buildx build --platform linux/amd64,linux/arm64 --builder container-builder -t registry.cn-shenzhen.aliyuncs.com/euler-project/user-center:1.0.0 --push .

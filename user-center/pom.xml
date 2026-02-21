@@ -1,288 +1,186 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.eulerframework.demo</groupId>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.5.8</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+    <groupId>org.eulerframework</groupId>
     <artifactId>user-center</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
-    <packaging>war</packaging>
-
+    <version>0.0.1-SNAPSHOT</version>
+    <name>user-center</name>
+    <description>user-center</description>
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        
-        <java.version>1.8</java.version>
-        <maven.compiler.source>${java.version}</maven.compiler.source>
-        <maven.compiler.target>${java.version}</maven.compiler.target>
-        
-        <jsp.version>2.2</jsp.version>
-        <servlet.version>3.0.1</servlet.version>
-        
-        <euler-common.version>1.0.0.M7-SNAPSHOT</euler-common.version>
-        <euler-framework.version>1.0.0.M7-SNAPSHOT</euler-framework.version>
-        <euler-framework-pages.version>1.0.0.M7.EASYUI-SNAPSHOT</euler-framework-pages.version>
-        
-        <mvn.buildtimestamp>${maven.build.timestamp}</mvn.buildtimestamp>
+        <java.version>17</java.version>
+        <spring-cloud.version>2025.0.0</spring-cloud.version>
+        <euler-boot.version>1.0.0.M1.JDK17-SNAPSHOT</euler-boot.version>
 
-        <lettuce.version>5.1.8.RELEASE</lettuce.version>
-        <mysqljdbc.version>5.1.38</mysqljdbc.version>
-
-        <log4j.version>1.2.17</log4j.version>
-        <log4j2.version>2.5</log4j2.version>
-        <jboss.logging.version>3.3.0.Final</jboss.logging.version>
-        <commons-logging.version>1.2</commons-logging.version>
+        <apt-maven-plugin.version>1.1.3</apt-maven-plugin.version>
     </properties>
-    
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-authorization-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-config</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thymeleaf.extras</groupId>
+            <artifactId>thymeleaf-extras-springsecurity6</artifactId>
+        </dependency>
+        <!--        <dependency>-->
+        <!--            <groupId>org.springframework.cloud</groupId>-->
+        <!--            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>-->
+        <!--        </dependency>-->
+
+        <dependency>
+            <groupId>org.eulerframework.boot</groupId>
+            <artifactId>spring-boot-starter-euler-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eulerframework.boot</groupId>
+            <artifactId>spring-boot-starter-euler-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eulerframework.boot</groupId>
+            <artifactId>spring-boot-starter-euler-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eulerframework.boot</groupId>
+            <artifactId>spring-boot-starter-euler-oauth2-authorization-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eulerframework.boot</groupId>
+            <artifactId>spring-boot-starter-euler-oauth2-resource-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eulerframework</groupId>
+            <artifactId>euler-common-util-extra</artifactId>
+            <version>1.0.0.M7.JDK11-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.querydsl</groupId>
+            <artifactId>querydsl-jpa</artifactId>
+            <version>${querydsl.version}</version>
+            <classifier>jakarta</classifier>
+        </dependency>
+
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
     <dependencyManagement>
         <dependencies>
-            <!-- J2EE -->
             <dependency>
-                <groupId>javax.servlet</groupId>
-                <artifactId>javax.servlet-api</artifactId>
-                <scope>provided</scope>
-                <version>${servlet.version}</version>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
             <dependency>
-                <groupId>javax.servlet.jsp</groupId>
-                <artifactId>jsp-api</artifactId>
-                <scope>provided</scope>
-                <version>${jsp.version}</version>
-            </dependency>
-        
-            <dependency>
-                <groupId>org.eulerframework</groupId>
-                <artifactId>euler-web-core-pages</artifactId>
-                <version>${euler-framework-pages.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eulerframework</groupId>
-                <artifactId>euler-web-authentication-pages</artifactId>
-                <version>${euler-framework-pages.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.eulerframework</groupId>
-                <artifactId>euler-common-logging</artifactId>
-                <version>${euler-common.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eulerframework</groupId>
-                <artifactId>euler-web-authentication-impl-jpa</artifactId>
-                <version>${euler-framework.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.eulerframework</groupId>
-                <artifactId>euler-web-oauth2-server</artifactId>
-                <version>${euler-framework.version}</version>
-            </dependency>
-    
-            <dependency>
-                <groupId>org.eulerframework</groupId>
-                <artifactId>euler-web-oauth2-util</artifactId>
-                <version>${euler-framework.version}</version>
+                <groupId>org.eulerframework.boot</groupId>
+                <artifactId>euler-boot-dependencies</artifactId>
+                <version>${euler-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
 
-    <dependencies>
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>javax.servlet.jsp</groupId>
-            <artifactId>jsp-api</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.security.oauth</groupId>
-            <artifactId>spring-security-oauth2</artifactId>
-            <version>2.3.4.RELEASE</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.springframework</groupId>
-                    <artifactId>spring-core</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.springframework</groupId>
-                    <artifactId>spring-context</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.springframework</groupId>
-                    <artifactId>spring-beans</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.springframework</groupId>
-                    <artifactId>spring-webmvc</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.springframework.security</groupId>
-                    <artifactId>spring-security-core</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.springframework.security</groupId>
-                    <artifactId>spring-security-config</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.springframework.security</groupId>
-                    <artifactId>spring-security-web</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>commons-codec</groupId>
-                    <artifactId>commons-codec</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>org.eulerframework</groupId>
-            <artifactId>euler-web-core-pages</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eulerframework</groupId>
-            <artifactId>euler-web-authentication-pages</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.eulerframework</groupId>
-            <artifactId>euler-web-authentication-impl-jpa</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.eulerframework</groupId>
-            <artifactId>euler-web-oauth2-server</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.eulerframework</groupId>
-            <artifactId>euler-web-oauth2-util</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>io.lettuce</groupId>
-            <artifactId>lettuce-core</artifactId>
-            <version>${lettuce.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>${mysqljdbc.version}</version>
-        </dependency>
-
-        <!-- Loggers -->
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>${log4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.logging</groupId>
-            <artifactId>jboss-logging</artifactId>
-            <version>${jboss.logging.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-            <version>${commons-logging.version}</version>
-        </dependency>
-
-        <!-- 核心log4j2jar包 -->
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-api</artifactId>
-            <version>${log4j2.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
-            <version>${log4j2.version}</version>
-        </dependency>
-        <!-- 用于与slf4j保持桥接 -->
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-slf4j-impl</artifactId>
-            <version>${log4j2.version}</version>
-        </dependency>
-        <!-- web工程需要包含log4j-web，非web工程不需要 -->
-        <!-- <dependency> <groupId>org.apache.logging.log4j</groupId> <artifactId>log4j-web</artifactId> <version>${log4j2.version}</version> 
-            <scope>runtime</scope> </dependency> -->
-
-        <!-- 需要使用log4j2的AsyncLogger需要包含disruptor -->
-        <!-- <dependency> <groupId>com.lmax</groupId> <artifactId>disruptor</artifactId> <version>3.2.0</version> </dependency> -->
-    </dependencies>
-
     <build>
-        <resources>
-            <resource>
-                <directory>${project.basedir}/src/main/resources</directory>
-                <filtering>true</filtering>
-            </resource>
-        </resources>
-        <testResources>
-            <testResource>
-                <directory>${project.basedir}/src/test/resources</directory>
-                <filtering>true</filtering>
-            </testResource>
-        </testResources>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>com.mysema.maven</groupId>
+                <artifactId>apt-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>com.mysema.maven</groupId>
+                    <artifactId>apt-maven-plugin</artifactId>
+                    <version>${apt-maven-plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>process</goal>
+                            </goals>
+                            <configuration>
+                                <outputDirectory>target/generated-sources/java</outputDirectory>
+                                <processor>com.querydsl.apt.jpa.JPAAnnotationProcessor</processor>
+                            </configuration>
+                        </execution>
+                    </executions>
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.querydsl</groupId>
+                            <artifactId>querydsl-apt</artifactId>
+                            <version>${querydsl.version}</version>
+                            <classifier>jakarta</classifier>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
 
-    <profiles>
-        <profile>
-            <id>develop</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-
-            <dependencies>
-                <dependency>
-                    <groupId>org.eulerframework.uc.plugins</groupId>
-                    <artifactId>euler-uc-plugin-alicloud-sms</artifactId>
-                    <version>1.0.0-SNAPSHOT</version>
-                </dependency>
-            </dependencies>
-
-            <properties>
-                <mvn.mode>debug</mvn.mode>
-                <mvn.log.level>info</mvn.log.level>
-                <mvn.db.showsql>true</mvn.db.showsql>
-                <mvn.web.site.url>http://localhost:8080</mvn.web.site.url>
-                <mvn.security.signup.enableMobileAutoSignup>false</mvn.security.signup.enableMobileAutoSignup>
-                <mvn.security.signup.enableInterestingUsernamePrefix>true</mvn.security.signup.enableInterestingUsernamePrefix>
-            </properties>
-            <build>
-                <finalName>uc</finalName>
-            </build>
-        </profile>
-        <profile>
-            <id>release</id>
-            <properties>
-                <mvn.mode>release</mvn.mode>
-                <mvn.log.level>warn</mvn.log.level>
-                <mvn.db.showsql>false</mvn.db.showsql>
-                <mvn.web.site.url>http://localhost:8080</mvn.web.site.url>
-                <mvn.security.signup.enableMobileAutoSignup>false</mvn.security.signup.enableMobileAutoSignup>
-                <mvn.security.signup.enableInterestingUsernamePrefix>true</mvn.security.signup.enableInterestingUsernamePrefix>
-            </properties>
-            <build>
-                <finalName>uc-web-${project.version}-release</finalName>
-            </build>
-        </profile>
-    </profiles>
-
-    <repositories>
-        <repository>
-            <id>euler-snapshots</id>
-            <name>Euler Snapshots</name>
-            <url>https://repo.eulerproject.io/repository/maven-snapshots/</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
 </project>
