@@ -1,6 +1,11 @@
 spring:
   application:
     name: user-center
+  web:
+    error:
+      include-stacktrace: always
+      include-message: always
+      include-exception: true
   datasource:
     url: jdbc:mysql://localhost:3306/euler_uc
     username: root
@@ -45,16 +50,28 @@ spring:
               client-id: admin
               client-secret: '{noop}admin'
               client-authentication-methods:
-                - none
+                - client_secret_basic
               authorization-grant-types:
                 - authorization_code
+                - refresh_token
               redirect-uris:
-                - http://localhost:3000/callback
+                - http://localhost:3000/auth/callback
+                - http://localhost:3000/admin/auth/callback
               scopes:
                 - openid
-                - granted-authorities
+                - profile
+                - email
+                - phone
+                - authorities
+              post-logout-redirect-uris:
+                - http://localhost:3000
+                - http://localhost:3000/admin
             token:
               access-token-time-to-live: 1h
+
+logging:
+  level:
+    org.eulerframework.common.http.JdkHttpClientTemplate: TRACE
 
 euler:
   application:
@@ -95,8 +112,3 @@ euler:
       resourceserver:
         url-patterns:
           - /api/**
-server:
-  error:
-    include-stacktrace: always
-    include-message: always
-    include-exception: true

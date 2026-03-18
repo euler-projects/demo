@@ -1,4 +1,0 @@
-euler:
-  application:
-    runtime-path: /var/lib/${spring.application.name}
-    temp-path: /var/tmp/${spring.application.name}
