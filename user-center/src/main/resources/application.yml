@@ -54,6 +54,8 @@ spring:
               authorization-grant-types:
                 - authorization_code
                 - refresh_token
+                - apple_app_attest_attestation
+                - apple_app_attest_assertion
               redirect-uris:
                 - http://localhost:3000/auth/callback
                 - http://localhost:3000/admin/auth/callback
@@ -72,6 +74,7 @@ spring:
 logging:
   level:
     org.eulerframework.common.http.JdkHttpClientTemplate: TRACE
+    org.springframework.security.authentication.ProviderManager: DEBUG
 
 euler:
   application:
@@ -109,6 +112,12 @@ euler:
       authorizationserver:
         authorization-store-type: redis
         redis-key-prefix: 'euler:oauth2:auth'
+        apple-app-attest:
+          enabled: true
+          auto-create-user-if-not-exists: true
+          allow-development-environment: true
+          team-id: 2LP82WL749
+          bundle-id: org.eulerframework.AppAttestDemo
       resourceserver:
         url-patterns:
           - /api/**

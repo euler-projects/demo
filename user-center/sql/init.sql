@@ -92,3 +92,18 @@ create table t_wechat_user_mapping
   default character set utf8mb4
   default collate utf8mb4_bin
     comment '微信用户到本地用户映射表';
+
+create table t_apple_app_attest_user_mapping
+(
+    key_id        varchar(255) not null comment 'Apple App Attest Key ID',
+    user_id       varchar(36)  not null,
+    team_id       varchar(20)  not null comment 'Apple Developer Team ID',
+    bundle_id     varchar(255) not null comment 'App Bundle ID',
+    created_date  datetime(3)  not null comment '资源创建时间',
+    modified_date datetime(3)  not null comment '资源最后修改时间',
+    primary key (key_id),
+    unique uk_apple_app_attest_user_mapping_user_id (user_id)
+) engine = innodb
+  default character set utf8mb4
+  default collate utf8mb4_bin
+    comment 'Apple App Attest设备到本地用户映射表';

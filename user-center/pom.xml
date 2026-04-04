@@ -96,6 +96,12 @@
             <classifier>jakarta</classifier>
         </dependency>
 
+        <!-- Required for Apple App Attest Validation -->
+        <dependency>
+            <groupId>tools.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-cbor</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>

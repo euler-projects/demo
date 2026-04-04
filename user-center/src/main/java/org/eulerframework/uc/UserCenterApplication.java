@@ -1,6 +1,8 @@
 package org.eulerframework.uc;
 
 import org.eulerframework.common.util.StringUtils;
+import org.eulerframework.security.authentication.ChallengeService;
+import org.eulerframework.security.authentication.InMemoryChallengeService;
 import org.eulerframework.security.oauth2.core.oidc.EulerOidcScopes;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -49,6 +51,11 @@ public class UserCenterApplication {
         filterRegistrationBean.setFilter(new CorsFilter(source));
         filterRegistrationBean.setOrder(Ordered.HIGHEST_PRECEDENCE);
         return filterRegistrationBean;
+    }
+
+    @Bean
+    public ChallengeService challengeService() {
+        return new InMemoryChallengeService();
     }
 
 

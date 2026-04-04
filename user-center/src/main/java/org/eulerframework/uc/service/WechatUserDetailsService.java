@@ -1,7 +1,7 @@
 package org.eulerframework.uc.service;
 
 import org.eulerframework.common.util.StringUtils;
-import org.eulerframework.security.authentication.WechatUser;
+import org.eulerframework.security.authentication.wechat.WechatUser;
 import org.eulerframework.security.core.userdetails.EulerUserDetails;
 import org.eulerframework.security.core.userdetails.EulerWechatUserDetailsService;
 import org.eulerframework.security.core.userdetails.UserDetailsNotFountException;
