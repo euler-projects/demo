@@ -2,8 +2,6 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var logEntries: [LogEntry] = []
-    @State private var clientId = ""
-    @State private var clientSecret = ""
     @State private var isLoading = false
     @State private var loadingAction = ""
     @State private var refreshId = UUID()
@@ -13,7 +11,6 @@ struct ContentView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 16) {
-                        credentialsSection
                         actionsSection
                         tokenStateSection
                         deviceInfoSection
@@ -40,29 +37,6 @@ struct ContentView: View {
 
     // MARK: - Sections
 
-    private var credentialsSection: some View {
-        GroupBox {
-            VStack(spacing: 8) {
-                TextField("Client ID", text: $clientId)
-                    .textFieldStyle(.roundedBorder)
-                    .textInputAutocapitalization(.never)
-                    .disableAutocorrection(true)
-                SecureField("Client Secret", text: $clientSecret)
-                    .textFieldStyle(.roundedBorder)
-                Button {
-                    saveCredentials()
-                } label: {
-                    Label("Save Credentials", systemImage: "key.fill")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-            }
-            .padding(.top, 8)
-        } label: {
-            Label("Client Credentials", systemImage: "person.badge.key")
-        }
-    }
-
     private var actionsSection: some View {
         GroupBox {
             VStack(spacing: 10) {
@@ -70,17 +44,18 @@ struct ContentView: View {
                     let challenge = try await OAuthTokenManager.shared.fetchChallenge()
                     return "Challenge: \(challenge)"
                 }
-                actionButton("Attestation Login", icon: "checkmark.shield", hint: "初次注册") {
+                actionButton("Attestation", icon: "checkmark.shield", hint: "初次注册") {
                     let challenge = try await OAuthTokenManager.shared.fetchChallenge()
-                    let token = try await OAuthTokenManager.shared.authenticateWithAppAttestAttestation(challenge: challenge)
+                    let token = try await OAuthTokenManager.shared.attestAndGetToken(challenge: challenge)
                     return formatTokenResult(token)
                 }
-                actionButton("Assertion Login", icon: "arrow.triangle.2.circlepath", hint: "已注册设备") {
+                actionButton("Assertion Renew", icon: "arrow.triangle.2.circlepath", hint: "续期") {
                     let challenge = try await OAuthTokenManager.shared.fetchChallenge()
-                    let token = try await OAuthTokenManager.shared.authenticateWithAppAttestAssertion(challenge: challenge)
+                    let token = try await OAuthTokenManager.shared.renewWithAssertion(challenge: challenge)
                     return formatTokenResult(token)
                 }
-                actionButton("Refresh Token", icon: "arrow.clockwise") {
+                // ⚠️ Refresh Token仅机密客户端可用, 本 Demo为公共客户端模式, 服务端不会签发refresh_token
+                actionButton("Refresh Token", icon: "arrow.clockwise", hint: "仅机密客户端") {
                     let token = try await OAuthTokenManager.shared.refreshAccessToken()
                     return formatTokenResult(token)
                 }
@@ -138,10 +113,10 @@ struct ContentView: View {
                 } else {
                     infoRow("Key ID", "Not generated")
                 }
-                if KeychainHelper.shared.read(forKey: "com.app.oauth.clientId") != nil {
-                    infoRow("Credentials", "✅ 已配置")
+                if let appId = OAuthTokenManager.appId {
+                    infoRow("App ID", appId)
                 } else {
-                    infoRow("Credentials", "⚠️ 未配置")
+                    infoRow("App ID", "⚠️ 检测失败")
                 }
             }
             .font(.system(.caption, design: .monospaced))
@@ -274,23 +249,6 @@ struct ContentView: View {
     }
 
     // MARK: - Actions
-
-    private func saveCredentials() {
-        let id = clientId.trimmingCharacters(in: .whitespacesAndNewlines)
-        let secret = clientSecret.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        guard !id.isEmpty, !secret.isEmpty else {
-            appendLog(title: "Save Credentials", message: "Client ID 和 Client Secret 不能为空", isError: true)
-            return
-        }
-
-        OAuthTokenManager.shared.configureClientCredentials(clientId: id, clientSecret: secret)
-        appendLog(
-            title: "Save Credentials",
-            message: "Client ID: \(String(id.prefix(8)))\(id.count > 8 ? "..." : "")\n已安全存储到 Keychain"
-        )
-        refreshId = UUID()
-    }
 
     private func performAsync(_ title: String, action: @escaping () async throws -> String) {
         isLoading = true

@@ -54,8 +54,6 @@ spring:
               authorization-grant-types:
                 - authorization_code
                 - refresh_token
-                - apple_app_attest_attestation
-                - apple_app_attest_assertion
               redirect-uris:
                 - http://localhost:3000/auth/callback
                 - http://localhost:3000/admin/auth/callback
@@ -70,6 +68,18 @@ spring:
                 - http://localhost:3000/admin
             token:
               access-token-time-to-live: 1h
+          app-attest-demo:
+            registration:
+              client-id: 2LP82WL749.org.eulerframework.AppAttestDemo
+              client-authentication-methods:
+                - none
+              authorization-grant-types:
+                - apple_app_attest_attestation
+                - apple_app_attest_assertion
+              scopes:
+                - openid
+            token:
+              access-token-time-to-live: 7d
 
 logging:
   level:
@@ -116,8 +126,10 @@ euler:
           enabled: true
           auto-create-user-if-not-exists: true
           allow-development-environment: true
-          team-id: 2LP82WL749
-          bundle-id: org.eulerframework.AppAttestDemo
+          apps:
+            app-attest-demo:
+              team-id: 2LP82WL749
+              bundle-id: org.eulerframework.AppAttestDemo
       resourceserver:
         url-patterns:
           - /api/**

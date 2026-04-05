@@ -1,4 +1,5 @@
 import Foundation
+import Security
 
 // MARK: - Models
 
@@ -36,7 +37,7 @@ enum AppAttestError: LocalizedError {
     case noRefreshToken
     case invalidURL
     case invalidResponse
-    case clientCredentialsNotConfigured
+    case appIdDetectionFailed
     case serverError(statusCode: Int, error: String, description: String?)
     
     var errorDescription: String? {
@@ -51,8 +52,8 @@ enum AppAttestError: LocalizedError {
             return "Invalid token endpoint URL."
         case .invalidResponse:
             return "Invalid server response."
-        case .clientCredentialsNotConfigured:
-            return "Client credentials not configured. Call configureClientCredentials() first."
+        case .appIdDetectionFailed:
+            return "Failed to detect App ID (teamId.bundleId). Ensure the app is properly signed."
         case .serverError(let statusCode, let error, let description):
             return "Server error (\(statusCode)): \(error) - \(description ?? "")"
         }
@@ -67,16 +68,10 @@ class OAuthTokenManager {
     private let tokenEndpoint = "http://192.168.50.40:8080/oauth2/token"
     private let challengeEndpoint = "http://192.168.50.40:8080/oauth2/challenge"
     
-    /// ⚠️ 安全警告: Client ID和Client Secret是OAuth2客户端凭证
-    /// **绝对不要**在源码中硬编码这些值, 原因:
-    /// 1. 源码可被反编译(class-dump、Hopper等), 硬编码的字符串可被直接提取
-    /// 2. 泄露的Client Secret可被用于伪造客户端身份, 冒充合法APP请求Token
-    /// 3. 一旦泄露需要服务端轮换密钥, 并强制所有用户更新APP
-    ///
-    /// 正确做法: 在APP首次配置时将凭证安全地写入Keychain, 后续从Keychain读取
-    /// 凭证来源可以是: 服务端下发、编译期注入(如Xcode Build Configuration + 混淆)等
-    private static let clientIdKeychainKey = "com.app.oauth.clientId"
-    private static let clientSecretKeychainKey = "com.app.oauth.clientSecret"
+    /// App ID (teamId.bundleId), 运行时通过Keychain访问组自动检测
+    /// 用作OAuth2公共客户端的client_id, 无需手动配置
+    /// 公共客户端无需Client Secret, 设备身份通过Apple App Attest硬件级证明来保证
+    static let appId: String? = detectAppId()
     
     /// Token在Keychain中的存储键名
     /// Access Token和Refresh Token必须存储在Keychain中, 因为:
@@ -100,15 +95,6 @@ class OAuthTokenManager {
         loadTokenFromKeychain()
     }
     
-    /// 配置客户端凭证(应在APP首次启动或配置时调用)
-    /// - Parameters:
-    ///   - clientId: OAuth2 Client ID
-    ///   - clientSecret: OAuth2 Client Secret
-    func configureClientCredentials(clientId: String, clientSecret: String) {
-        _ = KeychainHelper.shared.save(clientId, forKey: Self.clientIdKeychainKey)
-        _ = KeychainHelper.shared.save(clientSecret, forKey: Self.clientSecretKeychainKey)
-    }
-    
     /// 从服务端获取一次性challenge
     /// - Returns: challenge字符串
     func fetchChallenge() async throws -> String {
@@ -116,16 +102,14 @@ class OAuthTokenManager {
             throw AppAttestError.invalidURL
         }
         
-        guard let clientId = KeychainHelper.shared.read(forKey: Self.clientIdKeychainKey),
-              let clientSecret = KeychainHelper.shared.read(forKey: Self.clientSecretKeychainKey) else {
-            throw AppAttestError.clientCredentialsNotConfigured
+        guard let appId = Self.appId else {
+            throw AppAttestError.appIdDetectionFailed
         }
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        let credentials = "\(clientId):\(clientSecret)"
-        let base64Credentials = Data(credentials.utf8).base64EncodedString()
-        request.setValue("Basic \(base64Credentials)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        request.httpBody = "client_id=\(appId)".data(using: .utf8)
         
         lastRequestInfo = RequestInfo(request: request)
         
@@ -153,9 +137,10 @@ class OAuthTokenManager {
     }
     
     /// 使用Apple App Attest获取OAuth Token(初次注册 - Attestation)
+    /// 这是获取Token的唯一入口, 设备必须先通过Attestation完成注册
     /// - Parameter challenge: 服务端下发的challenge字符串
     /// - Returns: OAuthTokenResponse
-    func authenticateWithAppAttestAttestation(challenge: String) async throws -> OAuthTokenResponse {
+    func attestAndGetToken(challenge: String) async throws -> OAuthTokenResponse {
         let attestManager = AppAttestManager.shared
         
         guard attestManager.isSupported else {
@@ -183,17 +168,18 @@ class OAuthTokenManager {
         // 4. 发送Token请求
         let token = try await requestToken(params: params)
         
-        // 5. 服务端验证成功后才将Key ID存入Keychain, 供后续Assertion流程使用
+        // 5. 服务端验证成功后才将Key ID存入Keychain, 供后续Assertion续期使用
         attestManager.saveKeyId(keyId)
         
         saveToken(token)
         return token
     }
 
-    /// 使用Apple App Attest Assertion获取OAuth Token(已注册设备重新认证)
+    /// 使用Apple App Attest Assertion续期Token(已注册设备)
+    /// 公共客户端不会收到refresh_token, Assertion是公共客户端的续期手段
     /// - Parameter challenge: 服务端下发的challenge字符串
     /// - Returns: OAuthTokenResponse
-    func authenticateWithAppAttestAssertion(challenge: String) async throws -> OAuthTokenResponse {
+    func renewWithAssertion(challenge: String) async throws -> OAuthTokenResponse {
         let attestManager = AppAttestManager.shared
 
         guard attestManager.isSupported else {
@@ -226,6 +212,8 @@ class OAuthTokenManager {
     }
 
     /// 使用Refresh Token续期
+    /// ⚠️ 仅机密客户端会收到refresh_token, 本 Demo 使用公共客户端模式, 服务端不会签发refresh_token,
+    /// 因此正常情况下此方法不会被调用. 保留代码以供机密客户端场景参考.
     func refreshAccessToken() async throws -> OAuthTokenResponse {
         guard let refreshToken = currentToken?.refreshToken else {
             throw AppAttestError.noRefreshToken
@@ -241,8 +229,9 @@ class OAuthTokenManager {
         return token
     }
     
-    /// 获取有效的Access Token, 必要时自动续期或重新认证
-    /// 优先尝试Refresh Token续期, 其次尝试Assertion重新认证, 最后回退到Attestation
+    /// 获取有效的Access Token, 必要时自动续期或重新注册
+    /// 续期策略(公共客户端): Assertion续期 > Attestation重新注册
+    /// 续期策略(机密客户端): Refresh Token > Assertion回退 > Attestation重新注册
     /// 注意: challenge是一次性的, 每次认证尝试需要获取新的challenge, 因此本方法内部按需获取
     func getValidAccessToken() async throws -> String {
         if let token = currentToken,
@@ -251,31 +240,31 @@ class OAuthTokenManager {
             return token.accessToken
         }
         
-        // 尝试用Refresh Token续期(不需要challenge)
+        // 1. 如果持有refresh_token, 优先使用(仅机密客户端场景, 公共客户端不会进入此分支)
         if currentToken?.refreshToken != nil {
             do {
                 let token = try await refreshAccessToken()
                 return token.accessToken
             } catch {
-                // Refresh Token也失效了, 尝试Assertion或Attestation重新认证
+                // Refresh Token已失效, 回退到Assertion
             }
         }
 
-        // 尝试用Assertion重新认证(如果已有Key ID)
-        // ⚠️ 每次认证都必须获取新的challenge, challenge是一次性的, 使用后立即失效
+        // 2. 使用Assertion续期(公共客户端的主要续期手段)
+        // ⚠️ 每次续期都必须获取新的challenge, challenge是一次性的, 使用后立即失效
         if AppAttestManager.shared.getExistingKeyId() != nil {
             do {
                 let challenge = try await fetchChallenge()
-                let token = try await authenticateWithAppAttestAssertion(challenge: challenge)
+                let token = try await renewWithAssertion(challenge: challenge)
                 return token.accessToken
             } catch {
-                // Assertion失败, 回退到Attestation
+                // Assertion也失败, 尝试重新注册
             }
         }
 
-        // 最后回退到Attestation(初次注册), 需要获取新的challenge
+        // 3. 最后回退到Attestation重新注册
         let challenge = try await fetchChallenge()
-        let token = try await authenticateWithAppAttestAttestation(challenge: challenge)
+        let token = try await attestAndGetToken(challenge: challenge)
         return token.accessToken
     }
     
@@ -318,21 +307,17 @@ class OAuthTokenManager {
             throw AppAttestError.invalidURL
         }
         
-        // 从Keychain读取客户端凭证
-        guard let clientId = KeychainHelper.shared.read(forKey: Self.clientIdKeychainKey),
-              let clientSecret = KeychainHelper.shared.read(forKey: Self.clientSecretKeychainKey) else {
-            throw AppAttestError.clientCredentialsNotConfigured
+        guard let appId = Self.appId else {
+            throw AppAttestError.appIdDetectionFailed
         }
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         
-        // Client Basic Auth
-        let credentials = "\(clientId):\(clientSecret)"
-        let credentialsData = Data(credentials.utf8)
-        let base64Credentials = credentialsData.base64EncodedString()
-        request.setValue("Basic \(base64Credentials)", forHTTPHeaderField: "Authorization")
+        // 公共客户端: 将client_id作为表单参数发送, 无需Authorization头
+        var allParams = params
+        allParams["client_id"] = appId
         
         // Form body
         // ⚠️ 必须使用严格的字符集进行percent-encoding
@@ -340,7 +325,7 @@ class OAuthTokenManager {
         // +在form-urlencoded中代表空格, =是key-value分隔符, 不编码会导致服务端解析错误
         var formUrlEncodingAllowed = CharacterSet.alphanumerics
         formUrlEncodingAllowed.insert(charactersIn: "-._~")
-        let bodyString = params.map { "\($0.key)=\($0.value.addingPercentEncoding(withAllowedCharacters: formUrlEncodingAllowed) ?? $0.value)" }
+        let bodyString = allParams.map { "\($0.key)=\($0.value.addingPercentEncoding(withAllowedCharacters: formUrlEncodingAllowed) ?? $0.value)" }
             .joined(separator: "&")
         request.httpBody = bodyString.data(using: .utf8)
         
@@ -411,5 +396,33 @@ struct ResponseInfo {
     
     var summary: String {
         "HTTP \(statusCode)\n\(body)"
+    }
+}
+
+// MARK: - App ID Detection
+
+private extension OAuthTokenManager {
+    /// 通过Keychain访问组检测App ID
+    /// Keychain默认访问组格式即为 "<TeamID>.<BundleID>", 可直接用作OAuth2 client_id
+    static func detectAppId() -> String? {
+        let tempKey = "com.app.appIdDetection"
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: tempKey,
+            kSecValueData as String: Data("x".utf8),
+            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
+            kSecReturnAttributes as String: true
+        ]
+        SecItemDelete(query as CFDictionary)
+        var result: AnyObject?
+        let status = SecItemAdd(query as CFDictionary, &result)
+        defer { SecItemDelete(query as CFDictionary) }
+
+        guard status == errSecSuccess,
+              let dict = result as? [String: Any],
+              let accessGroup = dict[kSecAttrAccessGroup as String] as? String else {
+            return nil
+        }
+        return accessGroup
     }
 }
