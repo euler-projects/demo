@@ -1,9 +1,11 @@
 package org.eulerframework.uc;
 
+import org.eulerframework.boot.autoconfigure.support.security.oauth2.server.EulerBootAuthorizationServerAutoConfiguration;
 import org.eulerframework.common.util.StringUtils;
 import org.eulerframework.security.authentication.ChallengeService;
 import org.eulerframework.security.authentication.InMemoryChallengeService;
 import org.eulerframework.security.oauth2.core.oidc.EulerOidcScopes;
+import org.eulerframework.security.oauth2.server.authorization.config.annotation.web.configurers.EulerAuthorizationServerConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -32,7 +34,7 @@ import java.util.stream.Collectors;
 @EnableMethodSecurity
 public class UserCenterApplication {
 
-    public static void main(String[] args) {
+    static void main(String[] args) {
         SpringApplication.run(UserCenterApplication.class, args);
     }
 

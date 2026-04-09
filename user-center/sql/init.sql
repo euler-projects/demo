@@ -1,8 +1,8 @@
-create database if not exists euler_uc
+create database if not exists :schema_name
     default character set utf8mb4
     default collate utf8mb4_bin;
 
-use euler_uc;
+use :schema_name;
 
 create table t_user
 (
@@ -107,3 +107,40 @@ create table t_apple_app_attest_user_mapping
   default character set utf8mb4
   default collate utf8mb4_bin
     comment 'Apple App Attest设备到本地用户映射表';
+
+create table t_oauth2_client
+(
+    id                                              varchar(36)  not null,
+    client_id                                       varchar(255) not null,
+    client_id_issued_at                             datetime(3)  null,
+    client_secret                                   varchar(255) null,
+    client_secret_expires_at                        datetime(3)  null,
+    client_name                                     varchar(255) null,
+    token_endpoint_auth_method                      varchar(255) null,
+    authorization_grant_types                       varchar(255) not null,
+    response_types                                  varchar(255) null,
+    redirect_uris                                   varchar(255) null,
+    post_logout_redirect_uris                       varchar(255) null,
+    scopes                                          varchar(255) null,
+    jwks                                            text         null,
+    require_proof_key                               bit          null,
+    require_authorization_consent                   bit          null,
+    jwk_set_url                                     varchar(255) null,
+    token_endpoint_authentication_signing_algorithm varchar(255) null,
+    x509_certificate_subject_dn                     varchar(255) null,
+    authorization_code_time_to_live                 bigint       null,
+    access_token_time_to_live                       bigint       null,
+    access_token_format                             varchar(255) null,
+    device_code_time_to_live                        bigint       null,
+    reuse_refresh_tokens                            bit          null,
+    refresh_token_time_to_live                      bigint       null,
+    id_token_signature_algorithm                    varchar(255) null,
+    x509_certificate_bound_access_tokens            bit          null,
+    created_date                                    datetime(3)  not null comment '资源创建时间',
+    modified_date                                   datetime(3)  not null comment '资源最后修改时间',
+    primary key (id),
+    unique uk_oauth2_client_client_id (client_id)
+) engine = innodb
+  default character set utf8mb4
+  default collate utf8mb4_bin
+    comment 'OAuth2客户端表';
