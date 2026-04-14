@@ -68,7 +68,7 @@ euler:
     temp-path: @basedir@/var/tmp
   copyright:
     holder:
-      website: 'http://www.eulerproject.io'
+      website: 'https://www.eulerproject.io'
       name: 'Euler Projects'
   web:
     site:
