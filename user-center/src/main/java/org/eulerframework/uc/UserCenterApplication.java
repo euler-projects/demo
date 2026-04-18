@@ -20,6 +20,7 @@ import org.eulerframework.common.util.StringUtils;
 import org.eulerframework.security.authentication.ChallengeService;
 import org.eulerframework.security.authentication.InMemoryChallengeService;
 import org.eulerframework.security.oauth2.core.oidc.EulerOidcScopes;
+import org.eulerframework.security.webauthn.authentication.AppleAppAttestRootCA;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -68,12 +69,6 @@ public class UserCenterApplication {
         filterRegistrationBean.setOrder(Ordered.HIGHEST_PRECEDENCE);
         return filterRegistrationBean;
     }
-
-    @Bean
-    public ChallengeService challengeService() {
-        return new InMemoryChallengeService();
-    }
-
 
     private static final String PRINCIPAL_AUTHENTICATION_KEY = Authentication.class.getName().concat(".PRINCIPAL");
 

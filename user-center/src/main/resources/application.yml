@@ -94,6 +94,8 @@ euler:
           enabled: true
           signup-page: /create-account
           signup-processing-url: /doSignup
+    device-attest:
+      enabled: true
     oauth2:
       authorizationserver:
         authorization-store-type: redis

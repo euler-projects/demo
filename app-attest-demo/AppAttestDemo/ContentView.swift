@@ -5,26 +5,29 @@ struct ContentView: View {
     @State private var isLoading = false
     @State private var loadingAction = ""
     @State private var refreshId = UUID()
+    @State private var baseUrlInput: String = OAuthTokenManager.shared.baseUrl
+    @State private var baseUrlSaved = false
+    @FocusState private var isBaseUrlFocused: Bool
 
     var body: some View {
         NavigationView {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 16) {
-                        actionsSection
+                        serverConfigSection
+                        mainFlowSection
+                        auxiliarySection
                         tokenStateSection
                         deviceInfoSection
                         logSection
                     }
                     .padding()
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        isBaseUrlFocused = false
+                    }
                 }
                 .scrollDismissesKeyboard(.interactively)
-                .onTapGesture {
-                    UIApplication.shared.sendAction(
-                        #selector(UIResponder.resignFirstResponder),
-                        to: nil, from: nil, for: nil
-                    )
-                }
                 .onChange(of: logEntries.count) { _ in
                     if let lastId = logEntries.last?.id {
                         withAnimation { proxy.scrollTo(lastId, anchor: .bottom) }
@@ -37,36 +40,96 @@ struct ContentView: View {
 
     // MARK: - Sections
 
-    private var actionsSection: some View {
+    private var serverConfigSection: some View {
         GroupBox {
             VStack(spacing: 10) {
-                actionButton("Fetch Challenge", icon: "questionmark.circle") {
-                    let challenge = try await OAuthTokenManager.shared.fetchChallenge()
-                    return "Challenge: \(challenge)"
+                TextField("Base URL", text: $baseUrlInput)
+                    .textFieldStyle(.roundedBorder)
+                    .autocapitalization(.none)
+                    .disableAutocorrection(true)
+                    .keyboardType(.URL)
+                    .font(.system(.caption, design: .monospaced))
+                    .focused($isBaseUrlFocused)
+                HStack(spacing: 10) {
+                    Button {
+                        OAuthTokenManager.shared.baseUrl = baseUrlInput
+                        baseUrlSaved = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            baseUrlSaved = false
+                        }
+                    } label: {
+                        Label(baseUrlSaved ? "已保存" : "保存", systemImage: baseUrlSaved ? "checkmark.circle.fill" : "tray.and.arrow.down.fill")
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(baseUrlSaved ? .green : .accentColor)
+                    Button {
+                        baseUrlInput = OAuthTokenManager.defaultBaseUrl
+                        OAuthTokenManager.shared.baseUrl = OAuthTokenManager.defaultBaseUrl
+                    } label: {
+                        Label("重置默认", systemImage: "arrow.uturn.backward")
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.secondary)
+                    Spacer()
                 }
-                actionButton("Attestation", icon: "checkmark.shield", hint: "初次注册") {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Device Challenge:  .../device/challenge")
+                    Text("Device Attest:  .../device/attest")
+                    Text("OAuth Challenge:  .../oauth2/challenge")
+                    Text("OAuth Token:  .../oauth2/token")
+                }
+                .font(.system(size: 10, design: .monospaced))
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.top, 8)
+        } label: {
+            Label("Server", systemImage: "server.rack")
+        }
+    }
+
+    private var mainFlowSection: some View {
+        GroupBox {
+            VStack(spacing: 10) {
+                flowStep(1, label: "注册设备", description: "首次使用, 自动获取Challenge并完成Attestation")
+                actionButton("Register Device", icon: "iphone.and.arrow.forward") {
+                    let result = try await OAuthTokenManager.shared.registerDevice()
+                    return "Key ID: \(String(result.keyId.prefix(16)))...\nUsername: \(result.username)"
+                }
+                flowStep(2, label: "获取Token", description: "通过Assertion获取OAuth2 Token")
+                actionButton("Get Token (Device Assertion)", icon: "key.fill") {
                     let challenge = try await OAuthTokenManager.shared.fetchChallenge()
-                    let token = try await OAuthTokenManager.shared.attestAndGetToken(challenge: challenge)
+                    let token = try await OAuthTokenManager.shared.getTokenWithAssertion(challenge: challenge)
                     return formatTokenResult(token)
                 }
-                actionButton("Assertion Renew", icon: "arrow.triangle.2.circlepath", hint: "续期") {
-                    let challenge = try await OAuthTokenManager.shared.fetchChallenge()
-                    let token = try await OAuthTokenManager.shared.renewWithAssertion(challenge: challenge)
-                    return formatTokenResult(token)
-                }
-                // ⚠️ Refresh Token仅机密客户端可用, 本 Demo为公共客户端模式, 服务端不会签发refresh_token
-                actionButton("Refresh Token", icon: "arrow.clockwise", hint: "仅机密客户端") {
-                    let token = try await OAuthTokenManager.shared.refreshAccessToken()
-                    return formatTokenResult(token)
-                }
-                actionButton("Get Valid Token", icon: "bolt.fill", hint: "自动策略") {
+                flowStep(3, label: "续期 Token", description: "自动策略: Assertion获取新Token, 失败回退重新注册")
+                actionButton("Get Valid Token", icon: "checkmark.seal.fill") {
                     let accessToken = try await OAuthTokenManager.shared.getValidAccessToken()
                     return "Access Token: \(String(accessToken.prefix(20)))..."
                 }
             }
             .padding(.top, 8)
         } label: {
-            Label("Actions", systemImage: "play.circle")
+            Label("主流程", systemImage: "play.circle")
+        }
+        .disabled(isLoading)
+    }
+
+    private var auxiliarySection: some View {
+        GroupBox {
+            VStack(spacing: 10) {
+                actionButton("Fetch Attest Challenge", icon: "shield.lefthalf.filled", hint: "/device/challenge") {
+                    let challenge = try await OAuthTokenManager.shared.fetchAttestChallenge()
+                    return "Challenge: \(challenge)"
+                }
+                actionButton("Fetch OAuth Challenge", icon: "shield.lefthalf.filled", hint: "/oauth2/challenge") {
+                    let challenge = try await OAuthTokenManager.shared.fetchChallenge()
+                    return "Challenge: \(challenge)"
+                }
+            }
+            .padding(.top, 8)
+        } label: {
+            Label("辅助接口", systemImage: "wrench")
         }
         .disabled(isLoading)
     }
@@ -85,9 +148,6 @@ struct ContentView: View {
                         } else {
                             infoRow("有效期", "已过期")
                         }
-                    }
-                    if KeychainHelper.shared.read(forKey: "com.app.oauth.refreshToken") != nil {
-                        infoRow("Refresh Token", "✅ 已存储")
                     }
                 } else {
                     Text("未登录")
@@ -167,6 +227,25 @@ struct ContentView: View {
     }
 
     // MARK: - Sub Views
+
+    private func flowStep(_ step: Int, label: String, description: String) -> some View {
+        HStack(spacing: 8) {
+            Text("\(step)")
+                .font(.system(.caption2, design: .rounded).bold())
+                .foregroundColor(.white)
+                .frame(width: 20, height: 20)
+                .background(Circle().fill(Color.accentColor))
+            VStack(alignment: .leading, spacing: 1) {
+                Text(label)
+                    .font(.system(.caption, design: .default).bold())
+                Text(description)
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+            }
+            Spacer()
+        }
+        .padding(.top, step == 1 ? 0 : 4)
+    }
 
     private func actionButton(
         _ title: String, icon: String, hint: String? = nil,
@@ -254,6 +333,8 @@ struct ContentView: View {
         isLoading = true
         loadingAction = title
         let start = Date()
+        // 清除上次的请求/响应信息, 避免缓存命中时显示残留数据
+        OAuthTokenManager.shared.clearLastRequestInfo()
         Task {
             do {
                 let result = try await action()
@@ -306,9 +387,6 @@ struct ContentView: View {
         ]
         if let scope = token.scope {
             lines.append("Scope: \(scope)")
-        }
-        if token.refreshToken != nil {
-            lines.append("Refresh Token: ✅")
         }
         return lines.joined(separator: "\n")
     }
