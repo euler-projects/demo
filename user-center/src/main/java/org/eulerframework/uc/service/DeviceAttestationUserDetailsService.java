@@ -1,36 +1,36 @@
 package org.eulerframework.uc.service;
 
 import org.eulerframework.common.util.StringUtils;
-import org.eulerframework.security.authentication.apple.AppleAppAttestUser;
-import org.eulerframework.security.core.userdetails.EulerAppleAppAttestUserDetailsService;
+import org.eulerframework.security.authentication.device.DeviceAttestationUser;
+import org.eulerframework.security.core.userdetails.EulerDeviceAttestationUserDetailsService;
 import org.eulerframework.security.core.userdetails.EulerUserDetails;
 import org.eulerframework.security.core.userdetails.UserDetailsNotFountException;
 import org.eulerframework.security.util.UserDetailsUtils;
-import org.eulerframework.uc.entity.AppleAppAttestUserMappingEntity;
+import org.eulerframework.uc.entity.DeviceAttestationUserMappingEntity;
 import org.eulerframework.uc.model.User;
-import org.eulerframework.uc.repository.AppleAppAttestUserMappingRepository;
+import org.eulerframework.uc.repository.DeviceAttestationUserMappingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AppleAppAttestUserDetailsService implements EulerAppleAppAttestUserDetailsService {
+public class DeviceAttestationUserDetailsService implements EulerDeviceAttestationUserDetailsService {
 
-    private AppleAppAttestUserMappingRepository appleAppAttestUserMappingRepository;
+    private DeviceAttestationUserMappingRepository deviceAttestationUserMappingRepository;
 
     private UserService userService;
 
     @Override
-    public EulerUserDetails loadUserByAppleAppAttestUser(AppleAppAttestUser attestUser) {
-        return this.appleAppAttestUserMappingRepository.findByKeyId(attestUser.getKeyId())
-                .map(AppleAppAttestUserMappingEntity::getUserId)
+    public EulerUserDetails loadUserByAppleAppAttestUser(DeviceAttestationUser attestUser) {
+        return this.deviceAttestationUserMappingRepository.findByKeyId(attestUser.getKeyId())
+                .map(DeviceAttestationUserMappingEntity::getUserId)
                 .map(userId -> this.userService.loadUserById(userId))
                 .map(UserDetailsUtils::toEulerUserDetails)
                 .orElseThrow(() -> new UserDetailsNotFountException(attestUser.getKeyId()));
     }
 
     @Override
-    public EulerUserDetails createUser(AppleAppAttestUser attestUser) {
-        AppleAppAttestUserMappingEntity mappingEntity = new AppleAppAttestUserMappingEntity();
+    public EulerUserDetails createUser(DeviceAttestationUser attestUser) {
+        DeviceAttestationUserMappingEntity mappingEntity = new DeviceAttestationUserMappingEntity();
         mappingEntity.setKeyId(attestUser.getKeyId());
         mappingEntity.setTeamId(attestUser.getTeamId());
         mappingEntity.setBundleId(attestUser.getBundleId());
@@ -45,13 +45,13 @@ public class AppleAppAttestUserDetailsService implements EulerAppleAppAttestUser
         User createdUser = this.userService.createUser(userCreation);
 
         mappingEntity.setUserId(createdUser.getUserId());
-        this.appleAppAttestUserMappingRepository.save(mappingEntity);
+        this.deviceAttestationUserMappingRepository.save(mappingEntity);
         return UserDetailsUtils.toEulerUserDetails(createdUser);
     }
 
     @Autowired
-    public void setAppleAppAttestUserMappingRepository(AppleAppAttestUserMappingRepository appleAppAttestUserMappingRepository) {
-        this.appleAppAttestUserMappingRepository = appleAppAttestUserMappingRepository;
+    public void setAppleAppAttestUserMappingRepository(DeviceAttestationUserMappingRepository deviceAttestationUserMappingRepository) {
+        this.deviceAttestationUserMappingRepository = deviceAttestationUserMappingRepository;
     }
 
     @Autowired

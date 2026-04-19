@@ -7,8 +7,8 @@ import jakarta.persistence.Table;
 import org.eulerframework.data.entity.AuditingEntity;
 
 @Entity
-@Table(name = "t_apple_app_attest_user_mapping")
-public class AppleAppAttestUserMappingEntity extends AuditingEntity {
+@Table(name = "device_attestation_user_mapping")
+public class DeviceAttestationUserMappingEntity extends AuditingEntity {
     @Id
     @Column(name = "key_id")
     private String keyId;
