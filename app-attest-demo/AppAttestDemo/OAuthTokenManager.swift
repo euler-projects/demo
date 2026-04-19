@@ -269,7 +269,7 @@ class OAuthTokenManager {
 
         // 3. 构建请求参数(参数名按最新API文档: kid, assertion)
         let params: [String: String] = [
-            "grant_type": "urn:ietf:params:oauth:grant-type:device-assertion",
+            "grant_type": "urn:ietf:params:oauth:grant-type:device_assertion",
             "kid": keyId,
             "assertion": assertion,
             "challenge": challenge,
