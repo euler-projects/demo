@@ -352,7 +352,7 @@ class OAuthTokenManager {
         
         // 携带Assertion参数时, 添加PoP-Type头标识客户端证明方式
         if params["kid"] != nil && params["assertion"] != nil {
-            request.setValue("app-attest", forHTTPHeaderField: "OAuth-Client-Attestation-PoP-Type")
+            request.setValue("app-attest", forHTTPHeaderField: "OAuth-Client-Attestation-Type")
         }
         
         // Form body
