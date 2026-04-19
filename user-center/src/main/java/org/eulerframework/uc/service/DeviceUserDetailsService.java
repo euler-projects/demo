@@ -1,7 +1,7 @@
 package org.eulerframework.uc.service;
 
 import org.eulerframework.common.util.StringUtils;
-import org.eulerframework.security.authentication.device.DeviceUser;
+import org.eulerframework.security.authentication.appattest.DeviceAppUser;
 import org.eulerframework.security.core.userdetails.EulerDeviceUserDetailsService;
 import org.eulerframework.security.core.userdetails.EulerUserDetails;
 import org.eulerframework.security.core.userdetails.UserDetailsNotFountException;
@@ -20,23 +20,23 @@ public class DeviceUserDetailsService implements EulerDeviceUserDetailsService {
     private UserService userService;
 
     @Override
-    public EulerUserDetails loadUserByDeviceUser(DeviceUser deviceUser) {
-        return this.deviceUserMappingRepository.findByKeyId(deviceUser.getKeyId())
+    public EulerUserDetails loadUserByDeviceUser(DeviceAppUser deviceAppUser) {
+        return this.deviceUserMappingRepository.findByKeyId(deviceAppUser.getKeyId())
                 .map(DeviceUserMappingEntity::getUserId)
                 .map(userId -> this.userService.loadUserById(userId))
                 .map(UserDetailsUtils::toEulerUserDetails)
-                .orElseThrow(() -> new UserDetailsNotFountException(deviceUser.getKeyId()));
+                .orElseThrow(() -> new UserDetailsNotFountException(deviceAppUser.getKeyId()));
     }
 
     @Override
-    public EulerUserDetails createUser(DeviceUser deviceUser) {
+    public EulerUserDetails createUser(DeviceAppUser deviceAppUser) {
         DeviceUserMappingEntity mappingEntity = new DeviceUserMappingEntity();
-        mappingEntity.setKeyId(deviceUser.getKeyId());
-        mappingEntity.setTeamId(deviceUser.getTeamId());
-        mappingEntity.setBundleId(deviceUser.getBundleId());
+        mappingEntity.setKeyId(deviceAppUser.getKeyId());
+        mappingEntity.setTeamId(deviceAppUser.getTeamId());
+        mappingEntity.setBundleId(deviceAppUser.getBundleId());
 
         EulerUserDetails userDetails = EulerUserDetails.builder()
-                .username("attest_" + deviceUser.getKeyId().substring(0, Math.min(8, deviceUser.getKeyId().length())))
+                .username("attest_" + deviceAppUser.getKeyId().substring(0, Math.min(8, deviceAppUser.getKeyId().length())))
                 .password("{noop}" + StringUtils.randomString(32))
                 .authorities("user")
                 .build();

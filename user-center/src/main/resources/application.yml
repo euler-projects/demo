@@ -94,7 +94,7 @@ euler:
           enabled: true
           signup-page: /create-account
           signup-processing-url: /doSignup
-    device-attest:
+    app-attest:
       enabled: true
     oauth2:
       authorizationserver:
@@ -102,14 +102,6 @@ euler:
         redis-key-prefix: 'euler:oauth2:auth'
         dynamic-client-registration:
           enabled: true
-        apple-app-attest:
-          enabled: true
-          auto-create-user-if-not-exists: true
-          allow-development-environment: true
-          apps:
-            app-attest-demo:
-              team-id: 2LP82WL749
-              bundle-id: org.eulerframework.AppAttestDemo
       resourceserver:
         url-patterns:
           - /api/**

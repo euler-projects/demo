@@ -74,7 +74,7 @@ struct ContentView: View {
                 }
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Device Challenge:  .../device/challenge")
-                    Text("Device Attest:  .../device/attest")
+                    Text("App Attest:  .../device/register")
                     Text("OAuth Challenge:  .../oauth2/challenge")
                     Text("OAuth Token:  .../oauth2/token")
                 }
@@ -97,7 +97,7 @@ struct ContentView: View {
                     return "Key ID: \(String(result.keyId.prefix(16)))...\nUsername: \(result.username)"
                 }
                 flowStep(2, label: "获取Token", description: "通过Assertion获取OAuth2 Token")
-                actionButton("Get Token (Device Assertion)", icon: "key.fill") {
+                actionButton("Get Token (App Assertion)", icon: "key.fill") {
                     let challenge = try await OAuthTokenManager.shared.fetchChallenge()
                     let token = try await OAuthTokenManager.shared.getTokenWithAssertion(challenge: challenge)
                     return formatTokenResult(token)

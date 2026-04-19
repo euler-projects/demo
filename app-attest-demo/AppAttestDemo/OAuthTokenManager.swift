@@ -90,11 +90,11 @@ class OAuthTokenManager {
     private var tokenEndpoint: String { base + "oauth2/token" }
     private var challengeEndpoint: String { base + "oauth2/challenge" }
     private var attestChallengeEndpoint: String { base + "device/challenge" }
-    private var registerEndpoint: String { base + "device/attest" }
+    private var registerEndpoint: String { base + "device/register" }
     
     /// App ID (teamId.bundleId), 运行时通过Keychain访问组自动检测
     /// 仅用于UI展示和调试, 当前API不需要传递client_id
-    /// 设备身份通过Apple App Attest硬件级证明来保证, 服务端将其作为Device Attest的一种实现
+    /// 设备身份通过Apple App Attest硬件级证明来保证, 服务端将其作为App Attest的一种实现
     static let appId: String? = detectAppId()
     
     /// Token在Keychain中的存储键名
@@ -244,7 +244,7 @@ class OAuthTokenManager {
         }
     }
 
-    /// 使用Device Assertion获取Token(已注册设备)
+    /// 使用App Assertion获取Token(已注册设备)
     /// 设备注册成功后, 每次Token过期时通过Assertion重新获取Token
     /// 不使用refresh_token, 因为每次请求都需要完整的attestation验证, refresh_token无安全增益
     /// - Parameter challenge: 服务端下发的challenge字符串(来自 /oauth2/challenge)
@@ -269,7 +269,7 @@ class OAuthTokenManager {
 
         // 3. 构建请求参数(参数名按最新API文档: kid, assertion)
         let params: [String: String] = [
-            "grant_type": "urn:ietf:params:oauth:grant-type:device_assertion",
+            "grant_type": "urn:ietf:params:oauth:grant-type:app_assertion",
             "kid": keyId,
             "assertion": assertion,
             "challenge": challenge,
@@ -352,7 +352,7 @@ class OAuthTokenManager {
         
         // 携带Assertion参数时, 添加PoP-Type头标识客户端证明方式
         if params["kid"] != nil && params["assertion"] != nil {
-            request.setValue("app-attest", forHTTPHeaderField: "OAuth-Client-Attestation-Type")
+            request.setValue("apple_app_attest", forHTTPHeaderField: "OAuth-Client-Attestation-Type")
         }
         
         // Form body
