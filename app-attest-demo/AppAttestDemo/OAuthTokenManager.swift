@@ -85,12 +85,16 @@ class OAuthTokenManager {
     
     /// 拼接baseUrl与固定路径, 自动处理末尾斜杠
     private var base: String {
-        baseUrl.hasSuffix("/") ? baseUrl : baseUrl + "/"
+        var result = baseUrl
+        while result.hasSuffix("/") {
+            result.removeLast()
+        }
+        return result
     }
-    private var tokenEndpoint: String { base + "oauth2/token" }
-    private var challengeEndpoint: String { base + "oauth2/challenge" }
-    private var attestChallengeEndpoint: String { base + "device/challenge" }
-    private var registerEndpoint: String { base + "device/register" }
+    private var appAttestChallengeEndpoint: String { base + "/app_attest/challenge" }
+    private var appAttestRegisterEndpoint: String { base + "/app_attest/register" }
+    private var oauth2ChallengeEndpoint: String { base + "/oauth2/challenge" }
+    private var oauth2TokenEndpoint: String { base + "/oauth2/token" }
     
     /// App ID (teamId.bundleId), 运行时通过Keychain访问组自动检测
     /// 仅用于UI展示和调试, 当前API不需要传递client_id
@@ -126,14 +130,14 @@ class OAuthTokenManager {
     /// 对应接口: POST /oauth2/challenge, 无需认证, 无需请求体
     /// - Returns: challenge字符串
     func fetchChallenge() async throws -> String {
-        return try await fetchChallengeFrom(endpoint: challengeEndpoint)
+        return try await fetchChallengeFrom(endpoint: oauth2ChallengeEndpoint)
     }
 
     /// 从服务端获取一次性challenge(用于设备注册Attestation流程)
-    /// 对应接口: POST /device/challenge, 无需认证, 无需请求体
+    /// 对应接口: POST /app_attest/challenge, 无需认证, 无需请求体
     /// - Returns: challenge字符串
     func fetchAttestChallenge() async throws -> String {
-        return try await fetchChallengeFrom(endpoint: attestChallengeEndpoint)
+        return try await fetchChallengeFrom(endpoint: appAttestChallengeEndpoint)
     }
 
     /// 通用challenge获取方法
@@ -195,7 +199,7 @@ class OAuthTokenManager {
         )
         
         // 4. 提交注册请求
-        guard let url = URL(string: registerEndpoint) else {
+        guard let url = URL(string: appAttestRegisterEndpoint) else {
             throw AppAttestError.invalidURL
         }
         
@@ -342,7 +346,7 @@ class OAuthTokenManager {
     }
     
     private func requestToken(params: [String: String]) async throws -> OAuthTokenResponse {
-        guard let url = URL(string: tokenEndpoint) else {
+        guard let url = URL(string: oauth2TokenEndpoint) else {
             throw AppAttestError.invalidURL
         }
         

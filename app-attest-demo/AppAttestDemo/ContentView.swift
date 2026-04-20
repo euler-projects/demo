@@ -73,8 +73,8 @@ struct ContentView: View {
                     Spacer()
                 }
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Device Challenge:  .../device/challenge")
-                    Text("App Attest:  .../device/register")
+                    Text("Device Challenge:  .../app_attest/challenge")
+                    Text("App Attest:  .../app_attest/register")
                     Text("OAuth Challenge:  .../oauth2/challenge")
                     Text("OAuth Token:  .../oauth2/token")
                 }
@@ -118,7 +118,7 @@ struct ContentView: View {
     private var auxiliarySection: some View {
         GroupBox {
             VStack(spacing: 10) {
-                actionButton("Fetch Attest Challenge", icon: "shield.lefthalf.filled", hint: "/device/challenge") {
+                actionButton("Fetch Attest Challenge", icon: "shield.lefthalf.filled", hint: "/app_attest/challenge") {
                     let challenge = try await OAuthTokenManager.shared.fetchAttestChallenge()
                     return "Challenge: \(challenge)"
                 }
