@@ -1,12 +1,12 @@
 package org.eulerframework.uc.service;
 
 import org.eulerframework.common.util.StringUtils;
-import org.eulerframework.security.authentication.appattest.DeviceAppUser;
+import org.eulerframework.security.authentication.appattest.AppAttestUser;
 import org.eulerframework.security.core.userdetails.EulerDeviceUserDetailsService;
 import org.eulerframework.security.core.userdetails.EulerUserDetails;
 import org.eulerframework.security.core.userdetails.UserDetailsNotFountException;
 import org.eulerframework.security.util.UserDetailsUtils;
-import org.eulerframework.uc.entity.DeviceAppUserMappingEntity;
+import org.eulerframework.uc.entity.AppAttestUserMappingEntity;
 import org.eulerframework.uc.model.User;
 import org.eulerframework.uc.repository.DeviceUserMappingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,23 +20,23 @@ public class DeviceUserDetailsService implements EulerDeviceUserDetailsService {
     private UserService userService;
 
     @Override
-    public EulerUserDetails loadUserByDeviceUser(DeviceAppUser deviceAppUser) {
-        return this.deviceUserMappingRepository.findByKeyId(deviceAppUser.getKeyId())
-                .map(DeviceAppUserMappingEntity::getUserId)
+    public EulerUserDetails loadUserByDeviceUser(AppAttestUser appAttestUser) {
+        return this.deviceUserMappingRepository.findByKeyId(appAttestUser.getKeyId())
+                .map(AppAttestUserMappingEntity::getUserId)
                 .map(userId -> this.userService.loadUserById(userId))
                 .map(UserDetailsUtils::toEulerUserDetails)
-                .orElseThrow(() -> new UserDetailsNotFountException(deviceAppUser.getKeyId()));
+                .orElseThrow(() -> new UserDetailsNotFountException(appAttestUser.getKeyId()));
     }
 
     @Override
-    public EulerUserDetails createUser(DeviceAppUser deviceAppUser) {
-        DeviceAppUserMappingEntity mappingEntity = new DeviceAppUserMappingEntity();
-        mappingEntity.setKeyId(deviceAppUser.getKeyId());
-        mappingEntity.setTeamId(deviceAppUser.getTeamId());
-        mappingEntity.setBundleId(deviceAppUser.getBundleId());
+    public EulerUserDetails createUser(AppAttestUser appAttestUser) {
+        AppAttestUserMappingEntity mappingEntity = new AppAttestUserMappingEntity();
+        mappingEntity.setKeyId(appAttestUser.getKeyId());
+        mappingEntity.setTeamId(appAttestUser.getTeamId());
+        mappingEntity.setBundleId(appAttestUser.getBundleId());
 
         EulerUserDetails userDetails = EulerUserDetails.builder()
-                .username("attest_" + deviceAppUser.getKeyId().substring(0, Math.min(8, deviceAppUser.getKeyId().length())))
+                .username("attest_" + appAttestUser.getKeyId().substring(0, Math.min(8, appAttestUser.getKeyId().length())))
                 .password("{noop}" + StringUtils.randomString(32))
                 .authorities("user")
                 .build();

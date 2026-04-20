@@ -93,7 +93,24 @@ create table t_wechat_user_mapping
   default collate utf8mb4_bin
     comment '微信用户到本地用户映射表';
 
-create table t_apple_app_attest_user_mapping
+CREATE TABLE app_attest_attestation_registration
+(
+    key_id                        VARCHAR(255) NOT NULL PRIMARY KEY,
+    team_id                       VARCHAR(255) NOT NULL,
+    bundle_id                     VARCHAR(255) NOT NULL,
+    aaguid                        BLOB         NOT NULL,
+    credential_id                 BLOB         NOT NULL,
+    attestation_certificate_chain BLOB         NOT NULL,
+    receipt                       BLOB         NOT NULL,
+    public_key                    BLOB         NOT NULL,
+    jwks                          TEXT         NOT NULL,
+    sign_count                    BIGINT       NOT NULL
+) engine = innodb
+  default character set utf8mb4
+  default collate utf8mb4_bin
+    comment 'App Attest 公钥证明登记表';
+
+create table app_attest_user_mapping
 (
     key_id        varchar(255) not null comment 'Apple App Attest Key ID',
     user_id       varchar(36)  not null,
@@ -106,7 +123,7 @@ create table t_apple_app_attest_user_mapping
 ) engine = innodb
   default character set utf8mb4
   default collate utf8mb4_bin
-    comment 'Apple App Attest设备到本地用户映射表';
+    comment 'App Attest 应用到本地用户映射表';
 
 create table t_oauth2_client
 (
