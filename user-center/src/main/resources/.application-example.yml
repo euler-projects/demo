@@ -1,0 +1,43 @@
+logging:
+  level:
+    org.eulerframework: DEBUG
+    org.eulerframework.common.http.JdkHttpClientTemplate: TRACE
+    org.springframework.security.authentication.ProviderManager: DEBUG
+    org.springframework.security.oauth2.server.authorization.web.OAuth2ClientRegistrationEndpointFilter: TRACE
+
+spring:
+  security:
+    oauth2:
+      authorizationserver:
+        client:
+          app-attest-demo:
+            registration:
+              client-id: {teamId}.{bundleId}
+              client-authentication-methods:
+                - attest_jwt_client_auth
+              authorization-grant-types:
+                - urn:ietf:params:oauth:grant-type:app_assertion
+              scopes:
+                - openid
+            token:
+              access-token-time-to-live: 7d
+euler:
+  security:
+    web:
+      authn:
+        allowed-origins:
+          - http://localhost:8080
+    app-attest:
+      enabled: true
+      development-environment: true
+      apps:
+        - team-id: NaN
+          bundle-id: NaN
+    oauth2:
+      authorizationserver:
+        dynamic-client-registration:
+          enabled: true
+        wechat-login:
+          enabled: true
+          appid: NaN
+          secret: NaN

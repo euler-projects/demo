@@ -94,14 +94,10 @@ euler:
           enabled: true
           signup-page: /create-account
           signup-processing-url: /doSignup
-    app-attest:
-      enabled: true
     oauth2:
       authorizationserver:
         authorization-store-type: redis
         redis-key-prefix: 'euler:oauth2:auth'
-        dynamic-client-registration:
-          enabled: true
       resourceserver:
         url-patterns:
           - /api/**
