@@ -18,13 +18,8 @@ struct OAuthTokenResponse: Codable {
 }
 
 struct AttestRegistrationResponse: Codable {
-    let keyId: String
-    let username: String
-    
-    enum CodingKeys: String, CodingKey {
-        case keyId = "kid"
-        case username
-    }
+    let kid: String
+    let sub: String
 }
 
 struct OAuthErrorResponse: Codable {

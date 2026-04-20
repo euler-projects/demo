@@ -94,7 +94,7 @@ struct ContentView: View {
                 flowStep(1, label: "注册设备", description: "首次使用, 自动获取Challenge并完成Attestation")
                 actionButton("Register Device", icon: "iphone.and.arrow.forward") {
                     let result = try await OAuthTokenManager.shared.registerDevice()
-                    return "Key ID: \(String(result.keyId.prefix(16)))...\nUsername: \(result.username)"
+                    return "Key ID: \(String(result.keyId.prefix(16)))...\nSubject: \(result.sub)"
                 }
                 flowStep(2, label: "获取Token", description: "通过Assertion获取OAuth2 Token")
                 actionButton("Get Token (App Assertion)", icon: "key.fill") {
