@@ -18,7 +18,7 @@ struct ContentView: View {
                         mainFlowSection
                         auxiliarySection
                         tokenStateSection
-                        deviceInfoSection
+                        clientInfoSection
                         logSection
                     }
                     .padding()
@@ -91,19 +91,19 @@ struct ContentView: View {
     private var mainFlowSection: some View {
         GroupBox {
             VStack(spacing: 10) {
-                flowStep(1, label: "注册设备", description: "首次使用, 自动获取Challenge并完成Attestation")
-                actionButton("Register Device", icon: "iphone.and.arrow.forward") {
-                    let result = try await OAuthTokenManager.shared.registerDevice()
+                flowStep(1, label: "注册客户端", description: "首次使用, 注册客户端并完成 App Attestation")
+                actionButton("Register (App Attestation)", icon: "iphone.and.arrow.forward", debugSource: .registration) {
+                    let result = try await AppAttestRegistrationService.shared.register()
                     return "Key ID: \(String(result.kid.prefix(16)))...\nSubject: \(result.sub)"
                 }
-                flowStep(2, label: "获取Token", description: "通过Assertion获取OAuth2 Token")
-                actionButton("Get Token (App Assertion)", icon: "key.fill") {
+                flowStep(2, label: "获取 Token", description: "通过 App Assertion 获取OAuth2 Token")
+                actionButton("Get Token (App Assertion)", icon: "key.fill", debugSource: .oauth) {
                     let challenge = try await OAuthTokenManager.shared.fetchChallenge()
                     let token = try await OAuthTokenManager.shared.getTokenWithAssertion(challenge: challenge)
                     return formatTokenResult(token)
                 }
                 flowStep(3, label: "续期 Token", description: "自动策略: Assertion获取新Token, 失败回退重新注册")
-                actionButton("Get Valid Token", icon: "checkmark.seal.fill") {
+                actionButton("Get Valid Token", icon: "checkmark.seal.fill", debugSource: .oauth) {
                     let accessToken = try await OAuthTokenManager.shared.getValidAccessToken()
                     return "Access Token: \(String(accessToken.prefix(20)))..."
                 }
@@ -118,11 +118,11 @@ struct ContentView: View {
     private var auxiliarySection: some View {
         GroupBox {
             VStack(spacing: 10) {
-                actionButton("Fetch Attest Challenge", icon: "shield.lefthalf.filled", hint: "/app_attest/challenge") {
-                    let challenge = try await OAuthTokenManager.shared.fetchAttestChallenge()
+                actionButton("Fetch Attest Challenge", icon: "shield.lefthalf.filled", hint: "/app_attest/challenge", debugSource: .registration) {
+                    let challenge = try await AppAttestRegistrationService.shared.fetchChallenge()
                     return "Challenge: \(challenge)"
                 }
-                actionButton("Fetch OAuth Challenge", icon: "shield.lefthalf.filled", hint: "/oauth2/challenge") {
+                actionButton("Fetch OAuth Challenge", icon: "shield.lefthalf.filled", hint: "/oauth2/challenge", debugSource: .oauth) {
                     let challenge = try await OAuthTokenManager.shared.fetchChallenge()
                     return "Challenge: \(challenge)"
                 }
@@ -163,7 +163,7 @@ struct ContentView: View {
         }
     }
 
-    private var deviceInfoSection: some View {
+    private var clientInfoSection: some View {
         GroupBox {
             VStack(alignment: .leading, spacing: 6) {
                 infoRow("App Attest",
@@ -171,7 +171,7 @@ struct ContentView: View {
                 if let keyId = AppAttestManager.shared.getExistingKeyId() {
                     infoRow("Key ID", String(keyId.prefix(16)) + "...")
                 } else {
-                    infoRow("Key ID", "Not generated")
+                    infoRow("Key ID", "Not registered")
                 }
                 if let appId = OAuthTokenManager.appId {
                     infoRow("App ID", appId)
@@ -184,7 +184,7 @@ struct ContentView: View {
             .padding(.top, 8)
             .id(refreshId)
         } label: {
-            Label("Device Info", systemImage: "iphone")
+            Label("客户端信息", systemImage: "iphone")
         }
     }
 
@@ -249,10 +249,11 @@ struct ContentView: View {
 
     private func actionButton(
         _ title: String, icon: String, hint: String? = nil,
+        debugSource: DebugInfoSource = .oauth,
         action: @escaping () async throws -> String
     ) -> some View {
         Button {
-            performAsync(title, action: action)
+            performAsync(title, debugSource: debugSource, action: action)
         } label: {
             HStack {
                 Label(title, systemImage: icon)
@@ -329,18 +330,18 @@ struct ContentView: View {
 
     // MARK: - Actions
 
-    private func performAsync(_ title: String, action: @escaping () async throws -> String) {
+    private func performAsync(_ title: String, debugSource: DebugInfoSource = .oauth, action: @escaping () async throws -> String) {
         isLoading = true
         loadingAction = title
         let start = Date()
-        // 清除上次的请求/响应信息, 避免缓存命中时显示残留数据
+        // Clear stale request/response info to avoid showing residual data on cache hits
         OAuthTokenManager.shared.clearLastRequestInfo()
+        AppAttestRegistrationService.shared.clearLastRequestInfo()
         Task {
             do {
                 let result = try await action()
                 let elapsed = formatElapsed(since: start)
-                let rawRequest = OAuthTokenManager.shared.lastRequestInfo?.summary
-                let rawResponse = OAuthTokenManager.shared.lastResponseInfo?.summary
+                let (rawRequest, rawResponse) = debugInfo(from: debugSource)
                 await MainActor.run {
                     appendLog(title: title, message: result, elapsed: elapsed, rawRequest: rawRequest, rawResponse: rawResponse)
                     isLoading = false
@@ -348,13 +349,23 @@ struct ContentView: View {
                 }
             } catch {
                 let elapsed = formatElapsed(since: start)
-                let rawRequest = OAuthTokenManager.shared.lastRequestInfo?.summary
-                let rawResponse = OAuthTokenManager.shared.lastResponseInfo?.summary
+                let (rawRequest, rawResponse) = debugInfo(from: debugSource)
                 await MainActor.run {
                     appendLog(title: title, message: error.localizedDescription, isError: true, elapsed: elapsed, rawRequest: rawRequest, rawResponse: rawResponse)
                     isLoading = false
                 }
             }
+        }
+    }
+
+    private func debugInfo(from source: DebugInfoSource) -> (request: String?, response: String?) {
+        switch source {
+        case .oauth:
+            return (OAuthTokenManager.shared.lastRequestInfo?.summary,
+                    OAuthTokenManager.shared.lastResponseInfo?.summary)
+        case .registration:
+            return (AppAttestRegistrationService.shared.lastRequestInfo?.summary,
+                    AppAttestRegistrationService.shared.lastResponseInfo?.summary)
         }
     }
 
@@ -411,4 +422,11 @@ struct LogEntry: Identifiable {
 
 #Preview {
     ContentView()
+}
+
+// MARK: - Debug Info Source
+
+enum DebugInfoSource {
+    case oauth
+    case registration
 }

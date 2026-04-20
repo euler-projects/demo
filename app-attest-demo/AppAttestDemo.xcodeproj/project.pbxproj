@@ -12,6 +12,7 @@
 		849E3C7F2D0A000000000022 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 849E3C7F2D0A000000000012 /* KeychainHelper.swift */; };
 		849E3C7F2D0A000000000023 /* AppAttestManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 849E3C7F2D0A000000000013 /* AppAttestManager.swift */; };
 		849E3C7F2D0A000000000024 /* OAuthTokenManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 849E3C7F2D0A000000000014 /* OAuthTokenManager.swift */; };
+		849E3C7F2D0A000000000027 /* AppAttestRegistrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 849E3C7F2D0A000000000018 /* AppAttestRegistrationService.swift */; };
 		849E3C7F2D0A000000000025 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 849E3C7F2D0A000000000015 /* Assets.xcassets */; };
 		849E3C7F2D0A000000000026 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 849E3C7F2D0A000000000016 /* Preview Assets.xcassets */; };
 /* End PBXBuildFile section */
@@ -22,6 +23,7 @@
 		849E3C7F2D0A000000000012 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		849E3C7F2D0A000000000013 /* AppAttestManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAttestManager.swift; sourceTree = "<group>"; };
 		849E3C7F2D0A000000000014 /* OAuthTokenManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthTokenManager.swift; sourceTree = "<group>"; };
+		849E3C7F2D0A000000000018 /* AppAttestRegistrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAttestRegistrationService.swift; sourceTree = "<group>"; };
 		849E3C7F2D0A000000000015 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		849E3C7F2D0A000000000016 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		849E3C7F2D0A000000000017 /* AppAttestDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AppAttestDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -54,6 +56,7 @@
 				849E3C7F2D0A000000000012 /* KeychainHelper.swift */,
 				849E3C7F2D0A000000000013 /* AppAttestManager.swift */,
 				849E3C7F2D0A000000000014 /* OAuthTokenManager.swift */,
+				849E3C7F2D0A000000000018 /* AppAttestRegistrationService.swift */,
 				849E3C7F2D0A000000000015 /* Assets.xcassets */,
 				849E3C7F2D0A000000000032 /* Preview Content */,
 			);
@@ -151,6 +154,7 @@
 				849E3C7F2D0A000000000022 /* KeychainHelper.swift in Sources */,
 				849E3C7F2D0A000000000023 /* AppAttestManager.swift in Sources */,
 				849E3C7F2D0A000000000024 /* OAuthTokenManager.swift in Sources */,
+				849E3C7F2D0A000000000027 /* AppAttestRegistrationService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

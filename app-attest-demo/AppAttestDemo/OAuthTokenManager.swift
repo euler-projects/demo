@@ -17,11 +17,6 @@ struct OAuthTokenResponse: Codable {
     }
 }
 
-struct AttestRegistrationResponse: Codable {
-    let kid: String
-    let sub: String
-}
-
 struct OAuthErrorResponse: Codable {
     let error: String
     let errorDescription: String?
@@ -68,7 +63,7 @@ class OAuthTokenManager {
     static let defaultBaseUrl = "https://as.example.com"
     static let baseUrlKey = "com.app.oauth.baseUrl"
     
-    /// 服务地址(支持带路径), 存储在UserDefaults中, 可在页面上配置
+    /// Server base URL (may include a path), stored in UserDefaults, configurable from the UI
     var baseUrl: String {
         get {
             UserDefaults.standard.string(forKey: Self.baseUrlKey) ?? Self.defaultBaseUrl
@@ -78,7 +73,7 @@ class OAuthTokenManager {
         }
     }
     
-    /// 拼接baseUrl与固定路径, 自动处理末尾斜杠
+    /// Combine baseUrl with fixed paths, stripping trailing slashes
     private var base: String {
         var result = baseUrl
         while result.hasSuffix("/") {
@@ -86,66 +81,54 @@ class OAuthTokenManager {
         }
         return result
     }
-    private var appAttestChallengeEndpoint: String { base + "/app_attest/challenge" }
-    private var appAttestRegisterEndpoint: String { base + "/app_attest/register" }
     private var oauth2ChallengeEndpoint: String { base + "/oauth2/challenge" }
     private var oauth2TokenEndpoint: String { base + "/oauth2/token" }
     
-    /// App ID (teamId.bundleId), 运行时通过Keychain访问组自动检测
-    /// 仅用于UI展示和调试, 当前API不需要传递client_id
-    /// 设备身份通过Apple App Attest硬件级证明来保证, 服务端将其作为App Attest的一种实现
+    /// App ID (teamId.bundleId), auto-detected at runtime via Keychain access groups.
+    /// Used only for UI display and debugging — the current API does not require client_id.
+    /// Client identity is established through Apple App Attest hardware-backed attestation,
+    /// where the keyId is bound to this specific app instance on this specific device.
     static let appId: String? = detectAppId()
     
-    /// Token在Keychain中的存储键名
-    /// Access Token必须存储在Keychain中, 因为Token等同于用户身份凭证, 泄露后攻击者可直接冒充用户调用API
+    /// Keychain storage keys for the access token.
+    /// The access token MUST be stored in Keychain — it is equivalent to a user identity
+    /// credential; if leaked, an attacker can directly impersonate the user.
     private static let accessTokenKeychainKey = "com.app.oauth.accessToken"
     private static let tokenExpirationKeychainKey = "com.app.oauth.tokenExpiration"
     
-    /// ⚠️ Token仅在内存中缓存用于快速访问
-    /// 持久化存储使用Keychain, 切勿使用UserDefaults或文件系统
+    /// ⚠️ Token is cached in memory for fast access only.
+    /// Persistent storage uses Keychain — NEVER use UserDefaults or the file system.
     private var currentToken: OAuthTokenResponse?
     private var tokenExpirationDate: Date?
     
-    /// 最近一次HTTP请求的调试信息(供日志展示)
+    /// Last HTTP request/response debug info (for log display in the UI)
     private(set) var lastRequestInfo: RequestInfo?
     private(set) var lastResponseInfo: ResponseInfo?
     
-    /// 清除请求/响应调试信息, 在每次新操作前调用以避免显示残留数据
+    /// Clear request/response debug info before each new operation to avoid stale data
     func clearLastRequestInfo() {
         lastRequestInfo = nil
         lastResponseInfo = nil
     }
     
     private init() {
-        // 启动时从Keychain恢复Token(如果存在)
+        // Restore token from Keychain on launch (if available)
         loadTokenFromKeychain()
     }
     
-    /// 从服务端获取一次性challenge(用于Token Assertion流程)
-    /// 对应接口: POST /oauth2/challenge, 无需认证, 无需请求体
-    /// - Returns: challenge字符串
+    /// Fetch a one-time challenge for the OAuth2 Assertion flow.
+    /// Endpoint: `POST /oauth2/challenge` — no authentication, no request body required.
+    /// - Returns: A one-time challenge string (Base64URL-encoded, valid for 5 minutes, single-use)
     func fetchChallenge() async throws -> String {
-        return try await fetchChallengeFrom(endpoint: oauth2ChallengeEndpoint)
-    }
-
-    /// 从服务端获取一次性challenge(用于设备注册Attestation流程)
-    /// 对应接口: POST /app_attest/challenge, 无需认证, 无需请求体
-    /// - Returns: challenge字符串
-    func fetchAttestChallenge() async throws -> String {
-        return try await fetchChallengeFrom(endpoint: appAttestChallengeEndpoint)
-    }
-
-    /// 通用challenge获取方法
-    private func fetchChallengeFrom(endpoint: String) async throws -> String {
-        guard let url = URL(string: endpoint) else {
+        guard let url = URL(string: oauth2ChallengeEndpoint) else {
             throw AppAttestError.invalidURL
         }
-        
+
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        
+
         lastRequestInfo = RequestInfo(request: request)
-        
+
         let (data, response) = try await URLSession.shared.data(for: request)
         let httpResponse = response as? HTTPURLResponse
         let rawBody = String(data: data, encoding: .utf8) ?? "<binary data>"
@@ -153,7 +136,7 @@ class OAuthTokenManager {
             statusCode: httpResponse?.statusCode ?? -1,
             body: rawBody
         )
-        
+
         guard let httpResponse = httpResponse, httpResponse.statusCode == 200 else {
             throw AppAttestError.serverError(
                 statusCode: httpResponse?.statusCode ?? -1,
@@ -161,93 +144,19 @@ class OAuthTokenManager {
                 description: rawBody
             )
         }
-        
+
         let json = try JSONDecoder().decode([String: String].self, from: data)
         guard let challenge = json["challenge"] else {
             throw AppAttestError.invalidResponse
         }
         return challenge
     }
-    
-    /// 设备注册(Attestation流程)
-    /// 仅在首次使用时执行一次, 注册成功后后续直接使用Assertion获取Token
-    /// 完整流程: 获取attest challenge → 生成密钥 → 生成attestation → 提交注册
-    /// - Returns: AttestRegistrationResponse
-    func registerDevice() async throws -> AttestRegistrationResponse {
-        let attestManager = AppAttestManager.shared
-        
-        guard attestManager.isSupported else {
-            throw AppAttestError.notSupported
-        }
-        
-        // 1. 获取注册用的challenge
-        let challenge = try await fetchAttestChallenge()
-        
-        // 2. 每次Attestation必须生成新Key
-        // ⚠️ 一个Key只能被attest一次, 复用已attest的Key会报 com.apple.devicecheck.error
-        let keyId = try await attestManager.generateNewKeyId()
-        
-        // 3. 生成Attestation
-        let attestation = try await attestManager.generateAttestation(
-            keyId: keyId,
-            challenge: challenge
-        )
-        
-        // 4. 提交注册请求
-        guard let url = URL(string: appAttestRegisterEndpoint) else {
-            throw AppAttestError.invalidURL
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        
-        let params: [String: String] = [
-            "kid": keyId,
-            "attestation": attestation,
-            "challenge": challenge
-        ]
-        
-        var formUrlEncodingAllowed = CharacterSet.alphanumerics
-        formUrlEncodingAllowed.insert(charactersIn: "-._~")
-        let bodyString = params.map { "\($0.key)=\($0.value.addingPercentEncoding(withAllowedCharacters: formUrlEncodingAllowed) ?? $0.value)" }
-            .joined(separator: "&")
-        request.httpBody = bodyString.data(using: .utf8)
-        
-        lastRequestInfo = RequestInfo(request: request)
-        
-        let (data, response) = try await URLSession.shared.data(for: request)
-        let httpResponse = response as? HTTPURLResponse
-        let rawBody = String(data: data, encoding: .utf8) ?? "<binary data>"
-        lastResponseInfo = ResponseInfo(
-            statusCode: httpResponse?.statusCode ?? -1,
-            body: rawBody
-        )
-        
-        guard let httpResponse = httpResponse else {
-            throw AppAttestError.invalidResponse
-        }
-        
-        if httpResponse.statusCode == 200 {
-            let result = try JSONDecoder().decode(AttestRegistrationResponse.self, from: data)
-            // 5. 服务端验证成功后才将Key ID存入Keychain, 供后续Assertion获取Token使用
-            attestManager.saveKeyId(keyId)
-            return result
-        } else {
-            let errorResponse = try? JSONDecoder().decode(OAuthErrorResponse.self, from: data)
-            throw AppAttestError.serverError(
-                statusCode: httpResponse.statusCode,
-                error: errorResponse?.error ?? "registration_failed",
-                description: errorResponse?.errorDescription
-            )
-        }
-    }
-
-    /// 使用App Assertion获取Token(已注册设备)
-    /// 设备注册成功后, 每次Token过期时通过Assertion重新获取Token
-    /// 不使用refresh_token, 因为每次请求都需要完整的attestation验证, refresh_token无安全增益
-    /// - Parameter challenge: 服务端下发的challenge字符串(来自 /oauth2/challenge)
-    /// - Returns: OAuthTokenResponse
+    /// Get an access token using App Assertion (for registered clients).
+    /// After registration (Phase 1), each time the token expires, a new token is obtained via
+    /// the Assertion flow. No refresh_token is used — every request requires full attestation-based
+    /// client authentication, so refresh_token provides no additional security value.
+    /// - Parameter challenge: One-time challenge string obtained from `POST /oauth2/challenge`
+    /// - Returns: `OAuthTokenResponse`
     func getTokenWithAssertion(challenge: String) async throws -> OAuthTokenResponse {
         let attestManager = AppAttestManager.shared
 
@@ -255,18 +164,18 @@ class OAuthTokenManager {
             throw AppAttestError.notSupported
         }
 
-        // 1. 获取已存储的Key ID(必须已通过Attestation注册)
+        // 1. Retrieve the stored keyId (must have completed Attestation registration)
         guard let keyId = AppAttestManager.shared.getExistingKeyId() else {
             throw AppAttestError.noKeyId
         }
 
-        // 2. 生成Assertion
+        // 2. Generate an Assertion using the Apple API
         let assertion = try await attestManager.generateAssertion(
             keyId: keyId,
             challenge: challenge
         )
 
-        // 3. 构建请求参数(参数名按最新API文档: kid, assertion)
+        // 3. Build request parameters (kid, assertion per the latest API spec)
         let params: [String: String] = [
             "grant_type": "urn:ietf:params:oauth:grant-type:app_assertion",
             "kid": keyId,
@@ -275,16 +184,16 @@ class OAuthTokenManager {
             "scope": "openid"
         ]
 
-        // 4. 发送Token请求
+        // 4. Send the token request
         let token = try await requestToken(params: params)
         saveToken(token)
         return token
     }
 
-    /// 获取有效的Access Token, 必要时自动续期或重新注册
-    /// 续期策略: Assertion获取新Token > Attestation重新注册
-    /// 不使用refresh_token, 因为每次请求都需要完整的attestation验证, refresh_token无安全增益
-    /// 注意: challenge是一次性的, 每次认证尝试需要获取新的challenge, 因此本方法内部按需获取
+    /// Get a valid access token, automatically renewing or re-registering as needed.
+    /// Strategy: Assertion for new token → fallback to Attestation re-registration (Phase 1).
+    /// No refresh_token is used — every request requires full attestation-based client authentication.
+    /// Note: challenges are single-use, so a fresh challenge is obtained for each attempt.
     func getValidAccessToken() async throws -> String {
         if let token = currentToken,
            let expiration = tokenExpirationDate,
@@ -292,20 +201,20 @@ class OAuthTokenManager {
             return token.accessToken
         }
 
-        // 1. 使用Assertion获取Token(设备已注册时的主要手段)
-        // ⚠️ 每次都必须获取新的challenge, challenge是一次性的, 使用后立即失效
+        // 1. Primary path: use Assertion to get a token (when client is already registered)
+        // ⚠️ A fresh challenge must be obtained each time — challenges are single-use
         if AppAttestManager.shared.getExistingKeyId() != nil {
             do {
                 let challenge = try await fetchChallenge()
                 let token = try await getTokenWithAssertion(challenge: challenge)
                 return token.accessToken
             } catch {
-                // Assertion失败, 尝试重新注册
+                // Assertion failed — fall back to re-registration
             }
         }
 
-        // 2. 最后回退到Attestation重新注册, 然后通过Assertion获取Token
-        _ = try await registerDevice()
+        // 2. Fallback: re-register via App Attestation (Phase 1), then get a token via Assertion
+        _ = try await AppAttestRegistrationService.shared.register()
         let challenge = try await fetchChallenge()
         let token = try await getTokenWithAssertion(challenge: challenge)
         return token.accessToken
@@ -313,18 +222,18 @@ class OAuthTokenManager {
     
     // MARK: - Private
     
-    /// 将Token安全地保存到内存缓存和Keychain
+    /// Securely save token to both in-memory cache and Keychain
     private func saveToken(_ token: OAuthTokenResponse) {
         self.currentToken = token
         self.tokenExpirationDate = Date().addingTimeInterval(TimeInterval(token.expiresIn))
         
-        // 持久化到Keychain, 以便APP重启后恢复会话
+        // Persist to Keychain so the session survives app restarts
         _ = KeychainHelper.shared.save(token.accessToken, forKey: Self.accessTokenKeychainKey)
         let expirationString = String(self.tokenExpirationDate!.timeIntervalSince1970)
         _ = KeychainHelper.shared.save(expirationString, forKey: Self.tokenExpirationKeychainKey)
     }
     
-    /// 从Keychain恢复Token
+    /// Restore token from Keychain on launch
     private func loadTokenFromKeychain() {
         guard let accessToken = KeychainHelper.shared.read(forKey: Self.accessTokenKeychainKey),
               let expirationString = KeychainHelper.shared.read(forKey: Self.tokenExpirationKeychainKey),
@@ -349,15 +258,15 @@ class OAuthTokenManager {
         request.httpMethod = "POST"
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         
-        // 携带Assertion参数时, 添加PoP-Type头标识客户端证明方式
+        // When carrying Assertion parameters, add the attestation type header
+        // to indicate the client authentication method
         if params["kid"] != nil && params["assertion"] != nil {
             request.setValue("apple_app_attest", forHTTPHeaderField: "OAuth-Client-Attestation-Type")
         }
         
         // Form body
-        // ⚠️ 必须使用严格的字符集进行percent-encoding
-        // .urlQueryAllowed不会编码+/=等字符, 而Base64编码的assertion包含这些字符
-        // +在form-urlencoded中代表空格, =是key-value分隔符, 不编码会导致服务端解析错误
+        // ⚠️ Must use strict percent-encoding: .urlQueryAllowed does NOT encode +/= characters,
+        // which would break form-urlencoded parsing (+ means space, = is a separator).
         var formUrlEncodingAllowed = CharacterSet.alphanumerics
         formUrlEncodingAllowed.insert(charactersIn: "-._~")
         let bodyString = params.map { "\($0.key)=\($0.value.addingPercentEncoding(withAllowedCharacters: formUrlEncodingAllowed) ?? $0.value)" }
@@ -437,8 +346,9 @@ struct ResponseInfo {
 // MARK: - App ID Detection
 
 private extension OAuthTokenManager {
-    /// 通过Keychain访问组检测App ID
-    /// Keychain默认访问组格式即为 "<TeamID>.<BundleID>", 可直接用作OAuth2 client_id
+    /// Detect App ID via Keychain access groups.
+    /// The default Keychain access group format is "<TeamID>.<BundleID>",
+    /// which can be used directly as the OAuth2 client_id.
     static func detectAppId() -> String? {
         let tempKey = "com.app.appIdDetection"
         let query: [String: Any] = [
