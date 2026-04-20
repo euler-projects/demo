@@ -22,7 +22,7 @@ struct AttestRegistrationResponse: Codable {
     let username: String
     
     enum CodingKeys: String, CodingKey {
-        case keyId = "key_id"
+        case keyId = "kid"
         case username
     }
 }
@@ -208,7 +208,7 @@ class OAuthTokenManager {
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         
         let params: [String: String] = [
-            "key_id": keyId,
+            "kid": keyId,
             "attestation": attestation,
             "challenge": challenge
         ]
