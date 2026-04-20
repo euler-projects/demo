@@ -6,7 +6,7 @@ import org.eulerframework.security.core.userdetails.EulerDeviceUserDetailsServic
 import org.eulerframework.security.core.userdetails.EulerUserDetails;
 import org.eulerframework.security.core.userdetails.UserDetailsNotFountException;
 import org.eulerframework.security.util.UserDetailsUtils;
-import org.eulerframework.uc.entity.DeviceUserMappingEntity;
+import org.eulerframework.uc.entity.DeviceAppUserMappingEntity;
 import org.eulerframework.uc.model.User;
 import org.eulerframework.uc.repository.DeviceUserMappingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +22,7 @@ public class DeviceUserDetailsService implements EulerDeviceUserDetailsService {
     @Override
     public EulerUserDetails loadUserByDeviceUser(DeviceAppUser deviceAppUser) {
         return this.deviceUserMappingRepository.findByKeyId(deviceAppUser.getKeyId())
-                .map(DeviceUserMappingEntity::getUserId)
+                .map(DeviceAppUserMappingEntity::getUserId)
                 .map(userId -> this.userService.loadUserById(userId))
                 .map(UserDetailsUtils::toEulerUserDetails)
                 .orElseThrow(() -> new UserDetailsNotFountException(deviceAppUser.getKeyId()));
@@ -30,7 +30,7 @@ public class DeviceUserDetailsService implements EulerDeviceUserDetailsService {
 
     @Override
     public EulerUserDetails createUser(DeviceAppUser deviceAppUser) {
-        DeviceUserMappingEntity mappingEntity = new DeviceUserMappingEntity();
+        DeviceAppUserMappingEntity mappingEntity = new DeviceAppUserMappingEntity();
         mappingEntity.setKeyId(deviceAppUser.getKeyId());
         mappingEntity.setTeamId(deviceAppUser.getTeamId());
         mappingEntity.setBundleId(deviceAppUser.getBundleId());
