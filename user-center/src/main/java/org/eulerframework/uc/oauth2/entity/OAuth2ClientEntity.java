@@ -16,9 +16,8 @@
 
 package org.eulerframework.uc.oauth2.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import org.eulerframework.data.entity.AuditingEntity;
 import org.eulerframework.data.entity.AuditingUUIDEntity;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -28,7 +27,20 @@ import java.util.Map;
 
 @Entity
 @Table(name = "t_oauth2_client")
-public class OAuth2ClientEntity extends AuditingUUIDEntity {
+public class OAuth2ClientEntity extends AuditingEntity {
+    @Id
+    @Column(name = "id", length = 36)
+    //@GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
     @Column(name = "client_id", unique = true, nullable = false)
     private String clientId;
 
@@ -47,8 +59,8 @@ public class OAuth2ClientEntity extends AuditingUUIDEntity {
     @Column(name = "token_endpoint_auth_method")
     private String tokenEndpointAuthMethod;
 
-    @Column(name = "authorization_grant_types", nullable = false)
-    private String authorizationGrantTypes;
+    @Column(name = "grant_types")
+    private String grantTypes;
 
     @Column(name = "response_types")
     private String responseTypes;
@@ -69,17 +81,17 @@ public class OAuth2ClientEntity extends AuditingUUIDEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Object> jwks;
 
-    @Column(name = "token_endpoint_authentication_signing_algorithm")
-    private String tokenEndpointAuthenticationSigningAlgorithm;
+    @Column(name = "token_endpoint_auth_signing_alg")
+    private String tokenEndpointAuthSigningAlgorithm;
 
-    @Column(name = "id_token_signature_algorithm")
-    private String idTokenSignatureAlgorithm;
+    @Column(name = "id_token_signed_response_alg")
+    private String idTokenSignedResponseAlgorithm;
 
-    @Column(name = "x509_certificate_subject_dn")
-    private String x509CertificateSubjectDN;
+    @Column(name = "tls_client_auth_subject_dn")
+    private String tlsClientAuthSubjectDN;
 
-    @Column(name = "x509_certificate_bound_access_tokens")
-    private Boolean x509CertificateBoundAccessTokens;
+    @Column(name = "tls_client_certificate_bound_access_tokens")
+    private Boolean tlsClientCertificateBoundAccessTokens;
 
     @Column(name = "client_settings")
     @JdbcTypeCode(SqlTypes.JSON)
@@ -139,12 +151,12 @@ public class OAuth2ClientEntity extends AuditingUUIDEntity {
         this.tokenEndpointAuthMethod = tokenEndpointAuthMethod;
     }
 
-    public String getAuthorizationGrantTypes() {
-        return authorizationGrantTypes;
+    public String getGrantTypes() {
+        return grantTypes;
     }
 
-    public void setAuthorizationGrantTypes(String authorizationGrantTypes) {
-        this.authorizationGrantTypes = authorizationGrantTypes;
+    public void setGrantTypes(String authorizationGrantTypes) {
+        this.grantTypes = authorizationGrantTypes;
     }
 
     public String getResponseTypes() {
@@ -195,36 +207,36 @@ public class OAuth2ClientEntity extends AuditingUUIDEntity {
         this.jwkSetUrl = jwkSetUrl;
     }
 
-    public String getTokenEndpointAuthenticationSigningAlgorithm() {
-        return tokenEndpointAuthenticationSigningAlgorithm;
+    public String getTokenEndpointAuthSigningAlgorithm() {
+        return tokenEndpointAuthSigningAlgorithm;
     }
 
-    public void setTokenEndpointAuthenticationSigningAlgorithm(String tokenEndpointAuthenticationSigningAlgorithm) {
-        this.tokenEndpointAuthenticationSigningAlgorithm = tokenEndpointAuthenticationSigningAlgorithm;
+    public void setTokenEndpointAuthSigningAlgorithm(String tokenEndpointAuthenticationSigningAlgorithm) {
+        this.tokenEndpointAuthSigningAlgorithm = tokenEndpointAuthenticationSigningAlgorithm;
     }
 
-    public String getX509CertificateSubjectDN() {
-        return x509CertificateSubjectDN;
+    public String getTlsClientAuthSubjectDN() {
+        return tlsClientAuthSubjectDN;
     }
 
-    public void setX509CertificateSubjectDN(String x509CertificateSubjectDN) {
-        this.x509CertificateSubjectDN = x509CertificateSubjectDN;
+    public void setTlsClientAuthSubjectDN(String x509CertificateSubjectDN) {
+        this.tlsClientAuthSubjectDN = x509CertificateSubjectDN;
     }
 
-    public String getIdTokenSignatureAlgorithm() {
-        return idTokenSignatureAlgorithm;
+    public String getIdTokenSignedResponseAlgorithm() {
+        return idTokenSignedResponseAlgorithm;
     }
 
-    public void setIdTokenSignatureAlgorithm(String idTokenSignatureAlgorithm) {
-        this.idTokenSignatureAlgorithm = idTokenSignatureAlgorithm;
+    public void setIdTokenSignedResponseAlgorithm(String idTokenSignatureAlgorithm) {
+        this.idTokenSignedResponseAlgorithm = idTokenSignatureAlgorithm;
     }
 
-    public Boolean getX509CertificateBoundAccessTokens() {
-        return x509CertificateBoundAccessTokens;
+    public Boolean getTlsClientCertificateBoundAccessTokens() {
+        return tlsClientCertificateBoundAccessTokens;
     }
 
-    public void setX509CertificateBoundAccessTokens(Boolean x509CertificateBoundAccessTokens) {
-        this.x509CertificateBoundAccessTokens = x509CertificateBoundAccessTokens;
+    public void setTlsClientCertificateBoundAccessTokens(Boolean x509CertificateBoundAccessTokens) {
+        this.tlsClientCertificateBoundAccessTokens = x509CertificateBoundAccessTokens;
     }
 
     public Map<String, Object> getClientSettings() {

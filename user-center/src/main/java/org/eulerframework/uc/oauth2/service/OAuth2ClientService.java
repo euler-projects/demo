@@ -16,11 +16,9 @@
 
 package org.eulerframework.uc.oauth2.service;
 
-import org.eulerframework.common.util.jackson.JacksonUtils;
+import org.eulerframework.security.oauth2.server.authorization.client.DefaultEulerOAuth2Client;
 import org.eulerframework.security.oauth2.server.authorization.client.EulerOAuth2Client;
 import org.eulerframework.security.oauth2.server.authorization.client.EulerOAuth2ClientService;
-import org.eulerframework.security.oauth2.server.authorization.settings.EulerOAuth2ClientSettings;
-import org.eulerframework.security.oauth2.server.authorization.settings.EulerOAuth2TokenSettings;
 import org.eulerframework.uc.oauth2.entity.OAuth2ClientEntity;
 import org.eulerframework.uc.oauth2.repository.OAuth2ClientRepository;
 import org.eulerframework.uc.oauth2.util.OAuth2ClientModelUtils;
@@ -32,7 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,7 +41,7 @@ public class OAuth2ClientService implements EulerOAuth2ClientService {
     @Override
     @Transactional
     public EulerOAuth2Client createClient(RegisteredClient registeredClient) {
-        EulerOAuth2Client client = new org.eulerframework.security.oauth2.server.authorization.client.DefaultEulerOAuth2Client();
+        EulerOAuth2Client client = new DefaultEulerOAuth2Client();
         client.reloadRegisteredClient(registeredClient);
         return this.createClient(client);
     }
@@ -52,11 +50,11 @@ public class OAuth2ClientService implements EulerOAuth2ClientService {
     @Transactional
     public EulerOAuth2Client createClient(EulerOAuth2Client client) {
         Assert.notNull(client, "client must not be null");
-        Assert.isInstanceOf(org.eulerframework.security.oauth2.server.authorization.client.DefaultEulerOAuth2Client.class, client, "client must be an instance of OAuth2Client");
+        Assert.isInstanceOf(DefaultEulerOAuth2Client.class, client, "client must be an instance of OAuth2Client");
 
-        org.eulerframework.security.oauth2.server.authorization.client.DefaultEulerOAuth2Client model = (org.eulerframework.security.oauth2.server.authorization.client.DefaultEulerOAuth2Client) client;
+        DefaultEulerOAuth2Client model = (DefaultEulerOAuth2Client) client;
         OAuth2ClientEntity entity = OAuth2ClientModelUtils.toOAuth2ClientEntity(model);
-        entity.setId(null); // ensure ID is generated
+        entity.setId(client.getRegistrationId() == null ? UUID.randomUUID().toString() : client.getRegistrationId());
         OAuth2ClientEntity saved = this.oauth2ClientRepository.save(entity);
         return OAuth2ClientModelUtils.toEulerOAuth2Client(saved);
     }

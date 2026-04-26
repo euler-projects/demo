@@ -49,17 +49,17 @@ public abstract class OAuth2ClientModelUtils {
         model.setClientSecretExpiresAt(entity.getClientSecretExpiresAt());
         model.setClientName(entity.getClientName());
         model.setTokenEndpointAuthMethod(entity.getTokenEndpointAuthMethod());
-        model.setGrantTypes(commaDelimitedToSet(entity.getAuthorizationGrantTypes()));
+        model.setGrantTypes(commaDelimitedToSet(entity.getGrantTypes()));
         model.setResponseTypes(commaDelimitedToSet(entity.getResponseTypes()));
         model.setRedirectUris(commaDelimitedToSet(entity.getRedirectUris()));
         model.setPostLogoutRedirectUris(commaDelimitedToSet(entity.getPostLogoutRedirectUris()));
         model.setScopes(commaDelimitedToSet(entity.getScopes()));
         model.setJwksUri(entity.getJwkSetUrl());
         model.setJwks(OAuth2ClientModelUtils.parseJwks(entity.getJwks()));
-        model.setTokenEndpointAuthSigningAlgorithm(entity.getTokenEndpointAuthenticationSigningAlgorithm());
-        model.setTlsClientAuthSubjectDN(entity.getX509CertificateSubjectDN());
-        model.setIdTokenSignedResponseAlgorithm(entity.getIdTokenSignatureAlgorithm());
-        model.setTlsClientCertificateBoundAccessTokens(entity.getX509CertificateBoundAccessTokens());
+        model.setTokenEndpointAuthSigningAlgorithm(entity.getTokenEndpointAuthSigningAlgorithm());
+        model.setTlsClientAuthSubjectDN(entity.getTlsClientAuthSubjectDN());
+        model.setIdTokenSignedResponseAlgorithm(entity.getIdTokenSignedResponseAlgorithm());
+        model.setTlsClientCertificateBoundAccessTokens(entity.getTlsClientCertificateBoundAccessTokens());
 
         Map<String, Object> clientSettings = entity.getClientSettings();
         if (clientSettings != null) {
@@ -99,17 +99,17 @@ public abstract class OAuth2ClientModelUtils {
         Optional.ofNullable(model.getClientSecretExpiresAt()).ifPresent(entity::setClientSecretExpiresAt);
         Optional.ofNullable(model.getClientName()).ifPresent(entity::setClientName);
         Optional.ofNullable(model.getTokenEndpointAuthMethod()).ifPresent(entity::setTokenEndpointAuthMethod);
-        Optional.ofNullable(model.getGrantTypes()).map(OAuth2ClientModelUtils::setToCommaDelimited).ifPresent(entity::setAuthorizationGrantTypes);
+        Optional.ofNullable(model.getGrantTypes()).map(OAuth2ClientModelUtils::setToCommaDelimited).ifPresent(entity::setGrantTypes);
         Optional.ofNullable(model.getResponseTypes()).map(OAuth2ClientModelUtils::setToCommaDelimited).ifPresent(entity::setResponseTypes);
         Optional.ofNullable(model.getRedirectUris()).map(OAuth2ClientModelUtils::setToCommaDelimited).ifPresent(entity::setRedirectUris);
         Optional.ofNullable(model.getPostLogoutRedirectUris()).map(OAuth2ClientModelUtils::setToCommaDelimited).ifPresent(entity::setPostLogoutRedirectUris);
         Optional.ofNullable(model.getScopes()).map(OAuth2ClientModelUtils::setToCommaDelimited).ifPresent(entity::setScopes);
         Optional.ofNullable(model.getJwksUri()).ifPresent(entity::setJwkSetUrl);
         Optional.ofNullable(model.getJwks()).map(JWKSet::toJSONObject).ifPresent(entity::setJwks);
-        Optional.ofNullable(model.getTokenEndpointAuthSigningAlgorithm()).ifPresent(entity::setTokenEndpointAuthenticationSigningAlgorithm);
-        Optional.ofNullable(model.getTlsClientAuthSubjectDN()).ifPresent(entity::setX509CertificateSubjectDN);
-        Optional.ofNullable(model.getIdTokenSignedResponseAlgorithm()).ifPresent(entity::setIdTokenSignatureAlgorithm);
-        Optional.ofNullable(model.getTlsClientCertificateBoundAccessTokens()).ifPresent(entity::setX509CertificateBoundAccessTokens);
+        Optional.ofNullable(model.getTokenEndpointAuthSigningAlgorithm()).ifPresent(entity::setTokenEndpointAuthSigningAlgorithm);
+        Optional.ofNullable(model.getIdTokenSignedResponseAlgorithm()).ifPresent(entity::setIdTokenSignedResponseAlgorithm);
+        Optional.ofNullable(model.getTlsClientAuthSubjectDN()).ifPresent(entity::setTlsClientAuthSubjectDN);
+        Optional.ofNullable(model.getTlsClientCertificateBoundAccessTokens()).ifPresent(entity::setTlsClientCertificateBoundAccessTokens);
         Optional.ofNullable(model.getClientSettings()).map(EulerOAuth2ClientSettings::getSettings).ifPresent(entity::setClientSettings);
         Optional.ofNullable(model.getTokenSettings()).map(EulerOAuth2TokenSettings::getSettings).ifPresent(entity::setTokenSettings);
     }
