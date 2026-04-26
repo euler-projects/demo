@@ -1,8 +1,23 @@
+/*
+ * Copyright 2013-present the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.eulerframework.uc.oauth2.controller.admin;
 
 import org.eulerframework.security.oauth2.server.authorization.client.EulerOAuth2Client;
 import org.eulerframework.security.oauth2.server.authorization.client.EulerOAuth2ClientService;
-import org.eulerframework.uc.oauth2.model.OAuth2Client;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.CredentialsContainer;
 import org.springframework.web.bind.annotation.*;
@@ -28,10 +43,10 @@ public class AdminOAuth2ClientController {
      * @return the created client (credentials erased)
      */
     @PostMapping
-    public OAuth2Client createClient(@RequestBody OAuth2Client client) {
+    public org.eulerframework.security.oauth2.server.authorization.client.DefaultEulerOAuth2Client createClient(@RequestBody org.eulerframework.security.oauth2.server.authorization.client.DefaultEulerOAuth2Client client) {
         EulerOAuth2Client created = this.oauth2ClientService.createClient(client);
         created.eraseCredentials();
-        return (OAuth2Client) created;
+        return (org.eulerframework.security.oauth2.server.authorization.client.DefaultEulerOAuth2Client) created;
     }
 
     /**
@@ -41,12 +56,12 @@ public class AdminOAuth2ClientController {
      * @return the client (credentials erased)
      */
     @GetMapping("/{registrationId}")
-    public OAuth2Client getClient(@PathVariable String registrationId) {
+    public org.eulerframework.security.oauth2.server.authorization.client.DefaultEulerOAuth2Client getClient(@PathVariable String registrationId) {
         EulerOAuth2Client client = this.oauth2ClientService.loadClientByRegistrationId(registrationId);
         if (client != null) {
             client.eraseCredentials();
         }
-        return (OAuth2Client) client;
+        return (org.eulerframework.security.oauth2.server.authorization.client.DefaultEulerOAuth2Client) client;
     }
 
     /**
@@ -74,7 +89,7 @@ public class AdminOAuth2ClientController {
      * @param client         the client with updated fields
      */
     @PutMapping("/{registrationId}")
-    public void updateClient(@PathVariable String registrationId, @RequestBody OAuth2Client client) {
+    public void updateClient(@PathVariable String registrationId, @RequestBody org.eulerframework.security.oauth2.server.authorization.client.DefaultEulerOAuth2Client client) {
         client.setRegistrationId(registrationId);
         this.oauth2ClientService.updateClient(client);
     }

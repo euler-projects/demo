@@ -1,18 +1,34 @@
+/*
+ * Copyright 2013-present the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.eulerframework.uc.oauth2.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import org.eulerframework.data.entity.AuditingUUIDEntity;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.util.Map;
 
 @Entity
 @Table(name = "t_oauth2_client")
 public class OAuth2ClientEntity extends AuditingUUIDEntity {
-
-    // --- Basic properties ---
-
     @Column(name = "client_id", unique = true, nullable = false)
     private String clientId;
 
@@ -27,8 +43,6 @@ public class OAuth2ClientEntity extends AuditingUUIDEntity {
 
     @Column(name = "client_name")
     private String clientName;
-
-    // --- RFC 7591 properties ---
 
     @Column(name = "token_endpoint_auth_method")
     private String tokenEndpointAuthMethod;
@@ -48,51 +62,32 @@ public class OAuth2ClientEntity extends AuditingUUIDEntity {
     @Column(name = "scopes")
     private String scopes;
 
-    // --- ClientSettings (flat) ---
-
-    @Column(name = "jwks", columnDefinition = "TEXT")
-    private String jwks;
-
-    @Column(name = "require_proof_key")
-    private Boolean requireProofKey;
-
-    @Column(name = "require_authorization_consent")
-    private Boolean requireAuthorizationConsent;
-
     @Column(name = "jwk_set_url")
     private String jwkSetUrl;
+
+    @Column(name = "jwks")
+    @JdbcTypeCode(SqlTypes.JSON)
+    private Map<String, Object> jwks;
 
     @Column(name = "token_endpoint_authentication_signing_algorithm")
     private String tokenEndpointAuthenticationSigningAlgorithm;
 
-    @Column(name = "x509_certificate_subject_dn")
-    private String x509CertificateSubjectDN;
-
-    // --- TokenSettings (flat, durations stored as seconds) ---
-
-    @Column(name = "authorization_code_time_to_live")
-    private Long authorizationCodeTimeToLive;
-
-    @Column(name = "access_token_time_to_live")
-    private Long accessTokenTimeToLive;
-
-    @Column(name = "access_token_format")
-    private String accessTokenFormat;
-
-    @Column(name = "device_code_time_to_live")
-    private Long deviceCodeTimeToLive;
-
-    @Column(name = "reuse_refresh_tokens")
-    private Boolean reuseRefreshTokens;
-
-    @Column(name = "refresh_token_time_to_live")
-    private Long refreshTokenTimeToLive;
-
     @Column(name = "id_token_signature_algorithm")
     private String idTokenSignatureAlgorithm;
 
+    @Column(name = "x509_certificate_subject_dn")
+    private String x509CertificateSubjectDN;
+
     @Column(name = "x509_certificate_bound_access_tokens")
     private Boolean x509CertificateBoundAccessTokens;
+
+    @Column(name = "client_settings")
+    @JdbcTypeCode(SqlTypes.JSON)
+    private Map<String, Object> clientSettings;
+
+    @Column(name = "token_settings")
+    @JdbcTypeCode(SqlTypes.JSON)
+    private Map<String, Object> tokenSettings;
 
     // --- Getters and Setters ---
 
@@ -184,28 +179,12 @@ public class OAuth2ClientEntity extends AuditingUUIDEntity {
         this.scopes = scopes;
     }
 
-    public String getJwks() {
+    public Map<String, Object> getJwks() {
         return jwks;
     }
 
-    public void setJwks(String jwks) {
+    public void setJwks(Map<String, Object> jwks) {
         this.jwks = jwks;
-    }
-
-    public Boolean getRequireProofKey() {
-        return requireProofKey;
-    }
-
-    public void setRequireProofKey(Boolean requireProofKey) {
-        this.requireProofKey = requireProofKey;
-    }
-
-    public Boolean getRequireAuthorizationConsent() {
-        return requireAuthorizationConsent;
-    }
-
-    public void setRequireAuthorizationConsent(Boolean requireAuthorizationConsent) {
-        this.requireAuthorizationConsent = requireAuthorizationConsent;
     }
 
     public String getJwkSetUrl() {
@@ -232,54 +211,6 @@ public class OAuth2ClientEntity extends AuditingUUIDEntity {
         this.x509CertificateSubjectDN = x509CertificateSubjectDN;
     }
 
-    public Long getAuthorizationCodeTimeToLive() {
-        return authorizationCodeTimeToLive;
-    }
-
-    public void setAuthorizationCodeTimeToLive(Long authorizationCodeTimeToLive) {
-        this.authorizationCodeTimeToLive = authorizationCodeTimeToLive;
-    }
-
-    public Long getAccessTokenTimeToLive() {
-        return accessTokenTimeToLive;
-    }
-
-    public void setAccessTokenTimeToLive(Long accessTokenTimeToLive) {
-        this.accessTokenTimeToLive = accessTokenTimeToLive;
-    }
-
-    public String getAccessTokenFormat() {
-        return accessTokenFormat;
-    }
-
-    public void setAccessTokenFormat(String accessTokenFormat) {
-        this.accessTokenFormat = accessTokenFormat;
-    }
-
-    public Long getDeviceCodeTimeToLive() {
-        return deviceCodeTimeToLive;
-    }
-
-    public void setDeviceCodeTimeToLive(Long deviceCodeTimeToLive) {
-        this.deviceCodeTimeToLive = deviceCodeTimeToLive;
-    }
-
-    public Boolean getReuseRefreshTokens() {
-        return reuseRefreshTokens;
-    }
-
-    public void setReuseRefreshTokens(Boolean reuseRefreshTokens) {
-        this.reuseRefreshTokens = reuseRefreshTokens;
-    }
-
-    public Long getRefreshTokenTimeToLive() {
-        return refreshTokenTimeToLive;
-    }
-
-    public void setRefreshTokenTimeToLive(Long refreshTokenTimeToLive) {
-        this.refreshTokenTimeToLive = refreshTokenTimeToLive;
-    }
-
     public String getIdTokenSignatureAlgorithm() {
         return idTokenSignatureAlgorithm;
     }
@@ -294,5 +225,21 @@ public class OAuth2ClientEntity extends AuditingUUIDEntity {
 
     public void setX509CertificateBoundAccessTokens(Boolean x509CertificateBoundAccessTokens) {
         this.x509CertificateBoundAccessTokens = x509CertificateBoundAccessTokens;
+    }
+
+    public Map<String, Object> getClientSettings() {
+        return clientSettings;
+    }
+
+    public void setClientSettings(Map<String, Object> clientSettings) {
+        this.clientSettings = clientSettings;
+    }
+
+    public Map<String, Object> getTokenSettings() {
+        return tokenSettings;
+    }
+
+    public void setTokenSettings(Map<String, Object> tokenSettings) {
+        this.tokenSettings = tokenSettings;
     }
 }
