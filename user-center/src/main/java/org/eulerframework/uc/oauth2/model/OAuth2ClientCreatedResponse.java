@@ -22,47 +22,22 @@ import org.eulerframework.security.oauth2.server.authorization.client.EulerOAuth
  * One-shot registration response returned by {@code POST} on the Admin
  * OAuth 2.0 Client API.
  *
- * <p>Extends {@link OAuth2ClientResponse} to surface every attribute of the
- * freshly created client plus the server-minted plaintext
- * {@code clientSecret}. Operators must capture the secret on this single
- * response: subsequent {@code GET} / {@code LIST} endpoints only ever return
- * the opaque encoded form stored on disk, and the plaintext is not retained
- * anywhere on the server.
+ * <p>Wraps the freshly created {@link EulerOAuth2Client} together with the
+ * server-minted plaintext {@code clientSecret}. Operators must capture the
+ * secret on this single response: subsequent {@code GET} / {@code LIST}
+ * endpoints only ever return the opaque encoded form stored on disk (masked
+ * as {@code null} on the wire), and the plaintext is not retained anywhere
+ * on the server.
  *
  * <p>The {@code clientSecret} field is {@code null} for clients whose
  * {@code token_endpoint_auth_method} does not require a shared secret
  * (e.g. {@code none}, {@code private_key_jwt}, {@code tls_client_auth},
  * {@code self_signed_tls_client_auth}).
+ *
+ * @param client       the created client (with its encoded {@code clientSecret}
+ *                     masked to {@code null} prior to serialization)
+ * @param clientSecret the freshly generated plaintext secret, or {@code null}
+ *                     when the client uses a non-secret authentication method
  */
-public class OAuth2ClientCreatedResponse extends OAuth2ClientResponse {
-
-    private String clientSecret;
-
-    public String getClientSecret() {
-        return clientSecret;
-    }
-
-    public void setClientSecret(String clientSecret) {
-        this.clientSecret = clientSecret;
-    }
-
-    /**
-     * Projects a freshly created {@link EulerOAuth2Client} into its one-shot
-     * transport form, attaching the plaintext secret when one was minted.
-     *
-     * @param model           the created client, or {@code null}
-     * @param plaintextSecret the freshly generated plaintext secret, or
-     *                        {@code null} when the client uses a non-secret
-     *                        authentication method
-     * @return the DTO, or {@code null} when the source model is {@code null}
-     */
-    public static OAuth2ClientCreatedResponse of(EulerOAuth2Client model, String plaintextSecret) {
-        if (model == null) {
-            return null;
-        }
-        OAuth2ClientCreatedResponse dto = new OAuth2ClientCreatedResponse();
-        populateResponse(dto, model);
-        dto.clientSecret = plaintextSecret;
-        return dto;
-    }
+public record OAuth2ClientCreatedResponse(EulerOAuth2Client client, String clientSecret) {
 }

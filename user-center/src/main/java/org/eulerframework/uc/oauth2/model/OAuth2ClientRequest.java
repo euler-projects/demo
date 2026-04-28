@@ -16,12 +16,7 @@
 
 package org.eulerframework.uc.oauth2.model;
 
-import com.nimbusds.jose.jwk.JWKSet;
-import org.eulerframework.security.jackson.JWKSetDeserializer;
-import org.eulerframework.security.jackson.JWKSetSerializer;
 import org.eulerframework.security.oauth2.server.authorization.client.DefaultEulerOAuth2Client;
-import tools.jackson.databind.annotation.JsonDeserialize;
-import tools.jackson.databind.annotation.JsonSerialize;
 
 import java.util.Set;
 
@@ -54,18 +49,10 @@ public class OAuth2ClientRequest {
     private String clientName;
     private String tokenEndpointAuthMethod;
     private Set<String> grantTypes;
-    private Set<String> responseTypes;
     private Set<String> redirectUris;
     private Set<String> postLogoutRedirectUris;
     private Set<String> scopes;
     private String jwksUri;
-    @JsonSerialize(using = JWKSetSerializer.class)
-    @JsonDeserialize(using = JWKSetDeserializer.class)
-    private JWKSet jwks;
-    private String tokenEndpointAuthSigningAlgorithm;
-    private String idTokenSignedResponseAlgorithm;
-    private String tlsClientAuthSubjectDN;
-    private Boolean tlsClientCertificateBoundAccessTokens;
     private OAuth2ClientSettingsDto clientSettings;
     private OAuth2TokenSettingsDto tokenSettings;
 
@@ -93,14 +80,6 @@ public class OAuth2ClientRequest {
 
     public void setGrantTypes(Set<String> grantTypes) {
         this.grantTypes = grantTypes;
-    }
-
-    public Set<String> getResponseTypes() {
-        return responseTypes;
-    }
-
-    public void setResponseTypes(Set<String> responseTypes) {
-        this.responseTypes = responseTypes;
     }
 
     public Set<String> getRedirectUris() {
@@ -133,46 +112,6 @@ public class OAuth2ClientRequest {
 
     public void setJwksUri(String jwksUri) {
         this.jwksUri = jwksUri;
-    }
-
-    public JWKSet getJwks() {
-        return jwks;
-    }
-
-    public void setJwks(JWKSet jwks) {
-        this.jwks = jwks;
-    }
-
-    public String getTokenEndpointAuthSigningAlgorithm() {
-        return tokenEndpointAuthSigningAlgorithm;
-    }
-
-    public void setTokenEndpointAuthSigningAlgorithm(String tokenEndpointAuthSigningAlgorithm) {
-        this.tokenEndpointAuthSigningAlgorithm = tokenEndpointAuthSigningAlgorithm;
-    }
-
-    public String getIdTokenSignedResponseAlgorithm() {
-        return idTokenSignedResponseAlgorithm;
-    }
-
-    public void setIdTokenSignedResponseAlgorithm(String idTokenSignedResponseAlgorithm) {
-        this.idTokenSignedResponseAlgorithm = idTokenSignedResponseAlgorithm;
-    }
-
-    public String getTlsClientAuthSubjectDN() {
-        return tlsClientAuthSubjectDN;
-    }
-
-    public void setTlsClientAuthSubjectDN(String tlsClientAuthSubjectDN) {
-        this.tlsClientAuthSubjectDN = tlsClientAuthSubjectDN;
-    }
-
-    public Boolean getTlsClientCertificateBoundAccessTokens() {
-        return tlsClientCertificateBoundAccessTokens;
-    }
-
-    public void setTlsClientCertificateBoundAccessTokens(Boolean tlsClientCertificateBoundAccessTokens) {
-        this.tlsClientCertificateBoundAccessTokens = tlsClientCertificateBoundAccessTokens;
     }
 
     public OAuth2ClientSettingsDto getClientSettings() {
@@ -212,16 +151,10 @@ public class OAuth2ClientRequest {
         model.setClientName(this.clientName);
         model.setTokenEndpointAuthMethod(this.tokenEndpointAuthMethod);
         model.setGrantTypes(this.grantTypes);
-        model.setResponseTypes(this.responseTypes);
         model.setRedirectUris(this.redirectUris);
         model.setPostLogoutRedirectUris(this.postLogoutRedirectUris);
         model.setScopes(this.scopes);
         model.setJwksUri(this.jwksUri);
-        model.setJwks(this.jwks);
-        model.setTokenEndpointAuthSigningAlgorithm(this.tokenEndpointAuthSigningAlgorithm);
-        model.setIdTokenSignedResponseAlgorithm(this.idTokenSignedResponseAlgorithm);
-        model.setTlsClientAuthSubjectDN(this.tlsClientAuthSubjectDN);
-        model.setTlsClientCertificateBoundAccessTokens(this.tlsClientCertificateBoundAccessTokens);
         if (this.clientSettings != null) {
             model.setClientSettings(this.clientSettings.toModel());
         }
