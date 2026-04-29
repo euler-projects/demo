@@ -6,7 +6,7 @@ import jakarta.annotation.Resource;
 import org.eulerframework.uc.entity.*;
 import org.springframework.stereotype.Repository;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 
 @Repository
@@ -88,7 +88,7 @@ public class UserDao {
         QUserEntity userEntity = QUserEntity.userEntity;
         this.jpaQueryFactory.update(userEntity)
                 .set(userEntity.password, newPassword)
-                .set(userEntity.modifiedDate, new Date())
+                .set(userEntity.modifiedDate, Instant.now())
                 .where(userEntity.userId.eq(userId))
                 .execute();
     }
@@ -104,7 +104,7 @@ public class UserDao {
         QUserEntity userEntity = QUserEntity.userEntity;
         this.jpaQueryFactory.update(userEntity)
                 .set(userEntity.enabled, false)
-                .set(userEntity.modifiedDate, new Date())
+                .set(userEntity.modifiedDate, Instant.now())
                 .execute();
     }
 }
