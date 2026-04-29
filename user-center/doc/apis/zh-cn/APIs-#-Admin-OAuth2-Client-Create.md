@@ -178,37 +178,31 @@ application/json
 
 **Success Response (200):**
 
+响应体为完整的 [OAuth2 客户端](Model-%23-OAuth2-Client.md) 模型. 与 [查询客户端](APIs-%23-Admin-OAuth2-Client-Get.md) 唯一的差异在于: **仅此一次**, `clientSecret` 字段会以明文形式返回新生成的密钥, 供调用方保存; 若 `tokenEndpointAuthMethod` 不使用共享密钥 (`none` / `private_key_jwt` / `tls_client_auth` / `self_signed_tls_client_auth`), 则 `clientSecret` 仍为 `null`.
+
 ```json
 {
-    "client": {
-        "registrationId": "5f9a1c2d-3b4e-4f6a-8d9c-1e2f3a4b5c6d",
-        "clientId": "r3j8F/2pTqk0C9hZwN4vJQ==",
-        "clientIdIssuedAt": 1777709730123,
-        "clientSecret": null,
-        "clientSecretExpiresAt": null,
-        "clientName": "example-web-app",
-        "tokenEndpointAuthMethod": "client_secret_basic",
-        "grantTypes": ["authorization_code", "refresh_token"],
-        "responseTypes": ["code"],
-        "redirectUris": ["https://app.example.com/callback"],
-        "postLogoutRedirectUris": ["https://app.example.com/"],
-        "scopes": ["openid", "profile"],
-        "jwksUri": null,
-        "jwks": null,
-        "tokenEndpointAuthSigningAlgorithm": null,
-        "idTokenSignedResponseAlgorithm": null,
-        "tlsClientAuthSubjectDN": null,
-        "tlsClientCertificateBoundAccessTokens": false,
-        "clientSettings": { "...": "见 ClientSettings" },
-        "tokenSettings":  { "...": "见 TokenSettings" }
-    },
-    "clientSecret": "euler_sk_9qZt3C9m1s6cPqz1nB7Vw8X2Yl3kU4oA5dJhI6pR7eS"
+    "registrationId": "5f9a1c2d-3b4e-4f6a-8d9c-1e2f3a4b5c6d",
+    "clientId": "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk",
+    "clientIdIssuedAt": 1777709730123,
+    "clientSecret": "euler_sk_9qZt3C9m1s6cPqz1nB7Vw8X2Yl3kU4oA5dJhI6pR7eS",
+    "clientSecretExpiresAt": null,
+    "clientName": "example-web-app",
+    "tokenEndpointAuthMethod": "client_secret_basic",
+    "grantTypes": ["authorization_code", "refresh_token"],
+    "responseTypes": ["code"],
+    "redirectUris": ["https://app.example.com/callback"],
+    "postLogoutRedirectUris": ["https://app.example.com/"],
+    "scopes": ["openid", "profile"],
+    "jwksUri": null,
+    "jwks": null,
+    "tokenEndpointAuthSigningAlgorithm": null,
+    "idTokenSignedResponseAlgorithm": null,
+    "tlsClientAuthSubjectDN": null,
+    "tlsClientCertificateBoundAccessTokens": false,
+    "clientSettings": { "...": "见 ClientSettings" },
+    "tokenSettings":  { "...": "见 TokenSettings" }
 }
 ```
 
-|属性名|类型|说明|
-|---|---|---|
-|client|object|刚创建的客户端, 结构为完整的 [OAuth2 客户端](Model-%23-OAuth2-Client.md) 模型; 其中 `clientSecret` 字段为 `null` (服务端仅保存哈希), 明文由外层 `clientSecret` 属性一次性承载|
-|clientSecret|string\|null|一次性明文密钥; 仅当 `tokenEndpointAuthMethod` 使用共享密钥时生成, 否则为 `null`|
-
-> **重要**: 外层 `clientSecret` 仅在此次响应中以明文返回一次, 服务端仅保存哈希形式. 调用方必须立即妥善存储; 遗失后只能通过[轮转客户端密钥](APIs-%23-Admin-OAuth2-Client-Rotate-Secret.md)重新签发.
+> **重要**: `clientSecret` 字段仅在本次响应中以明文返回一次, 服务端仅保存哈希形式. 调用方必须立即妥善存储; 遗失后只能通过[轮转客户端密钥](APIs-%23-Admin-OAuth2-Client-Rotate-Secret.md)重新签发. 后续所有 [查询](APIs-%23-Admin-OAuth2-Client-Get.md) / [列表](APIs-%23-Admin-OAuth2-Client-List.md) / [更新](APIs-%23-Admin-OAuth2-Client-Update.md) 响应中, 该字段均会被置为 `null`.

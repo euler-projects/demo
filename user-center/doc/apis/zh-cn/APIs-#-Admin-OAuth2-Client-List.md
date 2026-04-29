@@ -35,7 +35,7 @@ Authorization: Bearer <access_token>
 [
     {
         "registrationId": "5f9a1c2d-3b4e-4f6a-8d9c-1e2f3a4b5c6d",
-        "clientId": "r3j8F/2pTqk0C9hZwN4vJQ==",
+        "clientId": "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk",
         "clientIdIssuedAt": 1777709730123,
         "clientSecret": null,
         "clientSecretExpiresAt": null,

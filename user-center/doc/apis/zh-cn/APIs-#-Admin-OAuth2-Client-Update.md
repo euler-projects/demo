@@ -154,6 +154,33 @@ application/json
 
 ## Response
 
-**Success Response (204 No Content):**
+**Success Response (200):**
 
-无响应体.
+响应体为更新后的完整 [OAuth2 客户端](Model-%23-OAuth2-Client.md) 模型, 与 [查询客户端](APIs-%23-Admin-OAuth2-Client-Get.md) 结构一致: `clientSecret` 始终为 `null` (服务端仅保存哈希; 如需更换请调用[轮转客户端密钥](APIs-%23-Admin-OAuth2-Client-Rotate-Secret.md)).
+
+```json
+{
+    "registrationId": "5f9a1c2d-3b4e-4f6a-8d9c-1e2f3a4b5c6d",
+    "clientId": "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk",
+    "clientIdIssuedAt": 1777709730123,
+    "clientSecret": null,
+    "clientSecretExpiresAt": null,
+    "clientName": "example-web-app-v2",
+    "tokenEndpointAuthMethod": "client_secret_basic",
+    "grantTypes": ["authorization_code", "refresh_token"],
+    "responseTypes": ["code"],
+    "redirectUris": ["https://app.example.com/callback", "https://app.example.com/auth/callback"],
+    "postLogoutRedirectUris": ["https://app.example.com/"],
+    "scopes": ["openid", "profile", "email"],
+    "jwksUri": null,
+    "jwks": null,
+    "tokenEndpointAuthSigningAlgorithm": null,
+    "idTokenSignedResponseAlgorithm": null,
+    "tlsClientAuthSubjectDN": null,
+    "tlsClientCertificateBoundAccessTokens": false,
+    "clientSettings": { "...": "见 ClientSettings" },
+    "tokenSettings":  { "...": "见 TokenSettings" }
+}
+```
+
+> 响应反映的是服务端落库后的最终配置, 可直接用于校对替换式更新是否如预期 (注意未提交的可选字段会被清空). `clientId` / `clientIdIssuedAt` 与创建时一致, 不会因更新而改变.

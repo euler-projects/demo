@@ -29,6 +29,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
+import java.security.SecureRandom;
+import java.time.Instant;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -40,21 +43,41 @@ public class OAuth2ClientService implements EulerOAuth2ClientService {
 
     @Override
     @Transactional
-    public EulerOAuth2Client createClient(RegisteredClient registeredClient) {
-        EulerOAuth2Client client = new DefaultEulerOAuth2Client();
-        client.reloadRegisteredClient(registeredClient);
-        return this.createClient(client);
-    }
-
-    @Override
-    @Transactional
     public EulerOAuth2Client createClient(EulerOAuth2Client client) {
         Assert.notNull(client, "client must not be null");
         Assert.isInstanceOf(DefaultEulerOAuth2Client.class, client, "client must be an instance of OAuth2Client");
 
         DefaultEulerOAuth2Client model = (DefaultEulerOAuth2Client) client;
         OAuth2ClientEntity entity = OAuth2ClientModelUtils.toOAuth2ClientEntity(model);
-        entity.setId(client.getRegistrationId() == null ? UUID.randomUUID().toString() : client.getRegistrationId());
+
+        // registrationId / clientId / clientIdIssuedAt are fully owned by the server
+        // on this path; any value carried by the caller is deliberately overwritten.
+        entity.setId(UUID.randomUUID().toString());
+        entity.setClientId(generateClientId());
+        entity.setClientIdIssuedAt(Instant.now());
+
+        OAuth2ClientEntity saved = this.oauth2ClientRepository.save(entity);
+        return OAuth2ClientModelUtils.toEulerOAuth2Client(saved);
+    }
+
+    @Override
+    @Transactional
+    public EulerOAuth2Client createClient(RegisteredClient registeredClient) {
+        Assert.notNull(registeredClient, "registeredClient must not be null");
+        Assert.hasText(registeredClient.getId(), "registrationId must not be empty");
+        Assert.hasText(registeredClient.getClientId(), "clientId must not be empty");
+
+        DefaultEulerOAuth2Client model = new DefaultEulerOAuth2Client();
+        model.reloadRegisteredClient(registeredClient);
+
+        OAuth2ClientEntity entity = OAuth2ClientModelUtils.toOAuth2ClientEntity(model);
+
+        // RegisteredClient carries a fully-assembled registration; the server
+        // only back-fills clientIdIssuedAt when the caller left it unset.
+        if (entity.getClientIdIssuedAt() == null) {
+            entity.setClientIdIssuedAt(Instant.now());
+        }
+
         OAuth2ClientEntity saved = this.oauth2ClientRepository.save(entity);
         return OAuth2ClientModelUtils.toEulerOAuth2Client(saved);
     }
@@ -99,6 +122,24 @@ public class OAuth2ClientService implements EulerOAuth2ClientService {
 
     @Override
     @Transactional
+    public void updateClient(RegisteredClient registeredClient) {
+        Assert.notNull(registeredClient, "registeredClient must not be null");
+        Assert.notNull(registeredClient.getId(), "registrationId must not be null");
+
+        OAuth2ClientEntity entity = this.oauth2ClientRepository.findById(registeredClient.getId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Client not found, registrationId: " + registeredClient.getId()));
+
+        DefaultEulerOAuth2Client model = new DefaultEulerOAuth2Client();
+        model.reloadRegisteredClient(registeredClient);
+
+        OAuth2ClientModelUtils.replaceOAuth2ClientEntity(model, entity);
+
+        this.oauth2ClientRepository.save(entity);
+    }
+
+    @Override
+    @Transactional
     public void deleteClient(String registrationId) {
         this.oauth2ClientRepository.deleteById(registrationId);
     }
@@ -116,5 +157,28 @@ public class OAuth2ClientService implements EulerOAuth2ClientService {
     @Autowired
     public void setOauth2ClientRepository(OAuth2ClientRepository oauth2ClientRepository) {
         this.oauth2ClientRepository = oauth2ClientRepository;
+    }
+
+    /**
+     * 256 bits of entropy behind the generated {@code clientId}, matching the
+     * strength of a minted client secret.
+     */
+    private static final int CLIENT_ID_RANDOM_BYTES = 32;
+
+    private static final SecureRandom CLIENT_ID_RANDOM = new SecureRandom();
+    private static final Base64.Encoder CLIENT_ID_ENCODER = Base64.getUrlEncoder().withoutPadding();
+
+    /**
+     * Mints a fresh {@code clientId} as the URL-safe, unpadded Base64 encoding
+     * of 256 random bits ({@value #CLIENT_ID_RANDOM_BYTES} bytes). The result
+     * is 43 characters drawn from {@code [A-Za-z0-9_-]}, usable verbatim in
+     * HTTP headers, form bodies and URL path segments without further escaping.
+     *
+     * @return the freshly generated {@code clientId}
+     */
+    private static String generateClientId() {
+        byte[] random = new byte[CLIENT_ID_RANDOM_BYTES];
+        CLIENT_ID_RANDOM.nextBytes(random);
+        return CLIENT_ID_ENCODER.encodeToString(random);
     }
 }

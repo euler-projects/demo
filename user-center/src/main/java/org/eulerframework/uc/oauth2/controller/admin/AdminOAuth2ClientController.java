@@ -19,7 +19,6 @@ package org.eulerframework.uc.oauth2.controller.admin;
 import org.eulerframework.security.oauth2.server.authorization.client.DefaultEulerOAuth2Client;
 import org.eulerframework.security.oauth2.server.authorization.client.EulerOAuth2Client;
 import org.eulerframework.security.oauth2.server.authorization.client.EulerOAuth2ClientService;
-import org.eulerframework.uc.oauth2.model.OAuth2ClientCreatedResponse;
 import org.eulerframework.uc.oauth2.model.OAuth2ClientRequest;
 import org.eulerframework.uc.oauth2.model.OAuth2ClientSecretResponse;
 import org.eulerframework.uc.oauth2.util.OAuth2ClientSecretGenerator;
@@ -50,15 +49,18 @@ import java.util.List;
  * <ul>
  *   <li>On {@code POST}, a cryptographically strong plaintext secret is
  *       minted by {@link OAuth2ClientSecretGenerator}, hashed via the
- *       configured {@link PasswordEncoder} before persistence, and returned
- *       exactly once through {@link OAuth2ClientCreatedResponse}. No secret
- *       is minted when {@code token_endpoint_auth_method} does not use a
- *       shared secret (e.g. {@code none}, {@code private_key_jwt},
+ *       configured {@link PasswordEncoder} before persistence, and carried
+ *       back exactly once on the response through the
+ *       {@link EulerOAuth2Client#getClientSecret() clientSecret} attribute of
+ *       the returned domain model. No secret is minted when
+ *       {@code token_endpoint_auth_method} does not use a shared secret
+ *       (e.g. {@code none}, {@code private_key_jwt},
  *       {@code tls_client_auth}).</li>
- *   <li>On subsequent {@code GET} / {@code LIST} responses the encoded
- *       credential held by the domain model is masked to {@code null} before
- *       serialization &mdash; what the service persists is the hash, which
- *       would only leak the on-disk representation if disclosed.</li>
+ *   <li>On subsequent {@code GET} / {@code LIST} / {@code PUT} responses the
+ *       encoded credential held by the domain model is masked to
+ *       {@code null} before serialization &mdash; what the service persists
+ *       is the hash, which would only leak the on-disk representation if
+ *       disclosed.</li>
  *   <li>{@link #rotateClientSecret(String)} mints a fresh plaintext secret
  *       and returns it through a dedicated one-shot
  *       {@link OAuth2ClientSecretResponse}.</li>
@@ -88,21 +90,28 @@ public class AdminOAuth2ClientController {
      * <p>When the requested {@code token_endpoint_auth_method} relies on a
      * shared secret, a cryptographically strong plaintext secret is minted
      * server-side, hashed with the configured {@link PasswordEncoder} before
-     * persistence, and returned <em>once</em> on the response so the
-     * operator can capture it. Otherwise the {@code clientSecret} attribute
-     * of the response is {@code null}.
+     * persistence, and carried back <em>once</em> on the
+     * {@link EulerOAuth2Client#getClientSecret() clientSecret} attribute of
+     * the returned client so the operator can capture it. Otherwise that
+     * attribute is {@code null}.
      *
      * <p>{@code clientSecretExpiresAt} defaults to {@code null} ("never");
      * operators rotate the secret explicitly via
      * {@link #rotateClientSecret(String)}.
      *
      * @param request the client to create
-     * @return the created client together with the one-shot plaintext secret
-     *         when applicable
+     * @return the created client; its {@code clientSecret} attribute holds
+     * the one-shot plaintext secret when applicable, otherwise {@code null}
      */
     @PostMapping
-    public OAuth2ClientCreatedResponse createClient(@RequestBody OAuth2ClientRequest request) {
+    public EulerOAuth2Client createClient(@RequestBody OAuth2ClientRequest request) {
         DefaultEulerOAuth2Client model = request.toModel();
+
+        // Ensure both registrationId and clientId are server-generated
+        model.setRegistrationId(null);
+        model.setClientId(null);
+        model.setClientIdIssuedAt(null);
+
         String plaintextSecret = null;
         if (OAuth2ClientSecretGenerator.requiresClientSecret(model.getTokenEndpointAuthMethod())) {
             plaintextSecret = OAuth2ClientSecretGenerator.generate();
@@ -111,8 +120,13 @@ public class AdminOAuth2ClientController {
             model.setClientSecret(null);
         }
         model.setClientSecretExpiresAt(null);
-        EulerOAuth2Client created = this.oauth2ClientService.createClient(model);
-        return new OAuth2ClientCreatedResponse(maskClientSecret(created), plaintextSecret);
+
+        DefaultEulerOAuth2Client created = (DefaultEulerOAuth2Client) this.oauth2ClientService.createClient(model);
+
+        // Return the plaintext client secret only once at creation for the user to save;
+        // if lost later, a new secret can only be obtained via rotation.
+        created.setClientSecret(plaintextSecret);
+        return created;
     }
 
     /**
@@ -120,7 +134,7 @@ public class AdminOAuth2ClientController {
      *
      * @param registrationId the registration identifier
      * @return the client with its encoded {@code clientSecret} masked to
-     *         {@code null}, or {@code null} if not found
+     * {@code null}, or {@code null} if not found
      */
     @GetMapping("/{registrationId}")
     public EulerOAuth2Client getClient(@PathVariable String registrationId) {
@@ -133,7 +147,7 @@ public class AdminOAuth2ClientController {
      * @param offset the offset of the first result
      * @param limit  the maximum number of results
      * @return a list of clients, each with its encoded {@code clientSecret}
-     *         masked to {@code null}
+     * masked to {@code null}
      */
     @GetMapping
     public List<EulerOAuth2Client> listClients(
@@ -147,16 +161,26 @@ public class AdminOAuth2ClientController {
     }
 
     /**
-     * Updates an existing client using patch semantics.
+     * Updates an existing client using replace semantics: the submitted
+     * payload fully overwrites mutable client metadata; fields omitted from
+     * the request are cleared rather than preserved.
+     *
+     * <p>The update does not touch {@code clientSecret} &mdash; operators
+     * rotate it explicitly via {@link #rotateClientSecret(String)}. The
+     * encoded credential on the returned model is masked to {@code null}
+     * before serialization, mirroring {@link #getClient(String)}.
      *
      * @param registrationId the registration identifier
      * @param request        the client with updated fields
+     * @return the persisted client with its encoded {@code clientSecret}
+     * masked to {@code null}
      */
     @PutMapping("/{registrationId}")
-    public void updateClient(@PathVariable String registrationId, @RequestBody OAuth2ClientRequest request) {
+    public EulerOAuth2Client updateClient(@PathVariable String registrationId, @RequestBody OAuth2ClientRequest request) {
         DefaultEulerOAuth2Client model = request.toModel();
         model.setRegistrationId(registrationId);
         this.oauth2ClientService.updateClient(model);
+        return maskClientSecret(this.oauth2ClientService.loadClientByRegistrationId(registrationId));
     }
 
     /**
@@ -208,12 +232,10 @@ public class AdminOAuth2ClientController {
      *
      * @param client the client to mask, or {@code null}
      * @return the same instance with its {@code clientSecret} cleared, or
-     *         {@code null} when the input is {@code null}
+     * {@code null} when the input is {@code null}
      */
     private static EulerOAuth2Client maskClientSecret(EulerOAuth2Client client) {
-        if (client instanceof DefaultEulerOAuth2Client concrete) {
-            concrete.setClientSecret(null);
-        }
+        client.eraseCredentials();
         return client;
     }
 }

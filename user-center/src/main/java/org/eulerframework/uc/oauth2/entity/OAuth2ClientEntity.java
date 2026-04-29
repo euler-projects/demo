@@ -18,28 +18,20 @@ package org.eulerframework.uc.oauth2.entity;
 
 import jakarta.persistence.*;
 import org.eulerframework.data.entity.AuditingEntity;
-import org.eulerframework.data.entity.AuditingUUIDEntity;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import org.springframework.data.domain.Persistable;
 
 import java.time.Instant;
 import java.util.Map;
 
 @Entity
 @Table(name = "t_oauth2_client")
-public class OAuth2ClientEntity extends AuditingEntity {
+public class OAuth2ClientEntity extends AuditingEntity implements Persistable<String> {
+
     @Id
     @Column(name = "id", length = 36)
-    //@GeneratedValue(strategy = GenerationType.UUID)
     private String id;
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
 
     @Column(name = "client_id", unique = true, nullable = false)
     private String clientId;
@@ -101,7 +93,14 @@ public class OAuth2ClientEntity extends AuditingEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Object> tokenSettings;
 
-    // --- Getters and Setters ---
+    @Override
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public String getClientId() {
         return clientId;
@@ -253,5 +252,10 @@ public class OAuth2ClientEntity extends AuditingEntity {
 
     public void setTokenSettings(Map<String, Object> tokenSettings) {
         this.tokenSettings = tokenSettings;
+    }
+
+    @Override
+    public boolean isNew() {
+        return this.getCreatedDate() == null;
     }
 }

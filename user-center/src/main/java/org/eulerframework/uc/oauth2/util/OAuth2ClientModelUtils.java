@@ -114,6 +114,50 @@ public abstract class OAuth2ClientModelUtils {
         Optional.ofNullable(model.getTokenSettings()).map(EulerOAuth2TokenSettings::getSettings).ifPresent(entity::setTokenSettings);
     }
 
+    /**
+     * Copies every mapped field from {@code model} onto {@code entity} using
+     * full-overwrite semantics: {@code null} values on the model overwrite the
+     * corresponding entity state (the mirror image of
+     * {@link #updateOAuth2ClientEntity(EulerOAuth2Client, OAuth2ClientEntity)},
+     * which uses patch semantics).
+     * <p>
+     * The only exception is {@code clientIdIssuedAt}: it is treated as a
+     * lifecycle audit field and is preserved when the incoming model does not
+     * carry a value, so the original registration timestamp is not wiped by a
+     * partially populated {@code RegisteredClient}.
+     *
+     * @param model  the source model; when {@code null} the method returns
+     *               without touching the entity
+     * @param entity the target entity to overwrite
+     */
+    public static void replaceOAuth2ClientEntity(EulerOAuth2Client model, OAuth2ClientEntity entity) {
+        if (model == null) {
+            return;
+        }
+        entity.setId(model.getRegistrationId());
+        entity.setClientId(model.getClientId());
+        if (model.getClientIdIssuedAt() != null) {
+            entity.setClientIdIssuedAt(model.getClientIdIssuedAt());
+        }
+        entity.setClientSecret(model.getClientSecret());
+        entity.setClientSecretExpiresAt(model.getClientSecretExpiresAt());
+        entity.setClientName(model.getClientName());
+        entity.setTokenEndpointAuthMethod(model.getTokenEndpointAuthMethod());
+        entity.setGrantTypes(setToCommaDelimited(model.getGrantTypes()));
+        entity.setResponseTypes(setToCommaDelimited(model.getResponseTypes()));
+        entity.setRedirectUris(setToCommaDelimited(model.getRedirectUris()));
+        entity.setPostLogoutRedirectUris(setToCommaDelimited(model.getPostLogoutRedirectUris()));
+        entity.setScopes(setToCommaDelimited(model.getScopes()));
+        entity.setJwkSetUrl(model.getJwksUri());
+        entity.setJwks(model.getJwks() == null ? null : model.getJwks().toJSONObject());
+        entity.setTokenEndpointAuthSigningAlgorithm(model.getTokenEndpointAuthSigningAlgorithm());
+        entity.setIdTokenSignedResponseAlgorithm(model.getIdTokenSignedResponseAlgorithm());
+        entity.setTlsClientAuthSubjectDN(model.getTlsClientAuthSubjectDN());
+        entity.setTlsClientCertificateBoundAccessTokens(model.getTlsClientCertificateBoundAccessTokens());
+        entity.setClientSettings(model.getClientSettings() == null ? null : model.getClientSettings().getSettings());
+        entity.setTokenSettings(model.getTokenSettings() == null ? null : model.getTokenSettings().getSettings());
+    }
+
     public static JWKSet parseJwks(Map<String, Object> jwks) {
         if (jwks == null) {
             return null;
