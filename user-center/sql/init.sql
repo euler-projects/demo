@@ -98,6 +98,7 @@ CREATE TABLE app_attest_attestation_registration
     key_id                        VARCHAR(255) NOT NULL PRIMARY KEY,
     team_id                       VARCHAR(255) NOT NULL,
     bundle_id                     VARCHAR(255) NOT NULL,
+    client_id                     VARCHAR(255) NULL,
     aaguid                        BLOB         NOT NULL,
     credential_id                 BLOB         NOT NULL,
     attestation_certificate_chain BLOB         NOT NULL,
