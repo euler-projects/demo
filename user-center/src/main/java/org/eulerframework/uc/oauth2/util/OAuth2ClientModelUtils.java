@@ -84,11 +84,24 @@ public abstract class OAuth2ClientModelUtils {
         }
 
         OAuth2ClientEntity entity = new OAuth2ClientEntity();
-        updateOAuth2ClientEntity(model, entity);
+        patchOAuth2ClientEntity(model, entity);
         return entity;
     }
 
-    public static void updateOAuth2ClientEntity(EulerOAuth2Client model, OAuth2ClientEntity entity) {
+    /**
+     * Patch-style update of {@code entity} from {@code model}: each field is
+     * applied only when the incoming value is non-{@code null}. Mirrors HTTP
+     * {@code PATCH} semantics.
+     *
+     * <p>Full-overwrite semantics &mdash; required by the HTTP {@code PUT} path
+     * and by the {@code RegisteredClient} bridge &mdash; use
+     * {@link #replaceOAuth2ClientEntity(EulerOAuth2Client, OAuth2ClientEntity)}
+     * instead, which is the mirror image of this method.
+     *
+     * @param model  the source model
+     * @param entity the target entity to mutate
+     */
+    public static void patchOAuth2ClientEntity(EulerOAuth2Client model, OAuth2ClientEntity entity) {
         if (model == null) {
             return;
         }
@@ -118,13 +131,20 @@ public abstract class OAuth2ClientModelUtils {
      * Copies every mapped field from {@code model} onto {@code entity} using
      * full-overwrite semantics: {@code null} values on the model overwrite the
      * corresponding entity state (the mirror image of
-     * {@link #updateOAuth2ClientEntity(EulerOAuth2Client, OAuth2ClientEntity)},
+     * {@link #patchOAuth2ClientEntity(EulerOAuth2Client, OAuth2ClientEntity)},
      * which uses patch semantics).
-     * <p>
-     * The only exception is {@code clientIdIssuedAt}: it is treated as a
-     * lifecycle audit field and is preserved when the incoming model does not
-     * carry a value, so the original registration timestamp is not wiped by a
-     * partially populated {@code RegisteredClient}.
+     * <p>Three fields are treated as non-overwritable by {@code null} on the
+     * replace path:
+     * <ul>
+     *   <li>{@code clientIdIssuedAt} &mdash; a lifecycle audit field; the
+     *       original registration timestamp must not be wiped by a partially
+     *       populated {@code RegisteredClient}.</li>
+     *   <li>{@code clientSecret} / {@code clientSecretExpiresAt} &mdash;
+     *       credential state owned exclusively by the rotation pipeline
+     *       (see {@code updateClientSecret}); bulk replace paths such as the
+     *       Admin {@code PUT} endpoint and the {@code RegisteredClient}
+     *       bridge deliberately do not touch the credential.</li>
+     * </ul>
      *
      * @param model  the source model; when {@code null} the method returns
      *               without touching the entity
@@ -139,8 +159,12 @@ public abstract class OAuth2ClientModelUtils {
         if (model.getClientIdIssuedAt() != null) {
             entity.setClientIdIssuedAt(model.getClientIdIssuedAt());
         }
-        entity.setClientSecret(model.getClientSecret());
-        entity.setClientSecretExpiresAt(model.getClientSecretExpiresAt());
+        if (model.getClientSecret() != null) {
+            entity.setClientSecret(model.getClientSecret());
+        }
+        if (model.getClientSecretExpiresAt() != null) {
+            entity.setClientSecretExpiresAt(model.getClientSecretExpiresAt());
+        }
         entity.setClientName(model.getClientName());
         entity.setTokenEndpointAuthMethod(model.getTokenEndpointAuthMethod());
         entity.setGrantTypes(setToCommaDelimited(model.getGrantTypes()));

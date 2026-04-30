@@ -93,11 +93,31 @@ create table t_wechat_user_mapping
   default collate utf8mb4_bin
     comment 'WeChat user mappings';
 
+create table app_attest_app_registration
+(
+    id                 varchar(64)  not null,
+    app_id             varchar(288) not null comment 'teamId.bundleId',
+    app_id_hash        varchar(64)  not null comment 'hex-encoded SHA-256 of app_id',
+    team_id            varchar(32)  not null comment 'Apple Developer Team ID',
+    bundle_id          varchar(255) not null comment 'Apple App Bundle ID',
+    oauth2_enabled     bit          not null,
+    oauth2_client_type varchar(16)  null,
+    created_date       datetime(3)  not null comment 'Created time',
+    modified_date      datetime(3)  not null comment 'Last modified time',
+    primary key (id),
+    unique uk_app_app_id (app_id),
+    unique uk_app_app_id_hash (app_id_hash)
+) engine = innodb
+  default character set utf8mb4
+  default collate utf8mb4_bin
+    comment 'Registered Apps for App Attest';
+
 CREATE TABLE app_attest_attestation_registration
 (
     key_id                        VARCHAR(255) NOT NULL PRIMARY KEY,
     team_id                       VARCHAR(255) NOT NULL,
     bundle_id                     VARCHAR(255) NOT NULL,
+    client_id                     VARCHAR(255) NULL,
     aaguid                        BLOB         NOT NULL,
     credential_id                 BLOB         NOT NULL,
     attestation_certificate_chain BLOB         NOT NULL,
@@ -125,30 +145,30 @@ create table app_attest_attestation_user_mapping
   default collate utf8mb4_bin
     comment 'App Attest Attestation user mappings';
 
-create table t_oauth2_client
+create table oauth2_client
 (
-    id                                              varchar(36)  not null,
-    client_id                                       varchar(255) not null,
-    client_id_issued_at                             datetime(3)  null,
-    client_secret                                   varchar(255) null,
-    client_secret_expires_at                        datetime(3)  null,
-    client_name                                     varchar(255) null,
-    token_endpoint_auth_method                      varchar(255) null,
-    grant_types                                     varchar(255) null,
-    response_types                                  varchar(255) null,
-    redirect_uris                                   varchar(255) null,
-    post_logout_redirect_uris                       varchar(255) null,
-    scopes                                          varchar(255) null,
-    jwk_set_url                                     varchar(255) null,
-    jwks                                            json         null,
-    token_endpoint_auth_signing_alg                 varchar(255) null,
-    id_token_signed_response_alg                    varchar(255) null,
-    tls_client_auth_subject_dn                      varchar(255) null,
-    tls_client_certificate_bound_access_tokens      bit          null,
-    client_settings                                 json         null,
-    token_settings                                  json         null,
-    created_date                                    datetime(3)  not null comment 'Created time',
-    modified_date                                   datetime(3)  not null comment 'Last modified time',
+    id                                         varchar(36)  not null,
+    client_id                                  varchar(255) not null,
+    client_id_issued_at                        datetime(3)  null,
+    client_secret                              varchar(255) null,
+    client_secret_expires_at                   datetime(3)  null,
+    client_name                                varchar(255) null,
+    token_endpoint_auth_method                 varchar(255) null,
+    grant_types                                varchar(255) null,
+    response_types                             varchar(255) null,
+    redirect_uris                              varchar(255) null,
+    post_logout_redirect_uris                  varchar(255) null,
+    scopes                                     varchar(255) null,
+    jwk_set_url                                varchar(255) null,
+    jwks                                       json         null,
+    token_endpoint_auth_signing_alg            varchar(255) null,
+    id_token_signed_response_alg               varchar(255) null,
+    tls_client_auth_subject_dn                 varchar(255) null,
+    tls_client_certificate_bound_access_tokens bit          null,
+    client_settings                            json         null,
+    token_settings                             json         null,
+    created_date                               datetime(3)  not null comment 'Created time',
+    modified_date                              datetime(3)  not null comment 'Last modified time',
     primary key (id),
     unique uk_oauth2_client_client_id (client_id)
 ) engine = innodb

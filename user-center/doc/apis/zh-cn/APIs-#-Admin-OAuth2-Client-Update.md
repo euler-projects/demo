@@ -1,6 +1,6 @@
 # 更新客户端
 
-整体替换指定 `registrationId` 客户端的配置. 通用约定见 [home.md](home.md#通用约定).
+整体替换指定 `registrationId` 客户端的配置. 语义为 `replace` — 请求体之外的**可变字段**将被重置为默认值 (`clientSecret` / `clientSecretExpiresAt` / `clientIdIssuedAt` 除外, 见下). 如只需部分更新, 请使用 [部分更新客户端](APIs-%23-Admin-OAuth2-Client-Patch.md) (PATCH). 通用约定见 [home.md](home.md#通用约定).
 
 ## Request
 

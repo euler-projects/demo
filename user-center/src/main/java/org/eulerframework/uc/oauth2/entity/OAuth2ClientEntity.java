@@ -26,7 +26,7 @@ import java.time.Instant;
 import java.util.Map;
 
 @Entity
-@Table(name = "t_oauth2_client")
+@Table(name = "oauth2_client")
 public class OAuth2ClientEntity extends AuditingEntity implements Persistable<String> {
 
     @Id

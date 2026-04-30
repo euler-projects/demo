@@ -161,9 +161,9 @@ public class AdminOAuth2ClientController {
     }
 
     /**
-     * Updates an existing client using replace semantics: the submitted
-     * payload fully overwrites mutable client metadata; fields omitted from
-     * the request are cleared rather than preserved.
+     * Replaces an existing client end-to-end (HTTP {@code PUT} semantics): the
+     * submitted payload fully overwrites mutable client metadata; fields
+     * omitted from the request are cleared rather than preserved.
      *
      * <p>The update does not touch {@code clientSecret} &mdash; operators
      * rotate it explicitly via {@link #rotateClientSecret(String)}. The
@@ -180,6 +180,29 @@ public class AdminOAuth2ClientController {
         DefaultEulerOAuth2Client model = request.toModel();
         model.setRegistrationId(registrationId);
         this.oauth2ClientService.updateClient(model);
+        return maskClientSecret(this.oauth2ClientService.loadClientByRegistrationId(registrationId));
+    }
+
+    /**
+     * Patches an existing client (HTTP {@code PATCH} semantics): only fields
+     * carrying a non-{@code null} value on the request are applied; omitted
+     * fields keep the persisted value.
+     *
+     * <p>The same credential guard as {@link #updateClient(String, OAuth2ClientRequest)
+     * the PUT path} applies: {@code clientSecret} is only mutated through
+     * {@link #rotateClientSecret(String)}. The encoded credential on the
+     * returned model is masked to {@code null} before serialization.
+     *
+     * @param registrationId the registration identifier
+     * @param request        the client carrying the fields to patch
+     * @return the persisted client with its encoded {@code clientSecret}
+     * masked to {@code null}
+     */
+    @PatchMapping("/{registrationId}")
+    public EulerOAuth2Client patchClient(@PathVariable String registrationId, @RequestBody OAuth2ClientRequest request) {
+        DefaultEulerOAuth2Client model = request.toModel();
+        model.setRegistrationId(registrationId);
+        this.oauth2ClientService.patchClient(model);
         return maskClientSecret(this.oauth2ClientService.loadClientByRegistrationId(registrationId));
     }
 

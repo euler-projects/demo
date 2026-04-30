@@ -115,7 +115,7 @@ public class OAuth2ClientService implements EulerOAuth2ClientService {
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Client not found, registrationId: " + client.getRegistrationId()));
 
-        OAuth2ClientModelUtils.updateOAuth2ClientEntity(client, entity);
+        OAuth2ClientModelUtils.replaceOAuth2ClientEntity(client, entity);
 
         this.oauth2ClientRepository.save(entity);
     }
@@ -134,6 +134,21 @@ public class OAuth2ClientService implements EulerOAuth2ClientService {
         model.reloadRegisteredClient(registeredClient);
 
         OAuth2ClientModelUtils.replaceOAuth2ClientEntity(model, entity);
+
+        this.oauth2ClientRepository.save(entity);
+    }
+
+    @Override
+    @Transactional
+    public void patchClient(EulerOAuth2Client client) {
+        Assert.notNull(client, "client must not be null");
+        Assert.notNull(client.getRegistrationId(), "registrationId must not be null");
+
+        OAuth2ClientEntity entity = this.oauth2ClientRepository.findById(client.getRegistrationId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Client not found, registrationId: " + client.getRegistrationId()));
+
+        OAuth2ClientModelUtils.patchOAuth2ClientEntity(client, entity);
 
         this.oauth2ClientRepository.save(entity);
     }

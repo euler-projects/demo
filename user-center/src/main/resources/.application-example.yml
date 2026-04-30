@@ -31,7 +31,8 @@ euler:
       enabled: true
       development-environment: true
       apps:
-        - team-id: NaN
+        myapp:
+          team-id: NaN
           bundle-id: NaN
     oauth2:
       authorizationserver:
