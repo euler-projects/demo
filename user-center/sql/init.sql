@@ -156,3 +156,22 @@ create table t_oauth2_client
   default character set utf8mb4
   default collate utf8mb4_bin
     comment 'OAuth2 Clients';
+
+create table app
+(
+    id                 varchar(64)  not null,
+    app_id             varchar(288) not null comment 'teamId.bundleId',
+    app_id_hash        varchar(64)  not null comment 'hex-encoded SHA-256 of app_id',
+    team_id            varchar(32)  not null comment 'Apple Developer Team ID',
+    bundle_id          varchar(255) not null comment 'Apple App Bundle ID',
+    oauth2_enabled     bit          not null,
+    oauth2_client_type varchar(16)  null,
+    created_date       datetime(3)  not null comment 'Created time',
+    modified_date      datetime(3)  not null comment 'Last modified time',
+    primary key (id),
+    unique uk_app_app_id (app_id),
+    unique uk_app_app_id_hash (app_id_hash)
+) engine = innodb
+  default character set utf8mb4
+  default collate utf8mb4_bin
+    comment 'Registered Apps for App Attest';

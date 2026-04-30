@@ -17,6 +17,10 @@
 package org.eulerframework.uc;
 
 import org.eulerframework.common.util.StringUtils;
+import org.eulerframework.security.authentication.appattest.AppAttestAppService;
+import org.eulerframework.security.authentication.appattest.AppAttestServiceRegisteredAppRepository;
+import org.eulerframework.security.authentication.appattest.RegisteredAppChangeListener;
+import org.eulerframework.security.authentication.appattest.RegisteredAppRepository;
 import org.eulerframework.security.oauth2.core.oidc.EulerOidcScopes;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -38,6 +42,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -48,6 +53,18 @@ public class UserCenterApplication {
 
     static void main(String[] args) {
         SpringApplication.run(UserCenterApplication.class, args);
+    }
+
+    /**
+     * Overrides the default in-memory {@code RegisteredAppRepository} from
+     * {@code EulerBootSecurityAutoConfiguration} with a JPA-backed implementation
+     * that delegates to {@link AppAttestAppService}.
+     */
+    @Bean
+    public RegisteredAppRepository registeredAppRepository(
+            AppAttestAppService appAttestAppService,
+            List<RegisteredAppChangeListener> listeners) {
+        return new AppAttestServiceRegisteredAppRepository(appAttestAppService, listeners);
     }
 
     @Bean
