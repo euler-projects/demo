@@ -28,6 +28,7 @@ spring:
   security:
     oauth2:
       authorizationserver:
+        issuer: https://account.eulerproject.org
         client:
           default:
             require-proof-key: true
@@ -54,7 +55,7 @@ spring:
                 - authorization_code
                 - refresh_token
               redirect-uris:
-                - https://example.com/auth/callback
+                - https://admin.eulerproject.org/auth/callback
               scopes:
                 - openid
                 - profile
@@ -62,7 +63,7 @@ spring:
                 - phone
                 - authorities
               post-logout-redirect-uris:
-                - https://example.com
+                - https://admin.eulerproject.org
             token:
               access-token-time-to-live: 5m
               refresh-token-time-to-live: 7d
