@@ -36,7 +36,7 @@ import org.springframework.data.domain.Persistable;
  * not collide with the {@code appId} lookup path.
  */
 @Entity
-@Table(name = "t_app_attest_app")
+@Table(name = "app_attest_app_registration")
 public class AppEntity extends AuditingEntity implements Persistable<String> {
 
     @Id

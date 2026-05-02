@@ -19,6 +19,7 @@ import org.eulerframework.security.authentication.appattest.AppAttestApp;
 import org.eulerframework.security.authentication.appattest.AppAttestAppService;
 import org.eulerframework.security.authentication.appattest.DefaultAppAttestApp;
 import org.eulerframework.security.authentication.appattest.RegisteredApp;
+import org.eulerframework.security.authentication.appattest.RegisteredAppChangeListener;
 import org.eulerframework.uc.appattest.entity.AppEntity;
 import org.eulerframework.uc.appattest.repository.AppRepository;
 import org.eulerframework.uc.appattest.util.AppModelUtils;
@@ -29,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
+import java.util.Collections;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
@@ -38,6 +40,16 @@ import java.util.stream.Collectors;
 public class AppService implements AppAttestAppService {
 
     private AppRepository appRepository;
+
+    /**
+     * Listeners to notify after each successful write. Dispatched inline at the tail of
+     * every mutating service method so that the callback runs inside the same
+     * transactional boundary as the persistence call. The repository layer
+     * ({@code AppAttestServiceRegisteredAppRepository}) treats dispatch as a
+     * service-layer concern and does not wrap itself in any notification decorator.
+     * Temporary until a cleaner notification strategy lands.
+     */
+    private List<RegisteredAppChangeListener> registeredAppChangeListeners = Collections.emptyList();
 
     @Override
     @Transactional
@@ -55,7 +67,9 @@ public class AppService implements AppAttestAppService {
         AppEntity entity = AppModelUtils.toAppEntity(app);
         entity.setId(registrationId);
         AppEntity saved = this.appRepository.save(entity);
-        return AppModelUtils.toAppAttestApp(saved);
+        AppAttestApp persisted = AppModelUtils.toAppAttestApp(saved);
+        notifyRegisteredAppSaved(persisted);
+        return persisted;
     }
 
     @Override
@@ -73,7 +87,9 @@ public class AppService implements AppAttestAppService {
         model.reloadRegisteredApp(registeredApp);
         AppEntity entity = AppModelUtils.toAppEntity(model);
         AppEntity saved = this.appRepository.save(entity);
-        return AppModelUtils.toAppAttestApp(saved);
+        AppAttestApp persisted = AppModelUtils.toAppAttestApp(saved);
+        notifyRegisteredAppSaved(persisted);
+        return persisted;
     }
 
     @Override
@@ -114,7 +130,8 @@ public class AppService implements AppAttestAppService {
                 .orElseThrow(() -> new IllegalArgumentException(
                         "App not found, registrationId: " + app.getRegistrationId()));
         AppModelUtils.replaceAppEntity(app, entity);
-        this.appRepository.save(entity);
+        AppEntity saved = this.appRepository.save(entity);
+        notifyRegisteredAppSaved(AppModelUtils.toAppAttestApp(saved));
     }
 
     @Override
@@ -128,7 +145,8 @@ public class AppService implements AppAttestAppService {
         DefaultAppAttestApp model = new DefaultAppAttestApp();
         model.reloadRegisteredApp(registeredApp);
         AppModelUtils.replaceAppEntity(model, entity);
-        this.appRepository.save(entity);
+        AppEntity saved = this.appRepository.save(entity);
+        notifyRegisteredAppSaved(AppModelUtils.toAppAttestApp(saved));
     }
 
     @Override
@@ -144,7 +162,8 @@ public class AppService implements AppAttestAppService {
                 .orElseThrow(() -> new IllegalArgumentException(
                         "App not found, registrationId: " + app.getRegistrationId()));
         AppModelUtils.patchAppEntity(app, entity);
-        this.appRepository.save(entity);
+        AppEntity saved = this.appRepository.save(entity);
+        notifyRegisteredAppSaved(AppModelUtils.toAppAttestApp(saved));
     }
 
     @Override
@@ -163,8 +182,37 @@ public class AppService implements AppAttestAppService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Build a {@link RegisteredApp} view of {@code model} and fan it out to every
+     * registered listener. teamId / bundleId are required here because the
+     * {@link RegisteredApp.Builder} rejects blank values; all mutating entry points
+     * above either validate them up front or reload them from the entity, so by the
+     * time we reach this method the values are guaranteed non-blank.
+     */
+    private void notifyRegisteredAppSaved(AppAttestApp model) {
+        if (this.registeredAppChangeListeners.isEmpty()) {
+            return;
+        }
+        RegisteredApp view = RegisteredApp.withId(model.getRegistrationId())
+                .teamId(model.getTeamId())
+                .bundleId(model.getBundleId())
+                .oauth2Enabled(Boolean.TRUE.equals(model.getOauth2Enabled()))
+                .oauth2ClientType(model.getOauth2ClientType())
+                .build();
+        for (RegisteredAppChangeListener listener : this.registeredAppChangeListeners) {
+            listener.onRegisteredAppSaved(view);
+        }
+    }
+
     @Autowired
     public void setAppRepository(AppRepository appRepository) {
         this.appRepository = appRepository;
+    }
+
+    @Autowired(required = false)
+    public void setRegisteredAppChangeListeners(List<RegisteredAppChangeListener> listeners) {
+        this.registeredAppChangeListeners = (listeners == null)
+                ? Collections.emptyList()
+                : List.copyOf(listeners);
     }
 }
