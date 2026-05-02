@@ -157,7 +157,7 @@ create table t_oauth2_client
   default collate utf8mb4_bin
     comment 'OAuth2 Clients';
 
-create table app
+create table t_app_attest_app
 (
     id                 varchar(64)  not null,
     app_id             varchar(288) not null comment 'teamId.bundleId',

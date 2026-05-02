@@ -17,6 +17,8 @@ package org.eulerframework.uc.appattest.service;
 
 import org.eulerframework.security.authentication.appattest.AppAttestApp;
 import org.eulerframework.security.authentication.appattest.AppAttestAppService;
+import org.eulerframework.security.authentication.appattest.DefaultAppAttestApp;
+import org.eulerframework.security.authentication.appattest.RegisteredApp;
 import org.eulerframework.uc.appattest.entity.AppEntity;
 import org.eulerframework.uc.appattest.repository.AppRepository;
 import org.eulerframework.uc.appattest.util.AppModelUtils;
@@ -57,6 +59,24 @@ public class AppService implements AppAttestAppService {
     }
 
     @Override
+    @Transactional
+    public AppAttestApp createApp(RegisteredApp registeredApp) {
+        Assert.notNull(registeredApp, "registeredApp must not be null");
+        Assert.hasText(registeredApp.getId(), "registrationId must not be empty");
+        Assert.hasText(registeredApp.getTeamId(), "teamId must not be empty");
+        Assert.hasText(registeredApp.getBundleId(), "bundleId must not be empty");
+        if (this.appRepository.existsById(registeredApp.getId())) {
+            throw new IllegalArgumentException(
+                    "App already exists, registrationId: " + registeredApp.getId());
+        }
+        DefaultAppAttestApp model = new DefaultAppAttestApp();
+        model.reloadRegisteredApp(registeredApp);
+        AppEntity entity = AppModelUtils.toAppEntity(model);
+        AppEntity saved = this.appRepository.save(entity);
+        return AppModelUtils.toAppAttestApp(saved);
+    }
+
+    @Override
     public AppAttestApp findByRegistrationId(String registrationId) {
         Assert.hasText(registrationId, "registrationId must not be empty");
         return this.appRepository.findById(registrationId)
@@ -86,10 +106,44 @@ public class AppService implements AppAttestAppService {
     public void updateApp(AppAttestApp app) {
         Assert.notNull(app, "app must not be null");
         Assert.hasText(app.getRegistrationId(), "registrationId must not be empty");
+        boolean teamIdPresent = StringUtils.hasText(app.getTeamId());
+        boolean bundleIdPresent = StringUtils.hasText(app.getBundleId());
+        Assert.isTrue(teamIdPresent == bundleIdPresent,
+                "teamId and bundleId must be updated together: either both present or both absent");
         AppEntity entity = this.appRepository.findById(app.getRegistrationId())
                 .orElseThrow(() -> new IllegalArgumentException(
                         "App not found, registrationId: " + app.getRegistrationId()));
-        AppModelUtils.updateAppEntity(app, entity);
+        AppModelUtils.replaceAppEntity(app, entity);
+        this.appRepository.save(entity);
+    }
+
+    @Override
+    @Transactional
+    public void updateApp(RegisteredApp registeredApp) {
+        Assert.notNull(registeredApp, "registeredApp must not be null");
+        Assert.hasText(registeredApp.getId(), "registrationId must not be empty");
+        AppEntity entity = this.appRepository.findById(registeredApp.getId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "App not found, registrationId: " + registeredApp.getId()));
+        DefaultAppAttestApp model = new DefaultAppAttestApp();
+        model.reloadRegisteredApp(registeredApp);
+        AppModelUtils.replaceAppEntity(model, entity);
+        this.appRepository.save(entity);
+    }
+
+    @Override
+    @Transactional
+    public void patchApp(AppAttestApp app) {
+        Assert.notNull(app, "app must not be null");
+        Assert.hasText(app.getRegistrationId(), "registrationId must not be empty");
+        boolean teamIdPresent = StringUtils.hasText(app.getTeamId());
+        boolean bundleIdPresent = StringUtils.hasText(app.getBundleId());
+        Assert.isTrue(teamIdPresent == bundleIdPresent,
+                "teamId and bundleId must be patched together: either both present or both absent");
+        AppEntity entity = this.appRepository.findById(app.getRegistrationId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "App not found, registrationId: " + app.getRegistrationId()));
+        AppModelUtils.patchAppEntity(app, entity);
         this.appRepository.save(entity);
     }
 

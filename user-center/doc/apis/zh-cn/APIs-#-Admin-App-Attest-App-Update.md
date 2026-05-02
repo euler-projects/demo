@@ -1,6 +1,6 @@
 # 更新 App Attest 应用
 
-按 `registrationId` 全量更新 App Attest 应用注册记录. 语义为 `replace` — 请求体之外的**可变字段**将被重置为默认值. 通用约定见 [home.md](home.md#通用约定), 应用完整结构见 [App Attest App](Model-%23-App-Attest-App.md).
+按 `registrationId` 全量更新 App Attest 应用注册记录. 语义为 `replace` — 请求体之外的**可变字段**将被重置为默认值. 如只需部分更新, 请使用 [部分更新应用](APIs-%23-Admin-App-Attest-App-Patch.md) (PATCH). 通用约定见 [home.md](home.md#通用约定), 应用完整结构见 [App Attest App](Model-%23-App-Attest-App.md).
 
 ## Request
 

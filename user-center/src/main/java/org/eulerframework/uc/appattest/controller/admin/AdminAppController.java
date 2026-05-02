@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -45,8 +46,8 @@ import java.util.List;
  * as the OAuth2 client admin API.
  */
 @RestController
-@RequestMapping(path = {"admin/appattest/app", "api/admin/appattest/app"})
-@PreAuthorize("hasAnyAuthority('root', 'admin')")
+@RequestMapping(path = {"admin/appattest/app", ""})
+@PreAuthorize("hasAnyAuapi/admin/appattest/appthority('root', 'admin')")
 public class AdminAppController {
 
     private final AppAttestAppService appAttestAppService;
@@ -97,7 +98,8 @@ public class AdminAppController {
     }
 
     /**
-     * Updates an existing app using full-overwrite semantics. The path variable
+     * Replaces an existing app end-to-end (HTTP {@code PUT} semantics). Fields
+     * omitted from {@code request} are reset, not preserved. The path variable
      * is authoritative: any {@code registrationId} carried by the request body
      * is overwritten.
      *
@@ -110,6 +112,28 @@ public class AdminAppController {
                                   @RequestBody DefaultAppAttestApp request) {
         request.setRegistrationId(registrationId);
         this.appAttestAppService.updateApp(request);
+        return this.appAttestAppService.findByRegistrationId(registrationId);
+    }
+
+    /**
+     * Patches an existing app (HTTP {@code PATCH} semantics). Only fields
+     * carrying a non-{@code null} value on {@code request} are applied;
+     * omitted fields keep the persisted value. The path variable is
+     * authoritative.
+     *
+     * <p>{@code teamId} and {@code bundleId} must be patched together &mdash;
+     * either both present or both absent, see
+     * {@link AppAttestApp#getAppId()} for rationale.
+     *
+     * @param registrationId the registration identifier
+     * @param request        the app carrying the fields to patch
+     * @return the persisted app
+     */
+    @PatchMapping("/{registrationId}")
+    public AppAttestApp patchApp(@PathVariable String registrationId,
+                                 @RequestBody DefaultAppAttestApp request) {
+        request.setRegistrationId(registrationId);
+        this.appAttestAppService.patchApp(request);
         return this.appAttestAppService.findByRegistrationId(registrationId);
     }
 

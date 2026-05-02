@@ -18,6 +18,7 @@ package org.eulerframework.uc.appattest.util;
 import org.eulerframework.security.authentication.appattest.AppAttestApp;
 import org.eulerframework.security.authentication.appattest.AppAttestUtils;
 import org.eulerframework.security.authentication.appattest.DefaultAppAttestApp;
+import org.eulerframework.security.authentication.appattest.RegisteredApp;
 import org.eulerframework.uc.appattest.entity.AppEntity;
 
 /**
@@ -62,6 +63,10 @@ public abstract class AppModelUtils {
      * {@code appIdHash} column stores the hex-encoded SHA-256 digest of
      * {@code appId} computed via {@link AppAttestUtils#appIdHashHex(String)}.
      *
+     * <p>Intended for the {@code createApp} path where {@code model} is expected
+     * to carry a fully-populated state. {@link AppAttestApp#getOauth2Enabled()
+     * oauth2Enabled} is coerced to {@code false} when {@code null}.
+     *
      * @param model the model to convert
      * @return the entity, or {@code null} if the model is {@code null}
      */
@@ -75,27 +80,78 @@ public abstract class AppModelUtils {
         entity.setAppIdHash(AppAttestUtils.appIdHashHex(model.getAppId()));
         entity.setTeamId(model.getTeamId());
         entity.setBundleId(model.getBundleId());
-        entity.setOauth2Enabled(model.isOauth2Enabled());
+        entity.setOauth2Enabled(Boolean.TRUE.equals(model.getOauth2Enabled()));
         entity.setOauth2ClientType(model.getOauth2ClientType());
         return entity;
     }
 
     /**
-     * Full-overwrite update of {@code target} from {@code src} on all non-audit,
-     * non-primary-key fields. Used by the update path.
+     * Patch-style update of {@code target} from {@code src}: each field of
+     * {@code src} is applied only when it is non-{@code null}.
+     *
+     * <p>{@link AppAttestApp#getTeamId() teamId} and
+     * {@link AppAttestApp#getBundleId() bundleId} travel together &mdash; the
+     * pairing invariant is enforced by {@link AppAttestApp#getAppId()} &mdash;
+     * so they are written as one atomic block along with the recomputed
+     * {@code appId} / {@code appIdHash}. {@link AppAttestApp#getOauth2Enabled()
+     * oauth2Enabled} of {@code null} means "unchanged".
+     *
+     * <p>Full-overwrite semantics &mdash; required by the HTTP {@code PUT} path
+     * and by the {@code RegisteredApp} bridge &mdash; use
+     * {@link #replaceAppEntity(AppAttestApp, AppEntity)} instead, which is
+     * the mirror image of this method.
      *
      * @param src    the source model
      * @param target the target entity to mutate
      */
-    public static void updateAppEntity(AppAttestApp src, AppEntity target) {
+    public static void patchAppEntity(AppAttestApp src, AppEntity target) {
         if (src == null || target == null) {
             return;
         }
-        target.setAppId(src.getAppId());
-        target.setAppIdHash(AppAttestUtils.appIdHashHex(src.getAppId()));
-        target.setTeamId(src.getTeamId());
-        target.setBundleId(src.getBundleId());
-        target.setOauth2Enabled(src.isOauth2Enabled());
-        target.setOauth2ClientType(src.getOauth2ClientType());
+        String appId = src.getAppId();
+        if (appId != null) {
+            target.setAppId(appId);
+            target.setAppIdHash(AppAttestUtils.appIdHashHex(appId));
+            target.setTeamId(src.getTeamId());
+            target.setBundleId(src.getBundleId());
+        }
+        Boolean oauth2Enabled = src.getOauth2Enabled();
+        if (oauth2Enabled != null) {
+            target.setOauth2Enabled(oauth2Enabled);
+        }
+        RegisteredApp.OAuth2ClientType oauth2ClientType = src.getOauth2ClientType();
+        if (oauth2ClientType != null) {
+            target.setOauth2ClientType(oauth2ClientType);
+        }
+    }
+
+    /**
+     * Copies every mapped field from {@code model} onto {@code entity} using
+     * full-overwrite semantics: {@code null} values on the model overwrite the
+     * corresponding entity state (the mirror image of
+     * {@link #patchAppEntity(AppAttestApp, AppEntity)}, which uses patch
+     * semantics).
+     *
+     * <p>{@code appIdHash} is always recomputed from {@link AppAttestApp#getAppId()}
+     * to keep the two columns in sync. {@link AppAttestApp#getOauth2Enabled()
+     * oauth2Enabled} of {@code null} is coerced to {@code false} because the
+     * entity column is a primitive {@code boolean}.
+     *
+     * @param model  the source model; when {@code null} the method returns
+     *               without touching the entity
+     * @param entity the target entity to overwrite
+     */
+    public static void replaceAppEntity(AppAttestApp model, AppEntity entity) {
+        if (model == null) {
+            return;
+        }
+        entity.setId(model.getRegistrationId());
+        String appId = model.getAppId();
+        entity.setAppId(appId);
+        entity.setAppIdHash(appId == null ? null : AppAttestUtils.appIdHashHex(appId));
+        entity.setTeamId(model.getTeamId());
+        entity.setBundleId(model.getBundleId());
+        entity.setOauth2Enabled(Boolean.TRUE.equals(model.getOauth2Enabled()));
+        entity.setOauth2ClientType(model.getOauth2ClientType());
     }
 }
