@@ -124,7 +124,9 @@ CREATE TABLE app_attest_attestation_registration
     receipt                       BLOB         NOT NULL,
     public_key                    BLOB         NOT NULL,
     jwks                          TEXT         NOT NULL,
-    sign_count                    BIGINT       NOT NULL
+    sign_count                    BIGINT       NOT NULL,
+    created_date                  DATETIME(3)  NOT NULL COMMENT 'Created time',
+    modified_date                 DATETIME(3)  NOT NULL COMMENT 'Last modified time'
 ) engine = innodb
   default character set utf8mb4
   default collate utf8mb4_bin
