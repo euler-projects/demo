@@ -36,3 +36,7 @@ build/
 var
 
 application-local.yml
+
+### LOCAL ENV ###
+.env
+!.env.example

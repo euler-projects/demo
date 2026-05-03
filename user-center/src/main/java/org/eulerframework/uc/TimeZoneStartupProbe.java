@@ -25,6 +25,7 @@ import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.sql.Timestamp;
 import java.util.Locale;
 import java.util.TimeZone;
 
@@ -189,7 +190,7 @@ public class TimeZoneStartupProbe {
             }
             log.info("[TimeZoneProbe] DB session timezone                = {}", info.sessionTimeZone);
             log.info("[TimeZoneProbe] DB global/db timezone              = {}", info.globalTimeZone);
-            log.info("[TimeZoneProbe] DB current timestamp               = {}", info.currentTimestamp);
+            log.info("[TimeZoneProbe] DB current timestamp               = {}", info.currentTimestamp.toInstant());
         } catch (Exception ex) {
             log.warn("[TimeZoneProbe] Failed to query time-zone state for {}", productName, ex);
         }
@@ -209,31 +210,31 @@ public class TimeZoneStartupProbe {
         if (p.contains("mysql") || p.contains("mariadb")) {
             return jdbcTemplate.queryForObject(
                     "SELECT @@session.time_zone, @@global.time_zone, NOW()",
-                    (rs, rn) -> new TimeZoneInfo(rs.getString(1), rs.getString(2), rs.getString(3)));
+                    (rs, rn) -> new TimeZoneInfo(rs.getString(1), rs.getString(2), rs.getTimestamp(3)));
         }
         if (p.contains("postgres")) {
             return jdbcTemplate.queryForObject(
                     "SELECT current_setting('timezone'), current_setting('timezone'), now()",
-                    (rs, rn) -> new TimeZoneInfo(rs.getString(1), rs.getString(2), rs.getString(3)));
+                    (rs, rn) -> new TimeZoneInfo(rs.getString(1), rs.getString(2), rs.getTimestamp(3)));
         }
         if (p.contains("oracle")) {
             return jdbcTemplate.queryForObject(
                     "SELECT SESSIONTIMEZONE, DBTIMEZONE, CURRENT_TIMESTAMP FROM DUAL",
-                    (rs, rn) -> new TimeZoneInfo(rs.getString(1), rs.getString(2), rs.getString(3)));
+                    (rs, rn) -> new TimeZoneInfo(rs.getString(1), rs.getString(2), rs.getTimestamp(3)));
         }
         if (p.contains("microsoft sql server") || p.contains("sql server")) {
             return jdbcTemplate.queryForObject(
                     "SELECT CURRENT_TIMEZONE(), CURRENT_TIMEZONE(), SYSDATETIMEOFFSET()",
-                    (rs, rn) -> new TimeZoneInfo(rs.getString(1), rs.getString(2), rs.getString(3)));
+                    (rs, rn) -> new TimeZoneInfo(rs.getString(1), rs.getString(2), rs.getTimestamp(3)));
         }
         if (p.contains("h2")) {
             return jdbcTemplate.queryForObject(
                     "SELECT 'n/a', 'n/a', CURRENT_TIMESTAMP",
-                    (rs, rn) -> new TimeZoneInfo(rs.getString(1), rs.getString(2), rs.getString(3)));
+                    (rs, rn) -> new TimeZoneInfo(rs.getString(1), rs.getString(2), rs.getTimestamp(3)));
         }
         return null;
     }
 
-    private record TimeZoneInfo(String sessionTimeZone, String globalTimeZone, String currentTimestamp) {
+    private record TimeZoneInfo(String sessionTimeZone, String globalTimeZone, Timestamp currentTimestamp) {
     }
 }
