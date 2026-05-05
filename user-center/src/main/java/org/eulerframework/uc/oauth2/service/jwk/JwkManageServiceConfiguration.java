@@ -16,38 +16,18 @@
 
 package org.eulerframework.uc.oauth2.service.jwk;
 
-import org.eulerframework.security.oauth2.server.authorization.jwk.JwkManageService;
-import org.eulerframework.security.oauth2.server.authorization.jwk.JwkRepositoryChangedEvent;
-import org.eulerframework.uc.oauth2.repository.JwkEntityRepository;
 import org.eulerframework.uc.oauth2.service.jwk.keygen.JwkGenerator;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StringUtils;
 
 import java.nio.file.Paths;
 
-/**
- * Wires the JPA-backed {@link JwkManageService} implementation for user-center.
- *
- * <p>The service is intentionally decoupled from
- * {@link org.eulerframework.security.oauth2.server.authorization.jwk.ReloadableJwkSource
- * ReloadableJwkSource}: after every write it publishes a
- * {@link JwkRepositoryChangedEvent} through the Spring
- * {@link ApplicationEventPublisher} and returns immediately. The live
- * {@code ReloadableJwkSource} bean listens for that event and performs its
- * own reload on a best-effort basis, so there is no longer a constructor-
- * level cycle between the service and the source.
- *
- * <p>{@link JwkGenerator} is intentionally kept out of the service's
- * constructor: key generation is an application-layer concern, driven by the
- * admin controller, which hands a
- * {@link org.eulerframework.security.oauth2.server.authorization.jwk.JwkEntry
- * JwkEntry} to {@code JwkManageService.createKey(...)}.
- */
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(UserCenterJwkProperties.class)
+@ConditionalOnProperty(prefix = "euler.uc.oauth2.jwk.encryption", name = "enc-kid")
 public class JwkManageServiceConfiguration {
 
     @Bean

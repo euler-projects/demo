@@ -107,39 +107,6 @@ euler:
       authorizationserver:
         authorization-store-type: redis
         redis-key-prefix: 'euler:oauth2:auth'
-        jwk:
-          # Pre-configured keys, keyed by kid. With a JwkManageService bean
-          # present (this deployment ships DefaultJwkManageService) each entry
-          # is upserted into the persistent backend on startup, giving every
-          # node a known baseline while live rotations happen through the
-          # admin API.
-          keys:
-            demo-key-0:
-              alg: RS256                           # RS256/RS384/RS512/ES256/ES384/ES512 (Ed25519 PEM not supported)
-              use: sig
-              status: ACTIVE                       # PENDING / ACTIVE / DEPRECATED / VERIFY_ONLY / RETIRED
-              iat: "2026-01-01T00:00:00Z"
-              pem: file:@basedir@/jwk/keys/demo.pem
-          manager:
-            type: clustered
-            cluster:
-              heartbeat-interval: 15s
-              heartbeat-ttl: 60s
-              safety-reload-interval: 5m
-              redis:
-                namespace: 'euler:oauth2:jwk'
       resourceserver:
         url-patterns:
           - /api/**
-  uc:
-    oauth2:
-      jwk:
-        encryption:
-          # KEK identifier recorded in the enc_kid column; must change together
-          # with the KEK itself on rotation.
-          enc-kid: default
-          # Development-only: derive the KEK from a passphrase via PBKDF2.
-          # Production deployments MUST switch to source=KEY_FILE with a
-          # 32-byte binary KEK file protected by POSIX 0600 permissions.
-          source: passphrase
-          passphrase: dev-secret

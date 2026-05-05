@@ -19,14 +19,12 @@ package org.eulerframework.uc.oauth2.service.jwk;
 import com.nimbusds.jose.Algorithm;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.KeyUse;
-import org.eulerframework.security.oauth2.server.authorization.jwk.AbstractJwkManageService;
-import org.eulerframework.security.oauth2.server.authorization.jwk.JwkEntry;
-import org.eulerframework.security.oauth2.server.authorization.jwk.JwkRepositoryChangedEvent;
-import org.eulerframework.security.oauth2.server.authorization.jwk.JwkStatus;
+import org.eulerframework.security.oauth2.server.authorization.jwk.*;
 import org.eulerframework.uc.oauth2.entity.JwkEntity;
 import org.eulerframework.uc.oauth2.repository.JwkEntityRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,6 +56,7 @@ import java.util.Set;
  */
 @Service
 @Transactional
+@ConditionalOnProperty(prefix = "euler.uc.oauth2.jwk.encryption", name = "enc-kid")
 public class DefaultJwkManageService extends AbstractJwkManageService {
 
     private static final Logger log = LoggerFactory.getLogger(DefaultJwkManageService.class);
