@@ -40,3 +40,6 @@ application-local.yml
 ### LOCAL ENV ###
 .env
 !.env.example
+
+jwk/keys/
+mkimg.sh

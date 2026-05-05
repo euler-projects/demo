@@ -4,6 +4,9 @@
 
 - [OAuth2 Client](Model-%23-OAuth2-Client.md)
 - [App Attest App](Model-%23-App-Attest-App.md)
+- [JWK Key](Model-%23-Jwk-Key.md)
+- [JWK 密钥创建请求](Model-%23-Jwk-Key-Create-Request.md)
+- [JWK Cluster Status](Model-%23-Jwk-Cluster-Status.md)
 
 ## OAuth2 Client 管理接口
 
@@ -23,3 +26,15 @@
 - [部分更新应用 (PATCH)](APIs-%23-Admin-App-Attest-App-Patch.md)
 - [删除应用](APIs-%23-Admin-App-Attest-App-Delete.md)
 - [列出应用](APIs-%23-Admin-App-Attest-App-List.md)
+
+## JWK 管理接口
+
+- [创建密钥](APIs-%23-Admin-JWKS-Create.md)
+- [查询密钥](APIs-%23-Admin-JWKS-Get.md)
+- [列出密钥](APIs-%23-Admin-JWKS-List.md)
+- [更新密钥 (PUT)](APIs-%23-Admin-JWKS-Update.md)
+- [变更密钥状态 (PATCH)](APIs-%23-Admin-JWKS-Patch.md)
+- [删除密钥](APIs-%23-Admin-JWKS-Delete.md)
+- [刷新密钥状态](APIs-%23-Admin-JWKS-Refresh.md)
+- [查询集群状态](APIs-%23-Admin-JWKS-Cluster-Get.md)
+- [刷新指定节点](APIs-%23-Admin-JWKS-Cluster-Node-Refresh.md)

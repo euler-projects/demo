@@ -117,11 +117,6 @@
             <artifactId>webauthn4j-appattest</artifactId>
             <version>${webauthn4j.verison}</version>
         </dependency>
-        <dependency>
-            <groupId>com.nimbusds</groupId>
-            <artifactId>nimbus-jose-jwt</artifactId>
-            <version>10.3</version>
-        </dependency>
 
         <!-- Required for Spring Security WebAuthn (Jackson 2) -->
         <dependency>
