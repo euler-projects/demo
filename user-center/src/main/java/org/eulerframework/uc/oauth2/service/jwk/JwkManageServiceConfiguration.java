@@ -77,13 +77,6 @@ public class JwkManageServiceConfiguration {
     }
 
     @Bean
-    public JwkManageService defaultJwkManageService(JwkEntityRepository repository,
-                                                    JwkKekCodec kekCodec,
-                                                    ApplicationEventPublisher publisher) {
-        return new DefaultJwkManageService(repository, kekCodec, publisher);
-    }
-
-    @Bean
     public JwkGenerator jwkGenerator() {
         return new JwkGenerator();
     }

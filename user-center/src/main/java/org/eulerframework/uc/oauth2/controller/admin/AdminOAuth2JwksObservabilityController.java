@@ -18,10 +18,7 @@ package org.eulerframework.uc.oauth2.controller.admin;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import org.eulerframework.security.oauth2.server.authorization.jwk.source.ClusteredReloadableJwkSource;
-import org.eulerframework.security.oauth2.server.authorization.jwk.JwkEntry;
-import org.eulerframework.security.oauth2.server.authorization.jwk.JwkRepository;
 import org.eulerframework.security.oauth2.server.authorization.jwk.source.ReloadableJwkSource;
-import org.eulerframework.uc.oauth2.model.JwkKeyView;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -31,8 +28,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -48,14 +43,10 @@ import java.util.Map;
 @PreAuthorize("hasAnyAuthority('root', 'admin')")
 public class AdminOAuth2JwksObservabilityController {
 
-    private final JwkRepository repository;
     private final ReloadableJwkSource reloadableJwkSource;
     private final ClusteredReloadableJwkSource clusteredReloadableJwkSource;
 
-    public AdminOAuth2JwksObservabilityController(
-            JwkRepository repository,
-            JWKSource<SecurityContext> jwkSource) {
-        this.repository = repository;
+    public AdminOAuth2JwksObservabilityController(JWKSource<SecurityContext> jwkSource) {
         if (jwkSource instanceof ClusteredReloadableJwkSource) {
             this.clusteredReloadableJwkSource = (ClusteredReloadableJwkSource) jwkSource;
             this.reloadableJwkSource = this.clusteredReloadableJwkSource;
@@ -66,21 +57,6 @@ public class AdminOAuth2JwksObservabilityController {
             this.reloadableJwkSource = null;
             this.clusteredReloadableJwkSource = null;
         }
-    }
-
-    /**
-     * List every stored JWK as an admin-friendly view. The {@code signing}
-     * flag is derived from {@link JwkEntry#isUsableForSigning()} (i.e.
-     * {@code status == ACTIVE}); private-key material is never exposed.
-     */
-    @GetMapping
-    public List<JwkKeyView> listKeys() {
-        List<JwkEntry> entries = this.repository.load();
-        List<JwkKeyView> views = new ArrayList<>(entries.size());
-        for (JwkEntry entry : entries) {
-            views.add(JwkKeyView.from(entry, entry.isUsableForSigning()));
-        }
-        return views;
     }
 
     /**

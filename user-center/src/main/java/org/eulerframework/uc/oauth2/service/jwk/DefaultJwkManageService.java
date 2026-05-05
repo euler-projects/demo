@@ -28,6 +28,7 @@ import org.eulerframework.uc.oauth2.repository.JwkEntityRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.ParseException;
@@ -55,6 +56,7 @@ import java.util.Set;
  * algorithm, kid uniqueness, private-key requirement on ACTIVE/PENDING) live in
  * {@link AbstractJwkManageService} and MUST NOT be re-implemented here.
  */
+@Service
 @Transactional
 public class DefaultJwkManageService extends AbstractJwkManageService {
 
