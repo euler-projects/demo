@@ -104,7 +104,6 @@ public final class JwkGenerator {
                 case ES256 -> buildEc(generateEc("secp256r1"), Curve.P_256, kid, jwsAlg, iat);
                 case ES384 -> buildEc(generateEc("secp384r1"), Curve.P_384, kid, jwsAlg, iat);
                 case ES512 -> buildEc(generateEc("secp521r1"), Curve.P_521, kid, jwsAlg, iat);
-                case EDDSA -> buildEd25519(generateEd25519(), kid, jwsAlg, iat);
             };
             log.info("Generated JWK kid={} alg={} use=sig", kid, jwsAlg.getName());
             return jwk;

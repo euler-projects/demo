@@ -16,49 +16,36 @@
 
 package org.eulerframework.uc.oauth2.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.nimbusds.jose.jwk.JWK;
+import jakarta.persistence.*;
 import org.eulerframework.data.entity.AuditingEntity;
-import org.springframework.data.domain.Persistable;
+import org.eulerframework.security.jwk.JwkStatus;
+import org.eulerframework.uc.oauth2.entity.converter.JwkAttributeConverter;
 
-/**
- * Persistent row of a JWK entry. The JWK itself is stored as AES-256-GCM
- * envelope ciphertext; {@code kid} is bound to the GCM tag as AAD by the
- * codec layer so row-level swaps are detected on decrypt.
- *
- * <p>Algorithm, use and {@code iat} are carried inside the encrypted JWK JSON;
- * the table only needs the lifecycle status alongside the cipher columns.
- */
+import java.time.Instant;
+
 @Entity
 @Table(name = "oauth2_jwk")
-public class JwkEntity extends AuditingEntity implements Persistable<String> {
+public class JwkEntity extends AuditingEntity {
 
-    /** JWK kid (RFC 7517). Primary key. */
     @Id
-    @Column(name = "kid", length = 128)
+    @Column(name = "kid", length = 36, nullable = false)
     private String kid;
 
-    /** Lifecycle status. Stored as enum name. */
-    @Column(name = "status", nullable = false, length = 32)
-    private String status;
 
-    /** Identifier of the KEK used to encrypt this row. */
-    @Column(name = "enc_kid", nullable = false, length = 64)
-    private String encKid;
+    @Column(name = "iat", nullable = false)
+    private Instant iat;
 
-    /** 12-byte GCM IV. */
-    @Column(name = "enc_iv", nullable = false, length = 16)
-    private byte[] encIv;
+    @Column(name = "status", nullable = false, length = 16)
+    @Enumerated(EnumType.STRING)
+    private JwkStatus status;
 
-    /** 16-byte GCM authentication tag. */
-    @Column(name = "enc_tag", nullable = false, length = 16)
-    private byte[] encTag;
+    @Column(name = "data", nullable = false)
+    @Convert(converter = JwkAttributeConverter.class)
+    private JWK data;
 
-    /** Ciphertext of the JWK JSON (private + public params). */
-    @Column(name = "jwk_cipher", nullable = false)
-    private byte[] jwkCipher;
+    @Column(name = "fingerprint", nullable = false)
+    private byte[] fingerprint;
 
     public String getKid() {
         return kid;
@@ -68,53 +55,35 @@ public class JwkEntity extends AuditingEntity implements Persistable<String> {
         this.kid = kid;
     }
 
-    public String getStatus() {
+    public Instant getIat() {
+        return iat;
+    }
+
+    public void setIat(Instant iat) {
+        this.iat = iat;
+    }
+
+    public JwkStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(JwkStatus status) {
         this.status = status;
     }
 
-    public String getEncKid() {
-        return encKid;
+    public JWK getData() {
+        return data;
     }
 
-    public void setEncKid(String encKid) {
-        this.encKid = encKid;
+    public void setData(JWK data) {
+        this.data = data;
     }
 
-    public byte[] getEncIv() {
-        return encIv;
+    public byte[] getFingerprint() {
+        return fingerprint;
     }
 
-    public void setEncIv(byte[] encIv) {
-        this.encIv = encIv;
-    }
-
-    public byte[] getEncTag() {
-        return encTag;
-    }
-
-    public void setEncTag(byte[] encTag) {
-        this.encTag = encTag;
-    }
-
-    public byte[] getJwkCipher() {
-        return jwkCipher;
-    }
-
-    public void setJwkCipher(byte[] jwkCipher) {
-        this.jwkCipher = jwkCipher;
-    }
-
-    @Override
-    public String getId() {
-        return this.kid;
-    }
-
-    @Override
-    public boolean isNew() {
-        return this.getCreatedDate() == null;
+    public void setFingerprint(byte[] fingerprint) {
+        this.fingerprint = fingerprint;
     }
 }

@@ -15,41 +15,29 @@
  */
 package org.eulerframework.uc.oauth2.model;
 
-import org.eulerframework.security.oauth2.server.authorization.jwk.JwkEntry;
-import org.eulerframework.security.oauth2.server.authorization.jwk.JwkStatus;
+import com.nimbusds.jose.Algorithm;
+import com.nimbusds.jose.jwk.KeyUse;
+import org.eulerframework.security.jwk.JwkStatus;
+import org.eulerframework.security.jwk.ManagedJwk;
 
 import java.time.Instant;
 
-/**
- * Admin-friendly projection of a published JWK entry. Never includes private-key
- * material; {@link #hasPrivate()} is exposed only to help the UI annotate rows that
- * can be promoted to signing via the admin {@code promote} flow.
- *
- * @param kid        key id
- * @param alg        JWA algorithm name (RS256 / ES256 / EdDSA / ...)
- * @param use        JWK use parameter (typically {@code sig})
- * @param status     lifecycle state of the entry
- * @param hasPrivate whether a private key is present at the authoritative repository
- * @param issuedAt   issuance timestamp declared in the manifest
- * @param signing    whether this entry is currently selected as the signing key
- */
+
 public record JwkKeyView(
         String kid,
-        String alg,
-        String use,
+        Algorithm alg,
+        KeyUse use,
+        Instant iat,
         JwkStatus status,
-        boolean hasPrivate,
-        Instant issuedAt,
-        boolean signing) {
+        boolean hasPrivate) {
 
-    public static JwkKeyView from(JwkEntry entry, boolean signing) {
+    public static JwkKeyView from(ManagedJwk managedJwk) {
         return new JwkKeyView(
-                entry.kid(),
-                entry.jwk().getAlgorithm() == null ? null : entry.jwk().getAlgorithm().getName(),
-                entry.jwk().getKeyUse() == null ? null : entry.jwk().getKeyUse().identifier(),
-                entry.status(),
-                entry.hasPrivateKey(),
-                entry.issuedAt(),
-                signing);
+                managedJwk.getKid(),
+                managedJwk.getJwk().getAlgorithm(),
+                managedJwk.getJwk().getKeyUse(),
+                managedJwk.getJwk().getIssueTime().toInstant(),
+                managedJwk.getStatus(),
+                managedJwk.getJwk().isPrivate());
     }
 }

@@ -18,25 +18,18 @@ package org.eulerframework.uc.oauth2.model;
 import org.eulerframework.uc.oauth2.service.jwk.keygen.JwkKeyGenAlgorithm;
 import org.eulerframework.uc.oauth2.service.jwk.keygen.JwkKeyGenSpec;
 
-/**
- * Admin-facing request DTO for the {@code POST /admin/oauth2/jwks} endpoint.
- * <p>
- * {@code algorithm} defaults to {@link JwkKeyGenAlgorithm#ES256} (EC P-256) when {@code null};
- * {@code keySize} is honoured only for RSA algorithms and is otherwise ignored. RSA without
- * an explicit {@code keySize} falls back to {@link JwkKeyGenSpec#DEFAULT_RSA_KEY_SIZE}.
- *
- * @param algorithm requested JWS algorithm
- * @param keySize   RSA key size in bits (2048 / 3072 / 4096); ignored for EC / EdDSA
- */
+
 public record JwkKeyCreateRequest(JwkKeyGenAlgorithm algorithm, Integer keySize) {
 
-    /** Default algorithm applied when {@link #algorithm()} is {@code null}. */
+    /**
+     * Default algorithm applied when {@link #algorithm()} is {@code null}.
+     */
     public static final JwkKeyGenAlgorithm DEFAULT_ALGORITHM = JwkKeyGenAlgorithm.ES256;
 
-    /** Resolve the request to an immutable {@link JwkKeyGenSpec} for the generator. */
+    /**
+     * Resolve the request to an immutable {@link JwkKeyGenSpec} for the generator.
+     */
     public JwkKeyGenSpec toSpec() {
-        JwkKeyGenAlgorithm alg = this.algorithm == null ? DEFAULT_ALGORITHM : this.algorithm;
-        Integer effectiveKeySize = alg.acceptsKeySize() ? this.keySize : null;
-        return new JwkKeyGenSpec(alg, effectiveKeySize);
+        return new JwkKeyGenSpec(this.algorithm == null ? DEFAULT_ALGORITHM : this.algorithm, this.keySize);
     }
 }

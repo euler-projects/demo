@@ -15,41 +15,12 @@
  */
 package org.eulerframework.uc.oauth2.service.jwk.keygen;
 
-/**
- * JWS signing algorithms supported by the server-side {@link JwkGenerator}.
- * The enum value maps directly to the JOSE {@code alg} header carried by the
- * JWS tokens signed with the generated key.
- *
- * <ul>
- *   <li>RSA ({@code RS256/RS384/RS512}) honours the {@code keySize} option
- *       (2048 / 3072 / 4096 bits) supplied via {@link JwkKeyGenSpec}.</li>
- *   <li>EC ({@code ES256/ES384/ES512}) is bound to the canonical curve
- *       (P-256 / P-384 / P-521); {@code keySize} is ignored.</li>
- *   <li>{@code EDDSA} is bound to Ed25519 and requires BouncyCastle on the
- *       classpath; {@code keySize} is ignored.</li>
- * </ul>
- *
- * <p>This enum is intentionally scoped to the key-generation concern of the
- * user-center application layer; the framework-level declarative enum for
- * pre-configured PEM entries ({@code JwkPemAlgorithm}) is a separate type and
- * deliberately omits Ed25519.
- */
 public enum JwkKeyGenAlgorithm {
 
     RS256, RS384, RS512,
-    ES256, ES384, ES512,
-    EDDSA;
+    ES256, ES384, ES512;
 
-    /**
-     * @return JOSE algorithm name: {@code RS*} / {@code ES*} are returned verbatim;
-     *         {@code EDDSA} is mapped to the canonical {@code "EdDSA"}.
-     */
     public String joseName() {
-        return this == EDDSA ? "EdDSA" : name();
-    }
-
-    /** Whether the {@code keySize} option in {@link JwkKeyGenSpec} is honoured. */
-    public boolean acceptsKeySize() {
-        return name().startsWith("RS");
+        return name();
     }
 }

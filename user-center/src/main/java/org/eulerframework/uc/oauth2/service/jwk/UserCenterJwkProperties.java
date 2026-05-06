@@ -19,76 +19,133 @@ package org.eulerframework.uc.oauth2.service.jwk;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * KEK (Key Encryption Key) configuration for the JPA-backed JWK store.
- * Controls how {@link JwkKekCodec} acquires its AES-256 master key used to
- * envelope-encrypt every JWK row in {@code oauth2_jwk}.
+ * Data-encryption configuration for the JPA-backed JWK store. Each supported
+ * algorithm has its own sub-block; {@link DataEncryption#getPrimaryAlg()}
+ * selects which one is used for writes. Reads dispatch by the algorithm
+ * identifier carried in each envelope header, so historical rows written
+ * under a different algorithm remain decryptable as long as the corresponding
+ * block is still enabled.
  *
- * <p>Property prefix: {@code euler.uc.oauth2.jwk.encryption}.
+ * <p>Property prefix: {@code euler.uc.oauth2.jwk}.
  */
-@ConfigurationProperties(prefix = "euler.uc.oauth2.jwk.encryption")
+@ConfigurationProperties(prefix = "euler.uc.oauth2.jwk")
 public class UserCenterJwkProperties {
 
+    /** Data-encryption sub-configuration. */
+    private final DataEncryption dataEncryption = new DataEncryption();
+
+    public DataEncryption getDataEncryption() {
+        return dataEncryption;
+    }
+
+    /** Encryption algorithm configuration for the {@code oauth2_jwk.data} column. */
+    public static class DataEncryption {
+
+        /**
+         * Identifier of the algorithm used for write operations. MUST match
+         * the {@code algorithmId} of one of the enabled algorithm sub-blocks
+         * (e.g. {@code AES-256-GCM} or {@code plain}).
+         */
+        private String primaryAlg;
+
+        /** AES-256-GCM algorithm configuration. */
+        private final AesGcm aesGcm = new AesGcm();
+
+        /** Plaintext algorithm configuration (development / historical-data). */
+        private final Plain plain = new Plain();
+
+        public String getPrimaryAlg() {
+            return primaryAlg;
+        }
+
+        public void setPrimaryAlg(String primaryAlg) {
+            this.primaryAlg = primaryAlg;
+        }
+
+        public AesGcm getAesGcm() {
+            return aesGcm;
+        }
+
+        public Plain getPlain() {
+            return plain;
+        }
+    }
+
     /**
-     * Identifier recorded in the {@code enc_kid} column with every encrypted
-     * row. MUST be changed together with the KEK itself on rotation (KEK
-     * rotation is otherwise unsupported by the current codec). Required.
+     * AES-256-GCM sub-block. {@link #keyFile} takes precedence; when it is
+     * blank the cipher falls back to {@link #passphrase} (development only).
+     * Both blank triggers a fail-fast at startup.
      */
-    private String encKid;
+    public static class AesGcm {
 
-    /** KEK source selection. Defaults to {@link Source#PASSPHRASE}. */
-    private Source source = Source.PASSPHRASE;
+        /** Whether this algorithm is registered. */
+        private boolean enabled;
 
-    /**
-     * Absolute file system path to a 32-byte binary KEK. Required when
-     * {@link #source} is {@link Source#KEY_FILE}. POSIX permissions MUST be
-     * {@code 0600} (owner read/write only).
-     */
-    private String keyFile;
+        /**
+         * Absolute file system path to a 32-byte binary KEK. When non-blank,
+         * the cipher is built via the KEY_FILE source. POSIX permissions MUST
+         * be {@code 0600} (owner read/write only).
+         */
+        private String keyFile;
 
-    /**
-     * Development-only passphrase used to derive the KEK via PBKDF2-HMAC-SHA256
-     * (600k iterations). Required when {@link #source} is
-     * {@link Source#PASSPHRASE}. Never set this in production.
-     */
-    private String passphrase;
+        /**
+         * Development-only passphrase used to derive the KEK via
+         * PBKDF2-HMAC-SHA256 (600k iterations). Consulted only when
+         * {@link #keyFile} is blank. Never set this in production.
+         */
+        private String passphrase;
 
-    public String getEncKid() {
-        return encKid;
+        /**
+         * Identifier of the KEK currently in effect, recorded in every
+         * envelope header's {@code kid} field and required for AEAD.
+         */
+        private String kid;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public String getKeyFile() {
+            return keyFile;
+        }
+
+        public void setKeyFile(String keyFile) {
+            this.keyFile = keyFile;
+        }
+
+        public String getPassphrase() {
+            return passphrase;
+        }
+
+        public void setPassphrase(String passphrase) {
+            this.passphrase = passphrase;
+        }
+
+        public String getKid() {
+            return kid;
+        }
+
+        public void setKid(String kid) {
+            this.kid = kid;
+        }
     }
 
-    public void setEncKid(String encKid) {
-        this.encKid = encKid;
-    }
+    /** Plaintext algorithm sub-block (unsafe; development / historical-data only). */
+    public static class Plain {
 
-    public Source getSource() {
-        return source;
-    }
+        /** Whether this algorithm is registered. Defaults to {@code false}. */
+        private boolean enabled;
 
-    public void setSource(Source source) {
-        this.source = source;
-    }
+        public boolean isEnabled() {
+            return enabled;
+        }
 
-    public String getKeyFile() {
-        return keyFile;
-    }
-
-    public void setKeyFile(String keyFile) {
-        this.keyFile = keyFile;
-    }
-
-    public String getPassphrase() {
-        return passphrase;
-    }
-
-    public void setPassphrase(String passphrase) {
-        this.passphrase = passphrase;
-    }
-
-    /** KEK material source. */
-    public enum Source {
-        /** Load a 32-byte binary KEK from a file on disk. Production-recommended. */
-        KEY_FILE,
-        /** Derive the KEK from a passphrase via PBKDF2. Development only. */
-        PASSPHRASE
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
     }
 }
