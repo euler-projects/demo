@@ -18,77 +18,148 @@ package org.eulerframework.uc.oauth2.service.jwk;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 /**
- * KEK (Key Encryption Key) configuration for the JPA-backed JWK store.
- * Controls how {@link JwkKekCodec} acquires its AES-256 master key used to
- * envelope-encrypt every JWK row in {@code oauth2_jwk}.
+ * Data-encryption configuration for the JPA-backed JWK store.
  *
- * <p>Property prefix: {@code euler.uc.oauth2.jwk.encryption}.
+ * <p>Binds the following shape under prefix {@code euler.uc.oauth2.jwk}:
+ *
+ * <pre>
+ * euler.uc.oauth2.jwk:
+ *   data-encryption:
+ *     primary-alg: AES-256-GCM      # or "noop"
+ *     keys:
+ *       AES-256-GCM:
+ *         primary-kid: k1
+ *         items:
+ *           k1:
+ *             key-file: /abs/path   # 32-byte POSIX-0600 file
+ *             passphrase: ...        # fallback when key-file is blank
+ * </pre>
+ *
+ * <p>{@code noop} is always registered by
+ * {@link JwkManageServiceConfiguration} and needs no entry under
+ * {@code keys}; it can still be named as {@code primary-alg} to disable data
+ * encryption entirely.
  */
-@ConfigurationProperties(prefix = "euler.uc.oauth2.jwk.encryption")
+@ConfigurationProperties(prefix = "euler.uc.oauth2.jwk")
 public class UserCenterJwkProperties {
 
+    private final DataEncryption dataEncryption = new DataEncryption();
+
+    public DataEncryption getDataEncryption() {
+        return dataEncryption;
+    }
+
+    /** Encryption sub-configuration for the {@code oauth2_jwk.data} column. */
+    public static class DataEncryption {
+
+        /**
+         * Algorithm identifier used for writes. MUST be either {@code "noop"}
+         * or a key present in {@link #keys}. Matched case-insensitively.
+         */
+        private String primaryAlg;
+
+        /**
+         * Registered keyed algorithms. Key is the algorithm identifier
+         * (e.g. {@code AES-256-GCM}); the value carries the primary {@code
+         * kid} plus the per-{@code kid} material source. Algorithms without
+         * keys (i.e. {@code noop}) do not appear here.
+         */
+        private final Map<String, AlgorithmKeys> keys = new LinkedHashMap<>();
+
+        public String getPrimaryAlg() {
+            return primaryAlg;
+        }
+
+        public void setPrimaryAlg(String primaryAlg) {
+            this.primaryAlg = primaryAlg;
+        }
+
+        public Map<String, AlgorithmKeys> getKeys() {
+            return keys;
+        }
+    }
+
+    /** Per-algorithm key-rotation block. */
+    public static class AlgorithmKeys {
+
+        /**
+         * Identifier of the {@code kid} that new ciphertexts are encrypted
+         * under. MUST be a key in {@link #items}.
+         */
+        private String primaryKid;
+
+        /** Per-{@code kid} material source. */
+        private final Map<String, KeyItem> items = new LinkedHashMap<>();
+
+        public String getPrimaryKid() {
+            return primaryKid;
+        }
+
+        public void setPrimaryKid(String primaryKid) {
+            this.primaryKid = primaryKid;
+        }
+
+        public Map<String, KeyItem> getItems() {
+            return items;
+        }
+    }
+
     /**
-     * Identifier recorded in the {@code enc_kid} column with every encrypted
-     * row. MUST be changed together with the KEK itself on rotation (KEK
-     * rotation is otherwise unsupported by the current codec). Required.
+     * Single key material source. {@link #keyFile} takes precedence; when it
+     * is blank, falls back to {@link #passphrase} (development only). Both
+     * blank is a fail-fast at startup.
      */
-    private String encKid;
+    public static class KeyItem {
 
-    /** KEK source selection. Defaults to {@link Source#PASSPHRASE}. */
-    private Source source = Source.PASSPHRASE;
+        /**
+         * Absolute file system path to a 32-byte binary KEY. POSIX permissions
+         * MUST be {@code 0600} (owner read/write only).
+         */
+        private String keyFile;
 
-    /**
-     * Absolute file system path to a 32-byte binary KEK. Required when
-     * {@link #source} is {@link Source#KEY_FILE}. POSIX permissions MUST be
-     * {@code 0600} (owner read/write only).
-     */
-    private String keyFile;
+        /**
+         * Development-only passphrase used to derive 32 bytes via
+         * PBKDF2-HMAC-SHA256 (600k iterations, salt derived from
+         * {@link #saltNamespace} + the {@code kid}). Consulted only when
+         * {@link #keyFile} is blank.
+         */
+        private String passphrase;
 
-    /**
-     * Development-only passphrase used to derive the KEK via PBKDF2-HMAC-SHA256
-     * (600k iterations). Required when {@link #source} is
-     * {@link Source#PASSPHRASE}. Never set this in production.
-     */
-    private String passphrase;
+        /**
+         * Optional override for the PBKDF2 salt namespace, only used on the
+         * passphrase path. Blank/unset falls back to the framework default
+         * ({@code "euler-data-key/"}). Set this to the historical value of a
+         * pre-existing deployment (e.g. {@code "euler-uc-data-key/"}) to keep
+         * legacy passphrase-derived ciphertexts decryptable.
+         */
+        private String saltNamespace;
 
-    public String getEncKid() {
-        return encKid;
-    }
+        public String getKeyFile() {
+            return keyFile;
+        }
 
-    public void setEncKid(String encKid) {
-        this.encKid = encKid;
-    }
+        public void setKeyFile(String keyFile) {
+            this.keyFile = keyFile;
+        }
 
-    public Source getSource() {
-        return source;
-    }
+        public String getPassphrase() {
+            return passphrase;
+        }
 
-    public void setSource(Source source) {
-        this.source = source;
-    }
+        public void setPassphrase(String passphrase) {
+            this.passphrase = passphrase;
+        }
 
-    public String getKeyFile() {
-        return keyFile;
-    }
+        public String getSaltNamespace() {
+            return saltNamespace;
+        }
 
-    public void setKeyFile(String keyFile) {
-        this.keyFile = keyFile;
-    }
-
-    public String getPassphrase() {
-        return passphrase;
-    }
-
-    public void setPassphrase(String passphrase) {
-        this.passphrase = passphrase;
-    }
-
-    /** KEK material source. */
-    public enum Source {
-        /** Load a 32-byte binary KEK from a file on disk. Production-recommended. */
-        KEY_FILE,
-        /** Derive the KEK from a passphrase via PBKDF2. Development only. */
-        PASSPHRASE
+        public void setSaltNamespace(String saltNamespace) {
+            this.saltNamespace = saltNamespace;
+        }
     }
 }

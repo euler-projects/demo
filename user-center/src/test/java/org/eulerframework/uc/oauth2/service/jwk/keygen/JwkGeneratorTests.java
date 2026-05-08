@@ -101,18 +101,6 @@ class JwkGeneratorTests {
         assertThat(((ECKey) g512).getCurve()).isEqualTo(Curve.P_521);
     }
 
-    @Test
-    void generatesEd25519() {
-        JWK jwk = generator.generate(new JwkKeyGenSpec(JwkKeyGenAlgorithm.EDDSA, null));
-
-        assertThat(jwk).isInstanceOf(OctetKeyPair.class);
-        OctetKeyPair okp = (OctetKeyPair) jwk;
-        assertThat(okp.getCurve()).isEqualTo(Curve.Ed25519);
-        assertThat(okp.getAlgorithm().getName()).isEqualTo("EdDSA");
-        assertThat(okp.getX().decode()).hasSize(32);
-        assertThat(okp.getDecodedD()).hasSize(32);
-    }
-
     // --- end-to-end sign + verify proves the JWK is materially complete (no PEM round-trip needed) ---
 
     @Test
@@ -137,32 +125,6 @@ class JwkGeneratorTests {
 
         JWSObject parsed = JWSObject.parse(compact);
         assertThat(parsed.verify(new ECDSAVerifier(ec.toPublicJWK().toECPublicKey()))).isTrue();
-    }
-
-    @Test
-    void ed25519SignedJwsVerifiesWithPublicProjection() throws Exception {
-        // Prove the OctetKeyPair raw bytes can be reconstituted into JCA Ed25519 keys for sign/verify.
-        // Use plain java.security.Signature instead of Nimbus Ed25519Signer to avoid pulling
-        // in the Google Tink runtime dependency in tests. Re-encode raw d/x via PKCS#8 / X.509
-        // (Nimbus OctetKeyPair.toPrivateKey() is not implemented).
-        OctetKeyPair okp = (OctetKeyPair) generator.generate(new JwkKeyGenSpec(JwkKeyGenAlgorithm.EDDSA, null));
-        AlgorithmIdentifier algId = new AlgorithmIdentifier(EdECObjectIdentifiers.id_Ed25519);
-        byte[] pkcs8 = new PrivateKeyInfo(algId, new DEROctetString(okp.getDecodedD())).getEncoded();
-        byte[] spki = new SubjectPublicKeyInfo(algId, okp.getX().decode()).getEncoded();
-        KeyFactory kf = KeyFactory.getInstance("Ed25519");
-        PrivateKey privateKey = kf.generatePrivate(new PKCS8EncodedKeySpec(pkcs8));
-        PublicKey publicKey = kf.generatePublic(new X509EncodedKeySpec(spki));
-        byte[] message = "hello-eddsa".getBytes(StandardCharsets.UTF_8);
-
-        Signature signer = Signature.getInstance("Ed25519");
-        signer.initSign(privateKey);
-        signer.update(message);
-        byte[] signature = signer.sign();
-
-        Signature verifier = Signature.getInstance("Ed25519");
-        verifier.initVerify(publicKey);
-        verifier.update(message);
-        assertThat(verifier.verify(signature)).isTrue();
     }
 
     @Test

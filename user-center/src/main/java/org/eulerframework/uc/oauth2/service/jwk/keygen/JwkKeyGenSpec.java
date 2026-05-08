@@ -31,38 +31,18 @@ public record JwkKeyGenSpec(JwkKeyGenAlgorithm algorithm, Integer keySize) {
     /** Default RSA key size when the caller omits {@link #keySize()}. */
     public static final int DEFAULT_RSA_KEY_SIZE = 2048;
 
-    public JwkKeyGenSpec {
-        Objects.requireNonNull(algorithm, "algorithm");
-        if (algorithm.acceptsKeySize() && keySize != null) {
-            switch (keySize) {
-                case 2048, 3072, 4096 -> { /* allowed */ }
-                default -> throw new IllegalArgumentException(
-                        "RSA keySize must be one of 2048/3072/4096, got " + keySize);
-            }
-        }
-    }
-
     /** Convenience factory: RSA with the specified key size. */
     public static JwkKeyGenSpec rsa(JwkKeyGenAlgorithm alg, int keySize) {
-        if (!alg.acceptsKeySize()) {
-            throw new IllegalArgumentException("Algorithm " + alg + " is not an RSA algorithm");
-        }
         return new JwkKeyGenSpec(alg, keySize);
     }
 
     /** Convenience factory: EC / EdDSA, no key size. */
     public static JwkKeyGenSpec curve(JwkKeyGenAlgorithm alg) {
-        if (alg.acceptsKeySize()) {
-            throw new IllegalArgumentException("Algorithm " + alg + " requires a keySize");
-        }
         return new JwkKeyGenSpec(alg, null);
     }
 
     /** Effective key size: callers' value when present, otherwise {@link #DEFAULT_RSA_KEY_SIZE}. */
     public int effectiveRsaKeySize() {
-        if (!algorithm.acceptsKeySize()) {
-            throw new IllegalStateException("Algorithm " + algorithm + " has no keySize");
-        }
         return keySize == null ? DEFAULT_RSA_KEY_SIZE : keySize;
     }
 }

@@ -180,18 +180,17 @@ create table oauth2_client
 
 create table oauth2_jwk
 (
-    kid           varchar(128)  not null comment 'JWK Key ID (UUID)',
-    status        varchar(16)   not null comment 'Lifecycle status (PENDING/ACTIVE/ROTATING/RETIRED)',
-    enc_kid       varchar(64)   not null comment 'KEK identifier used to encrypt this row (for future KEK rotation)',
-    enc_iv        varbinary(12) not null comment 'AES-GCM 96-bit Initialization Vector',
-    enc_tag       varbinary(16) not null comment 'AES-GCM 128-bit Authentication Tag',
-    jwk_cipher    mediumblob    not null comment 'AES-256-GCM ciphertext of the full JWK JSON (tag stored separately; JSON carries kid/alg/use/iat/private params)',
-    created_date  datetime(3)   not null comment 'Created time',
-    modified_date datetime(3)   not null comment 'Last modified time',
+    kid           varchar(128) not null comment 'JWK Key ID (UUID)',
+    iat           datetime(3)  not null comment 'JWK Issue Time',
+    status        varchar(16)  not null comment 'Lifecycle status',
+    data          longtext     not null comment 'Encrypted JWK envelope',
+    fingerprint   blob         not null comment 'JWK fingerprint',
+    created_date  datetime(3)  not null comment 'Created time',
+    modified_date datetime(3)  not null comment 'Last modified time',
     primary key (kid),
     index idx_oauth2_jwk_status (status)
 ) engine = innodb
   default character set utf8mb4
   default collate utf8mb4_bin
-    comment 'JWK key repository (full JWK JSON envelope-encrypted)';
+    comment 'JWK repository';
 

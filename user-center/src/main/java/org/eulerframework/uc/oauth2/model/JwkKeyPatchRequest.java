@@ -15,7 +15,7 @@
  */
 package org.eulerframework.uc.oauth2.model;
 
-import org.eulerframework.security.oauth2.server.authorization.jwk.JwkStatus;
+import org.eulerframework.security.jwk.JwkStatus;
 
 /**
  * Admin-facing request DTO for {@code PUT /admin/oauth2/jwks/{kid}} and
@@ -35,5 +35,5 @@ import org.eulerframework.security.oauth2.server.authorization.jwk.JwkStatus;
  *
  * @param status the requested lifecycle state
  */
-public record JwkKeyUpdateRequest(JwkStatus status) {
+public record JwkKeyPatchRequest(JwkStatus status) {
 }

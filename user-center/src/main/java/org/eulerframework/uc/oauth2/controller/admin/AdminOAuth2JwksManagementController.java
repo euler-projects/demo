@@ -16,13 +16,16 @@
 package org.eulerframework.uc.oauth2.controller.admin;
 
 import com.nimbusds.jose.jwk.JWK;
-import org.eulerframework.security.oauth2.server.authorization.jwk.JwkEntry;
-import org.eulerframework.security.oauth2.server.authorization.jwk.JwkManageService;
-import org.eulerframework.security.oauth2.server.authorization.jwk.JwkStatus;
+import org.eulerframework.security.jwk.JwkEntry;
+import org.eulerframework.security.jwk.JwkManageService;
+import org.eulerframework.security.jwk.JwkStatus;
+import org.eulerframework.security.jwk.ManagedJwk;
 import org.eulerframework.uc.oauth2.model.JwkKeyCreateRequest;
-import org.eulerframework.uc.oauth2.model.JwkKeyUpdateRequest;
+import org.eulerframework.uc.oauth2.model.JwkKeyPatchRequest;
 import org.eulerframework.uc.oauth2.model.JwkKeyView;
+import org.eulerframework.uc.oauth2.model.JwkModel;
 import org.eulerframework.uc.oauth2.service.jwk.keygen.JwkGenerator;
+import org.eulerframework.web.core.exception.web.api.ResourceNotFoundException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +35,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -42,37 +44,14 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.ArrayList;
 import java.util.List;
 
+
 /**
- * Management half of the JWK admin surface. Exposes strict CRUDL endpoints that
- * mutate the persistent store and trigger reload + cluster-convergence polling
- * through {@link JwkManageService}. Only activated when a
- * {@link JwkManageService} bean is contributed by the application &mdash; the
- * in-memory profile deliberately lacks this controller so callers get a clean
- * {@code 404} rather than a stub {@code 501}.
- *
- * <h2>Endpoint semantics</h2>
- * <ul>
- *   <li>{@code POST /} &mdash; generate a fresh key pair server-side, persist
- *       it as a {@link JwkStatus#PENDING PENDING} entry, respond
- *       {@code 201 Created} with the public projection.</li>
- *   <li>{@code GET /} &mdash; list every stored key as {@link JwkKeyView}.</li>
- *   <li>{@code GET /{kid}} &mdash; fetch a single entry as {@link JwkKeyView};
- *       {@code 404 Not Found} when the kid does not exist.</li>
- *   <li>{@code PUT /{kid}} &mdash; full-overwrite update of the lifecycle
- *       state. Body {@code status} is mandatory. Responds {@code 204 No
- *       Content}. Cluster convergence is not carried in the response; the
- *       observability surface exposes it separately.</li>
- *   <li>{@code PATCH /{kid}} &mdash; partial update of the lifecycle state.
- *       A {@code null} body status means no-op. Responds {@code 204 No
- *       Content}.</li>
- *   <li>{@code DELETE /{kid}} &mdash; physically remove a
- *       {@link JwkStatus#RETIRED RETIRED} entry. Responds {@code 204 No
- *       Content}; attempts to delete a non-RETIRED entry surface as
- *       {@code 400 Bad Request} via the global exception handler.</li>
- * </ul>
- *
- * <p>Mounted at both {@code admin/oauth2/jwks/**} and
- * {@code api/admin/oauth2/jwks/**}.
+ * Administrative REST API for managing the OAuth2 authorization server JWK set.
+ * It is only wired when a {@link JwkManageService} bean is present, which is
+ * what ties the lifecycle of these endpoints to the {@code persistent-jwk-source}
+ * profile.
+ * <p>
+ * All endpoints require either the {@code root} or {@code admin} authority.
  */
 @RestController
 @RequestMapping(path = {"admin/oauth2/jwks", "api/admin/oauth2/jwks"})
@@ -83,105 +62,82 @@ public class AdminOAuth2JwksManagementController {
     private final JwkManageService jwkManageService;
     private final JwkGenerator jwkGenerator;
 
-    public AdminOAuth2JwksManagementController(JwkManageService jwkManageService,
-                                               JwkGenerator jwkGenerator) {
+    public AdminOAuth2JwksManagementController(
+            JwkManageService jwkManageService, JwkGenerator jwkGenerator) {
         this.jwkManageService = jwkManageService;
         this.jwkGenerator = jwkGenerator;
     }
 
     /**
-     * Generate a fresh key pair server-side and persist it as a {@code PENDING}
-     * entry. Private-key material never escapes this method: it is fed
-     * directly into {@link JwkManageService#createKey(JwkEntry)} and only the
-     * public projection ({@link JwkKeyView}) is returned to the caller.
+     * Generate a new JWK according to {@code request} and persist it with
+     * {@link JwkStatus#PENDING} status.
+     *
+     * @param request generation parameters (algorithm, optional key size/curve)
+     * @return {@code 201 Created} with the newly generated {@link JwkKeyView}
      */
     @PostMapping
     public ResponseEntity<JwkKeyView> createKey(@RequestBody JwkKeyCreateRequest request) {
         JWK jwk = this.jwkGenerator.generate(request.toSpec());
         JwkEntry entry = new JwkEntry(jwk, JwkStatus.PENDING);
-        JwkEntry created = this.jwkManageService.createKey(entry);
+        ManagedJwk created = this.jwkManageService.createJwk(entry);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(JwkKeyView.from(created, created.isUsableForSigning()));
+                .body(JwkKeyView.from(created));
     }
 
-    /** Lists every stored JWK entry as an admin-friendly view (no private material). */
+    /**
+     * @return every managed JWK as an administrative view
+     */
     @GetMapping
     public List<JwkKeyView> listKeys() {
-        List<JwkEntry> entries = this.jwkManageService.listKeys();
-        List<JwkKeyView> views = new ArrayList<>(entries.size());
-        for (JwkEntry entry : entries) {
-            views.add(JwkKeyView.from(entry, entry.isUsableForSigning()));
+        List<ManagedJwk> managedJwks = this.jwkManageService.listJwks();
+        List<JwkKeyView> views = new ArrayList<>(managedJwks.size());
+        for (ManagedJwk managedJwk : managedJwks) {
+            views.add(JwkKeyView.from(managedJwk));
         }
         return views;
     }
 
-    /** Fetches a single entry by {@code kid}; {@code 404} when not found. */
+    /**
+     * Fetch a single JWK by its {@code kid}.
+     *
+     * @param kid JWK key identifier
+     * @return the matching {@link JwkKeyView}
+     * @throws ResourceNotFoundException if no key matches {@code kid}
+     */
     @GetMapping("/{kid}")
     public JwkKeyView getKey(@PathVariable String kid) {
-        JwkEntry entry = this.jwkManageService.findByKid(kid);
-        if (entry == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "JWK kid=" + kid + " not found");
+        ManagedJwk managedJwk = this.jwkManageService.getJwk(kid);
+        if (managedJwk == null) {
+            throw new ResourceNotFoundException("Key not found");
         }
-        return JwkKeyView.from(entry, entry.isUsableForSigning());
+        return JwkKeyView.from(managedJwk);
     }
 
     /**
-     * Full-overwrite update of the lifecycle state (HTTP {@code PUT}). The
-     * path {@code kid} is authoritative: the underlying JWK material is
-     * fetched from the persistent store and combined with the requested
-     * {@code status} before being handed to
-     * {@link JwkManageService#updateKey(JwkEntry)}.
-     * <p>
-     * {@code status} is mandatory; {@code null} surfaces as {@code 400 Bad
-     * Request}. Non-existent {@code kid} surfaces as the service layer's
-     * {@code IllegalStateException}, which the global handler maps to
-     * {@code 404 Not Found}.
-     */
-    @PutMapping("/{kid}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void updateKey(@PathVariable String kid,
-                          @RequestBody JwkKeyUpdateRequest request) {
-        if (request == null || request.status() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "status is required for PUT");
-        }
-        JwkEntry existing = requireExisting(kid);
-        this.jwkManageService.updateKey(new JwkEntry(existing.jwk(), request.status()));
-    }
-
-    /**
-     * Partial update of the lifecycle state (HTTP {@code PATCH}). A {@code
-     * null} {@code status} is a no-op; any non-{@code null} value is applied
-     * through {@link JwkManageService#patchKey(JwkEntry)}.
+     * Apply a partial update (currently only {@link JwkStatus}) to the JWK
+     * identified by {@code kid}.
+     *
+     * @param kid     JWK key identifier
+     * @param request patch payload; fields left {@code null} are preserved
      */
     @PatchMapping("/{kid}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void patchKey(@PathVariable String kid,
-                         @RequestBody JwkKeyUpdateRequest request) {
-        if (request == null || request.status() == null) {
-            return;
-        }
-        JwkEntry existing = requireExisting(kid);
-        this.jwkManageService.patchKey(new JwkEntry(existing.jwk(), request.status()));
+                         @RequestBody JwkKeyPatchRequest request) {
+        JwkModel patching = new JwkModel();
+        patching.setKid(kid);
+        patching.setStatus(request.status());
+        this.jwkManageService.patchJwk(patching);
     }
 
     /**
-     * Physically delete a {@link JwkStatus#RETIRED RETIRED} entry. Pre-validation
-     * of the status happens inside
-     * {@link JwkManageService#deleteByKid(String)}; attempts to delete a
-     * non-RETIRED entry surface as {@code 400 Bad Request} via the global
-     * exception handler chain.
+     * Delete the JWK identified by {@code kid}.
+     *
+     * @param kid JWK key identifier
      */
     @DeleteMapping("/{kid}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteKey(@PathVariable String kid) {
-        this.jwkManageService.deleteByKid(kid);
-    }
-
-    private JwkEntry requireExisting(String kid) {
-        JwkEntry existing = this.jwkManageService.findByKid(kid);
-        if (existing == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "JWK kid=" + kid + " not found");
-        }
-        return existing;
+        this.jwkManageService.deleteJwk(kid);
     }
 }
