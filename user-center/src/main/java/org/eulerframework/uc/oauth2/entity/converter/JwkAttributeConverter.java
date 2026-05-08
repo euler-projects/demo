@@ -17,7 +17,7 @@ package org.eulerframework.uc.oauth2.entity.converter;
 
 import com.nimbusds.jose.jwk.JWK;
 import jakarta.persistence.Converter;
-import org.eulerframework.uc.security.crypto.StringEncryptor;
+import org.eulerframework.security.crypto.DataCipher;
 import org.eulerframework.uc.security.crypto.convert.AbstractEncryptedAttributeConverter;
 
 import java.text.ParseException;
@@ -25,14 +25,15 @@ import java.text.ParseException;
 /**
  * JPA {@link jakarta.persistence.AttributeConverter} that persists a Nimbus
  * {@link JWK} as an encrypted envelope string. Delegates all crypto concerns
- * to {@link AbstractEncryptedAttributeConverter} / {@link StringEncryptor};
- * only the {@code JWK <-> JSON String} mapping lives here.
+ * to {@link AbstractEncryptedAttributeConverter} and the injected
+ * {@link DataCipher}; only the {@code JWK <-> JSON String} mapping lives
+ * here.
  */
 @Converter
 public class JwkAttributeConverter extends AbstractEncryptedAttributeConverter<JWK> {
 
-    public JwkAttributeConverter(StringEncryptor encryptor) {
-        super(encryptor);
+    public JwkAttributeConverter(DataCipher dataCipher) {
+        super(dataCipher);
     }
 
     @Override

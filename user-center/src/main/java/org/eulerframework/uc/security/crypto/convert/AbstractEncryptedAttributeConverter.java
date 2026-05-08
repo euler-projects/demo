@@ -16,7 +16,7 @@
 package org.eulerframework.uc.security.crypto.convert;
 
 import jakarta.persistence.AttributeConverter;
-import org.eulerframework.uc.security.crypto.StringEncryptor;
+import org.eulerframework.security.crypto.DataCipher;
 import org.springframework.util.Assert;
 
 /**
@@ -27,17 +27,17 @@ import org.springframework.util.Assert;
  * Subclasses only need to implement the domain-specific
  * {@code T <-> plaintext String} mapping via {@link #serialize(Object)} and
  * {@link #deserialize(String)}. Encryption, envelope framing and cipher
- * dispatch are fully handled by {@link StringEncryptor}.
+ * dispatch are fully handled by the injected {@link DataCipher}.
  *
  * @param <T> the entity attribute type
  */
 public abstract class AbstractEncryptedAttributeConverter<T> implements AttributeConverter<T, String> {
 
-    private final StringEncryptor encryptor;
+    private final DataCipher dataCipher;
 
-    protected AbstractEncryptedAttributeConverter(StringEncryptor encryptor) {
-        Assert.notNull(encryptor, "encryptor is required");
-        this.encryptor = encryptor;
+    protected AbstractEncryptedAttributeConverter(DataCipher dataCipher) {
+        Assert.notNull(dataCipher, "dataCipher is required");
+        this.dataCipher = dataCipher;
     }
 
     /** Serialize the domain value into its plaintext {@link String} form. */
@@ -51,7 +51,7 @@ public abstract class AbstractEncryptedAttributeConverter<T> implements Attribut
         if (attribute == null) {
             return null;
         }
-        return this.encryptor.encrypt(serialize(attribute));
+        return this.dataCipher.encrypt(serialize(attribute));
     }
 
     @Override
@@ -59,6 +59,6 @@ public abstract class AbstractEncryptedAttributeConverter<T> implements Attribut
         if (dbData == null) {
             return null;
         }
-        return deserialize(this.encryptor.decrypt(dbData));
+        return deserialize(this.dataCipher.decrypt(dbData));
     }
 }
