@@ -17,8 +17,8 @@ package org.eulerframework.uc.oauth2.entity.converter;
 
 import com.nimbusds.jose.jwk.JWK;
 import jakarta.persistence.Converter;
+import org.eulerframework.data.convert.encrypt.AbstractEncryptedAttributeConverter;
 import org.eulerframework.security.crypto.DataCipher;
-import org.eulerframework.uc.security.crypto.convert.AbstractEncryptedAttributeConverter;
 
 import java.text.ParseException;
 
