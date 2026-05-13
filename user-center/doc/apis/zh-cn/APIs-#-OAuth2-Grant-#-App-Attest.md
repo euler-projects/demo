@@ -1,4 +1,4 @@
-# Apple App Attest 接入文档
+# OAuth2 Token Grant - App Attest
 
 本文档描述 Apple Native App 如何利用 [Apple App Attest](https://developer.apple.com/documentation/devicecheck/establishing-your-app-s-integrity) 能力, 通过 `/oauth2/token` 端点一步完成设备注册与 OAuth2 Token 签发, 实现无账号登录并获取用户级 OAuth2 Token.
 
