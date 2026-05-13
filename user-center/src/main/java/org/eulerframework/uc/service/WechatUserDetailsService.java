@@ -4,7 +4,7 @@ import org.eulerframework.common.util.StringUtils;
 import org.eulerframework.security.authentication.wechat.WechatUser;
 import org.eulerframework.security.core.userdetails.EulerUserDetails;
 import org.eulerframework.security.core.userdetails.EulerWechatUserDetailsService;
-import org.eulerframework.security.core.userdetails.UserDetailsNotFountException;
+import org.eulerframework.security.core.userdetails.UserDetailsNotFoundException;
 import org.eulerframework.security.util.UserDetailsUtils;
 import org.eulerframework.uc.entity.WechatUserMappingEntity;
 import org.eulerframework.uc.model.User;
@@ -25,7 +25,7 @@ public class WechatUserDetailsService implements EulerWechatUserDetailsService {
                 .map(WechatUserMappingEntity::getUserId)
                 .map(userId -> this.userService.loadUserById(userId))
                 .map(UserDetailsUtils::toEulerUserDetails)
-                .orElseThrow(() -> new UserDetailsNotFountException(wechatUser.getOpenId()));
+                .orElseThrow(() -> new UserDetailsNotFoundException(wechatUser.getOpenId()));
     }
 
     @Override

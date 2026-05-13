@@ -4,7 +4,7 @@ import org.eulerframework.common.util.StringUtils;
 import org.eulerframework.security.authentication.appattest.AppAttestUser;
 import org.eulerframework.security.core.userdetails.EulerDeviceUserDetailsService;
 import org.eulerframework.security.core.userdetails.EulerUserDetails;
-import org.eulerframework.security.core.userdetails.UserDetailsNotFountException;
+import org.eulerframework.security.core.userdetails.UserDetailsNotFoundException;
 import org.eulerframework.security.util.UserDetailsUtils;
 import org.eulerframework.uc.entity.AppAttestAttestationUserMappingEntity;
 import org.eulerframework.uc.model.User;
@@ -25,7 +25,7 @@ public class DeviceUserDetailsService implements EulerDeviceUserDetailsService {
                 .map(AppAttestAttestationUserMappingEntity::getUserId)
                 .map(userId -> this.userService.loadUserById(userId))
                 .map(UserDetailsUtils::toEulerUserDetails)
-                .orElseThrow(() -> new UserDetailsNotFountException(appAttestUser.getKeyId()));
+                .orElseThrow(() -> new UserDetailsNotFoundException(appAttestUser.getKeyId()));
     }
 
     @Override
