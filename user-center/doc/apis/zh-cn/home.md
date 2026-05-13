@@ -10,8 +10,8 @@
 
 ## OAuth2 Token Grant
 
-- [OAuth2 Token Grant](APIs-%23-OAuth2-Token-Grant.md)
-- [OAuth2 Token Grant - App Attest](APIs-%23-OAuth2-Token-Grant-%23-App-Attest.md)
+- [OAuth2 Token Grant](OAuth2-Token-Grant.md)
+- [OAuth2 Token Grant - App Attest](OAuth2-Token-Grant-%23-App-Attest.md)
 
 ## OAuth2 Client 管理接口
 

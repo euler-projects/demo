@@ -94,7 +94,7 @@ grant_type=urn:ietf:params:oauth:grant-type:app_assertion&kid={keyId}&challenge=
 }
 ```
 
-> Token 响应格式详见 [OAuth2 Token Grant 总入口](APIs-%23-OAuth2-Token-Grant.md#response)
+> Token 响应格式详见 [OAuth2 Token Grant 总入口](OAuth2-Token-Grant.md#response)
 
 **Error Response (401):**
 

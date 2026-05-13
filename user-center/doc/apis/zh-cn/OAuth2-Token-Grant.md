@@ -60,7 +60,7 @@ grant_type=<grant_type>&scope=<scope>&...
 | `client_credentials` | 客户端凭证, 仅获取客户端级 Token | _待补充_ |
 | `password` | 用户名 + 密码 (内部用途, 不建议对外暴露) | _待补充_ |
 | `wechat_authorization_code` | 微信扫码登录 (自定义) | _待补充_ |
-| `urn:ietf:params:oauth:grant-type:app_assertion` | 基于 Apple App Attest 的设备认证 Grant (自定义) | [App Attest](APIs-%23-OAuth2-Token-Grant-%23-App-Attest.md) |
+| `urn:ietf:params:oauth:grant-type:app_assertion` | 基于 Apple App Attest 的设备认证 Grant (自定义) | [App Attest](OAuth2-Token-Grant-%23-App-Attest.md) |
 
 > `authorization_code` / `refresh_token` / `client_credentials` 严格遵循 [RFC 6749][rfc6749] 与 [OIDC Core 1.0][oidc-core] 定义的标准行为, 用法可直接参考对应 RFC.
 
@@ -90,6 +90,8 @@ grant_type=authorization_code&client_id=default&code=...&code_verifier=...&redir
 
 通过 `Authorization: Basic base64(client_id:client_secret)` 头部传递客户端凭据 ([RFC 6749 §2.3.1][rfc6749-2.3.1]). 机密客户端推荐使用.
 
+请求示例:
+
 ```http
 POST /oauth2/token
 Authorization: Basic YWRtaW46YWRtaW4=
@@ -102,6 +104,8 @@ grant_type=refresh_token&refresh_token=...
 
 通过请求体 `client_id` / `client_secret` 参数传递客户端凭据. 仅在无法使用 `client_secret_basic` 时使用, 安全性弱于 Basic 方式 (易出现在访问日志中).
 
+请求示例:
+
 ```http
 POST /oauth2/token
 Content-Type: application/x-www-form-urlencoded
@@ -111,22 +115,20 @@ grant_type=refresh_token&refresh_token=...&client_id=admin&client_secret=...
 
 ### `attest_jwt_client_auth` — 基于设备证明的客户端认证
 
-定义见 [draft-ietf-oauth-attestation-based-client-auth-08 §13.4][attestation-draft], 客户端认证方法标识符为 `attest_jwt_client_auth`.
+定义见 [draft-ietf-oauth-attestation-based-client-auth-08 §13.4](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-08#section-13.4). 客户端通过 `OAuth-Client-Attestation` / `OAuth-Client-Attestation-PoP` 等请求头携带设备证明与 PoP 数据, 可作为独立认证方式, 也可叠加在其他标准认证方式之上作为安全增强.
 
-客户端通过以下请求头携带客户端证明:
+请求示例:
 
-| 请求头 | 必填 | 说明                       |
-| --- | --- | ------- |
-| `OAuth-Client-Attestation-Type` | 否 | 证明类型, 缺省时按 `jwt` 处理; 目前支持 `jwt`、`apple_app_attest` |
-| `OAuth-Client-Attestation` | 视类型 | 标准 JWT 流程下携带客户端 Attestation JWT; 公钥未变更时可省略 (此时 PoP JWT header 需带已注册 kid) |
-| `OAuth-Client-Attestation-PoP` | 视类型 | `jwt` 类型时为必填的 PoP JWT (草案 §5.2); `apple_app_attest` 类型不使用本头, PoP 数据改走请求体 |
+```http
+POST /oauth2/token
+Content-Type: application/x-www-form-urlencoded
+OAuth-Client-Attestation: <Client Attestation JWT>
+OAuth-Client-Attestation-PoP: <PoP JWT>
 
-不同 `OAuth-Client-Attestation-Type` 的 PoP 数据载体:
+grant_type=authorization_code&client_id=default&code=...&code_verifier=...
+```
 
-* `jwt` (默认): PoP 数据放入 `OAuth-Client-Attestation-PoP` JWT.
-* `apple_app_attest`: PoP 数据放在请求体的 `kid`、`challenge`、`attestation` (首次) / `assertion` (后续) 参数中, 详见 [App Attest 子文档](APIs-%23-OAuth2-Token-Grant-%23-App-Attest.md).
-
-> 同时携带标准客户端认证 (如 `client_secret_basic`) 与 attestation 头时, 服务端先以标准方式完成客户端认证, 再把 attestation 作为附加安全信号校验.
+> 详细设计 (请求头语义、PoP 类型与载体、独立 / 增强两种使用场景、各认证方式与 PKCE 的组合约束) 较为复杂, 具体使用方式参考: [Attestation Based Client Auth 子文档](OAuth2-Token-Grant-%23-Attestation-Based-Client-Auth.md) (_待补充_).
 
 ---
 
@@ -200,7 +202,7 @@ grant_type=refresh_token&refresh_token=...&client_id=admin&client_secret=...
 
 ## 相关文档
 
-* [App Attest Grant 子文档](APIs-%23-OAuth2-Token-Grant-%23-App-Attest.md)
+* [App Attest Grant 子文档](OAuth2-Token-Grant-%23-App-Attest.md)
 * [OAuth2 Client 模型](Model-%23-OAuth2-Client.md)
 * [创建 OAuth2 Client](APIs-%23-Admin-OAuth2-Client-Create.md)
 * [RFC 6749 - The OAuth 2.0 Authorization Framework][rfc6749]
