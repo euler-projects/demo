@@ -2,7 +2,7 @@
 
 本文档描述 `/oauth2/token` 的通用约定、支持的 Grant Type、客户端认证方式、Scope 与各类 Token 的语义. 具体 grant type 的请求/响应细节请见对应子文档.
 
-> 本 OAuth2 认证服务基于 [RFC 6749 (OAuth 2.0 Authorization Framework)][rfc6749] 与 [OIDC Core 1.0][oidc-core], 在此之上扩展了 `wechat_authorization_code` 与 `urn:ietf:params:oauth:grant-type:app_assertion` 等自定义 grant type, 以及 `attest_jwt_client_auth` 客户端认证方式 ([draft-ietf-oauth-attestation-based-client-auth-08][attestation-draft]).
+> 本 OAuth2 认证服务基于 [RFC 6749 (OAuth 2.0 Authorization Framework)][rfc6749] 与 [OIDC Core 1.0][oidc-core], 在设计上大量参考了 [OAuth 2.1 草案][oauth2.1-draft] (如强制 PKCE、移除 implicit / password grant 等安全加固), 并在此之上扩展了 `wechat_authorization_code` 与 `urn:ietf:params:oauth:grant-type:app_assertion` 等自定义 grant type, 以及 `attest_jwt_client_auth` 客户端认证方式 ([draft-ietf-oauth-attestation-based-client-auth-08][attestation-draft]).
 
 ---
 
@@ -204,8 +204,9 @@ grant_type=refresh_token&refresh_token=...&client_id=admin&client_secret=...
 * [OAuth2 Client 模型](Model-%23-OAuth2-Client.md)
 * [创建 OAuth2 Client](APIs-%23-Admin-OAuth2-Client-Create.md)
 * [RFC 6749 - The OAuth 2.0 Authorization Framework][rfc6749]
+* [The OAuth 2.1 Authorization Framework (draft)][oauth2.1-draft]
+* [OAuth 2.0 Attestation-Based Client Authentication (draft)][attestation-draft]
 * [OpenID Connect Core 1.0][oidc-core]
-* [draft-ietf-oauth-attestation-based-client-auth-08][attestation-draft]
 
 [oidc-subject-types]: https://openid.net/specs/openid-connect-core-1_0.html#SubjectIDTypes
 [oidc-core]: https://openid.net/specs/openid-connect-core-1_0.html
@@ -213,3 +214,4 @@ grant_type=refresh_token&refresh_token=...&client_id=admin&client_secret=...
 [rfc6749]: https://datatracker.ietf.org/doc/html/rfc6749
 [rfc6749-2.3.1]: https://datatracker.ietf.org/doc/html/rfc6749#section-2.3.1
 [rfc6749-5.2]: https://datatracker.ietf.org/doc/html/rfc6749#section-5.2
+[oauth2.1-draft]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1
