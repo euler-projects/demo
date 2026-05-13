@@ -47,7 +47,8 @@ grant_type=<grant_type>&scope=<scope>&...
 | id_token | string | 基于 OIDC 协议签发的, 包含用户档案信息的 JWT, 可由客户端解析, 仅当请求 `scope` 包含 `openid` 时才返回 |
 | scope | string | `access_token` 的权限范围, 多个用空格分隔, 如果申请Token时没有传入 `scope` 参数, 则响应中也不会有此属性 |
 
-* `access_token` 的有效期很短, 目前设置为5分钟; `refresh_token` 的有效期很长, 目前设置为7天. 所以每次使用 `access_token` 前都应检查有效期, 若已过期或剩余有效时间小于1分钟, 则应及时续期.
+* `access_token` 的有效期很短, 通常为几分钟分钟到几小时; `refresh_token` 的有效期很长, 通常为数天到数月. 
+* 每次使用 `access_token` 前都应检查有效期, 若已过期或剩余有效时间小于1分钟, 则应及时续期.
 * 更多说明请参考[RFC6749 Section-4 Obtaining Authorization](https://datatracker.ietf.org/doc/html/rfc6749#section-4)
 
 ### 通用错误响应 (4xx)
