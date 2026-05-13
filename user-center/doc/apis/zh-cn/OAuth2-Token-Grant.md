@@ -22,6 +22,7 @@ grant_type=<grant_type>&scope=<scope>&...
 
 | 参数 | 必填 | 说明 |
 | --- | --- | --- |
+| Authorization | 否 | 位于请求头, 有多种格式, 相见 [客户端认证方式](#客户端认证方式) |
 | grant_type | 是 | 认证方式. 详见 [支持的 Grant Types](#支持的-grant-types) |
 | scope | 否 | 本次申请的权限范围, 多个用空格分隔. 详见 [支持的 Scopes](#支持的-scopes) |
 
