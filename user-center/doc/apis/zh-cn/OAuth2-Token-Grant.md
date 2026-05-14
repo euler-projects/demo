@@ -86,7 +86,11 @@ grant_type=<grant_type>&scope=<scope>&...
 | `openid` | OIDC 必需 | **决定是否签发 `id_token`**; 未申请 `openid` 时即使 grant type 支持 OIDC 也不会签发 ID Token |
 | `profile` | 用户信息 | UserInfo / ID Token 中追加: `nickname`, `avatar_url` |
 
----
+## 注意事项
+
+* `id_token` 不可作为 API 调用凭据; 调用受保护资源**只能**使用 `access_token`.
+* 同一 Client 为同一用户申请的 token 的 `sub` claim 始终相同; 但不同 Client 之间可能不同, 取决于服务端是否对该 Client 启用 `pairwise` 模式.
+* 对 `app_assertion` 的匿名用户而言, 重置设备 / 重新执行 attestation 会创建新的匿名用户并产生新的 `sub`.
 
 ## 相关文档
 
@@ -104,7 +108,6 @@ grant_type=<grant_type>&scope=<scope>&...
 [oidc-core]: https://openid.net/specs/openid-connect-core-1_0.html
 [attestation-draft]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-08
 [rfc6749]: https://datatracker.ietf.org/doc/html/rfc6749
-[rfc6749-2.3.1]: https://datatracker.ietf.org/doc/html/rfc6749v#section-2.3.1
 [RFC6749 §4]: https://datatracker.ietf.org/doc/html/rfc6749#section-4
 [RFC6749 §5.2]: https://datatracker.ietf.org/doc/html/rfc6749#section-5.2
 [oauth2.1-draft]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1
