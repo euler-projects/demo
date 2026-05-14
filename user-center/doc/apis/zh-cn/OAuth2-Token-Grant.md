@@ -1,14 +1,12 @@
 # OAuth2 Token Grant
 
-本文档描述 `/oauth2/token` 的通用约定、支持的 Grant Type、客户端认证方式、Scope 与各类 Token 的语义. 具体 grant type 的请求/响应细节请见对应子文档.
+本文档描述 `/oauth2/token` 的通用约定. 具体 Grant Type 的请求/响应细节请见对应子文档.
 
-> 本 OAuth2 认证服务基于 [RFC 6749 (OAuth 2.0 Authorization Framework)][rfc6749] 与 [OIDC Core 1.0][oidc-core], 在设计上大量参考了 [OAuth 2.1 草案][oauth2.1-draft] (如强制 PKCE、移除 implicit / password grant 等安全加固), 并在此之上扩展了 `wechat_authorization_code` 与 `urn:ietf:params:oauth:grant-type:app_assertion` 等自定义 grant type, 以及 `attest_jwt_client_auth` 客户端认证方式 ([OAuth 2.0 Attestation-Based Client Authentication (draft)][attestation-draft]).
+> 本 OAuth2 认证服务以 [RFC 6749 (OAuth 2.0 Authorization Framework)][rfc6749] 和 [OIDC Core 1.0][oidc-core] 标准为基础, 在设计上大量参考了 [The OAuth 2.1 Authorization Framework (draft)][oauth2.1-draft], 并支持增强型客户端认证 ([OAuth 2.0 Attestation-Based Client Authentication (draft)][attestation-draft]).
 
 ---
 
-## 请求与响应
-
-所有 Grant Type 都通过 Token 端点签发 Access Token (以及视情况下的 ID Token / Refresh Token).
+## 请求格式
 
 ```http
 POST /oauth2/token
@@ -18,15 +16,19 @@ Authorization: <客户端认证, 见客户端认证方式>
 grant_type=<grant_type>&scope=<scope>&...
 ```
 
-### 通用请求参数
-
 | 参数 | 必填 | 说明 |
 | --- | --- | --- |
-| Authorization | 否 | 位于请求头, 有多种格式, 详见 [客户端认证方式](#客户端认证方式) |
-| grant_type | 是 | 认证方式. 详见 [Grant Types](#grant-types) |
-| scope | 否 | 本次申请的权限范围, 多个用空格分隔. 详见 [Scopes](#scopes) |
+| grant_type | 是 | 认证方式. |
+| scope | 否 | 本次申请的权限范围, 多个用空格分隔. |
 
-### 通用成功响应 (200) {#response}
+更多详细说明请继续阅读:
+- [客户端认证方式](#客户端认证方式)
+- [Grant Types](#grant-types)
+- [Scopes](#scopes)
+
+---
+
+## 成功响应格式
 
 ```json
 {
@@ -52,7 +54,7 @@ grant_type=<grant_type>&scope=<scope>&...
 * 每次使用 `access_token` 前都应检查有效期, 若已过期或剩余有效时间小于1分钟, 则应及时续期.
 * 更多说明请参考 [RFC6749 §4](https://datatracker.ietf.org/doc/html/rfc6749#section-4)
 
-### 通用错误响应 (4xx)
+## 错误响应格式
 
 ```json
 {"error": "invalid_client", "error_description": "..."}
