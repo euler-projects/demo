@@ -22,7 +22,7 @@ grant_type=<grant_type>&scope=<scope>&...
 | scope | 否 | 本次申请的权限范围, 多个用空格分隔. |
 
 更多详细说明请继续阅读:
-- [客户端认证方式](#客户端认证方式)
+- [OAuth2 客户端认证][OAuth2 Client Authentication]
 - [Grant Types](#grant-types)
 - [Scopes](#scopes)
 
@@ -164,6 +164,7 @@ grant_type=authorization_code&client_id=default&code=...&code_verifier=...
 ## 相关文档
 
 * [App Attest Grant 子文档](OAuth2-Token-Grant-%23-App-Attest.md)
+* [OAuth2 Client Authentication]
 * [OAuth2 Client 模型](Model-%23-OAuth2-Client.md)
 * [创建 OAuth2 Client](APIs-%23-Admin-OAuth2-Client-Create.md)
 * [RFC 6749 - The OAuth 2.0 Authorization Framework][rfc6749]
@@ -171,6 +172,7 @@ grant_type=authorization_code&client_id=default&code=...&code_verifier=...
 * [OAuth 2.0 Attestation-Based Client Authentication (draft)][attestation-draft]
 * [OpenID Connect Core 1.0][oidc-core]
 
+[OAuth2 Client Authentication](#OAuth2-Client-Authentication.md)
 [oidc-subject-types]: https://openid.net/specs/openid-connect-core-1_0.html#SubjectIDTypes
 [oidc-core]: https://openid.net/specs/openid-connect-core-1_0.html
 [attestation-draft]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-08
