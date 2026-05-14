@@ -20,6 +20,7 @@ grant_type=<grant_type>&scope=<scope>&...
 | --- | --- | --- |
 | grant_type | 是 | 认证方式. |
 | scope | 否 | 本次申请的权限范围, 多个用空格分隔. |
+| ... | ... | 其他参数随不同的 `grant_type` 和不同的客户端认证方式而不同, 请参考具体文档. |
 
 更多详细说明请继续阅读:
 - [OAuth2 客户端认证][OAuth2 Client Authentication]
