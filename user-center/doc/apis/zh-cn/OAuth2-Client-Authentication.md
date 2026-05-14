@@ -65,5 +65,5 @@ grant_type=authorization_code&client_id=default&code=...&code_verifier=...
 * `client_secret_post` 仅在无法使用 `client_secret_basic` 时使用, 避免 secret 出现在访问日志中.
 * `client_secret_basic` 的 client_id / client_secret 需先经 URL form-encode, 再以 `:` 拼接做 Base64 编码, 详见 [RFC6749 §2.3.1].
 
-[RFC6749 §2.3.1]: https://datatracker.ietf.org/doc/html/rfc6749v#section-2.3.1
+[RFC6749 §2.3.1]: https://datatracker.ietf.org/doc/html/rfc6749#section-2.3.1
 [OAuth 2.0 Attestation-Based Client Authentication (draft) §13.4]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-08#section-13.4
