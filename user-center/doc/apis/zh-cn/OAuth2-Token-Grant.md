@@ -1,10 +1,8 @@
 # OAuth2 Token Grant
 
-本文档描述 `/oauth2/token` 的通用约定. 具体 Grant Type 的请求/响应细节请见对应子文档.
+本文档描述 `/oauth2/token` 接口的通用约定. 不同 Grant Type 的具体细节请见对应子文档.
 
 > 本 OAuth2 认证服务以 [RFC 6749 (OAuth 2.0 Authorization Framework)][rfc6749] 和 [OIDC Core 1.0][oidc-core] 标准为基础, 在设计上大量参考了 [The OAuth 2.1 Authorization Framework (draft)][oauth2.1-draft], 并支持增强型客户端认证 ([OAuth 2.0 Attestation-Based Client Authentication (draft)][attestation-draft]).
-
----
 
 ## 请求格式
 
@@ -27,9 +25,9 @@ grant_type=<grant_type>&scope=<scope>&...
 - [Grant Types](#grant-types)
 - [Scopes](#scopes)
 
----
+## 响应格式
 
-## 成功响应格式
+### 成功响应格式
 
 ```json
 {
@@ -53,15 +51,16 @@ grant_type=<grant_type>&scope=<scope>&...
 
 * `access_token` 的有效期很短, 通常为几分钟分钟到几小时; `refresh_token` 的有效期很长, 通常为数天到数月. 
 * 每次使用 `access_token` 前都应检查有效期, 若已过期或剩余有效时间小于1分钟, 则应及时续期.
-* 更多说明请参考 [RFC6749 §4](https://datatracker.ietf.org/doc/html/rfc6749#section-4)
+* `refresh_token` 是一次性的, 每次续期都会重新下发新的 `refresh_token`.
+* 更多说明请参考 [RFC6749 §4].
 
-## 错误响应格式
+### 错误响应格式
 
 ```json
 {"error": "invalid_client", "error_description": "..."}
 ```
 
-错误码遵循 [RFC 6749 §5.2][rfc6749-5.2].
+错误码遵循 [RFC6749 §5.2].
 
 ---
 
@@ -178,6 +177,7 @@ grant_type=authorization_code&client_id=default&code=...&code_verifier=...
 [oidc-core]: https://openid.net/specs/openid-connect-core-1_0.html
 [attestation-draft]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-08
 [rfc6749]: https://datatracker.ietf.org/doc/html/rfc6749
-[rfc6749-2.3.1]: https://datatracker.ietf.org/doc/html/rfc6749#section-2.3.1
-[rfc6749-5.2]: https://datatracker.ietf.org/doc/html/rfc6749#section-5.2
+[rfc6749-2.3.1]: https://datatracker.ietf.org/doc/html/rfc6749v#section-2.3.1
+[RFC6749 §4]: https://datatracker.ietf.org/doc/html/rfc6749v#section-4
+[RFC6749 §5.2]: https://datatracker.ietf.org/doc/html/rfc6749#section-5.2
 [oauth2.1-draft]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1
