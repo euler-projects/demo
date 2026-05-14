@@ -178,6 +178,6 @@ grant_type=authorization_code&client_id=default&code=...&code_verifier=...
 [attestation-draft]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-08
 [rfc6749]: https://datatracker.ietf.org/doc/html/rfc6749
 [rfc6749-2.3.1]: https://datatracker.ietf.org/doc/html/rfc6749v#section-2.3.1
-[RFC6749 §4]: https://datatracker.ietf.org/doc/html/rfc6749v#section-4
+[RFC6749 §4]: https://datatracker.ietf.org/doc/html/rfc6749#section-4
 [RFC6749 §5.2]: https://datatracker.ietf.org/doc/html/rfc6749#section-5.2
 [oauth2.1-draft]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1
