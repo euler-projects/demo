@@ -172,7 +172,7 @@ grant_type=authorization_code&client_id=default&code=...&code_verifier=...
 * [OAuth 2.0 Attestation-Based Client Authentication (draft)][attestation-draft]
 * [OpenID Connect Core 1.0][oidc-core]
 
-[OAuth2 Client Authentication](#OAuth2-Client-Authentication.md)
+[OAuth2 Client Authentication]: #OAuth2-Client-Authentication.md
 [oidc-subject-types]: https://openid.net/specs/openid-connect-core-1_0.html#SubjectIDTypes
 [oidc-core]: https://openid.net/specs/openid-connect-core-1_0.html
 [attestation-draft]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-08
