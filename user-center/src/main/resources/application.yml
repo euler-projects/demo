@@ -110,3 +110,12 @@ euler:
       resourceserver:
         url-patterns:
           - /api/**
+    otp:
+      enabled: true
+      storage: redis                      # in-memory | jdbc | redis (复用现有 spring.data.redis)
+      # issue-endpoint-uri: /otp/tickets  # 默认值，可省
+      # policy:                           # 默认 6 位 / 5分钟 / 60s / 5 次，如需调整可解锁
+      #   otp-length: 6
+      #   expires-in: 5m
+      #   retry-after: 60s
+      #   max-failures: 5
