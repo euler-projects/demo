@@ -16,7 +16,7 @@ factor_type=<factor_type>
 
 | 参数 | 类型 | 含义 |
 |---|---|---|
-| `factor_type` | string | **登录因素类型**<br>例如: `phone`, `email`, `google` |
+| `factor_type` | string | **登录因素类型**<br>例如: `phone`, `email`, `wechat`, `google`(占位, 暂未接入) |
 | ... | ... | **不同登录因素的定制参数**<br>根据具体的因素类型决定 |
 
 ## 2. 响应
@@ -91,4 +91,4 @@ factor_type=email
 | `otp_ticket` | string | **OTP 会话句柄**<br>调用 `POST /otp/tickets` 取得, 单次使用; 已隐含目标邮箱与下发通道 |
 | `otp` | string | **用户输入的邮件验证码** |
 
-[`POST /otp/tickets`]: App-Attest-Login-%23-OTP.md#二-发送-otp-post-otptickets.md
+[`POST /otp/tickets`]: App-Attest-Login-%23-OTP.md#二-发送-otp-post-otptickets

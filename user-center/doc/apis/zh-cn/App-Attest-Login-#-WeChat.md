@@ -138,18 +138,19 @@ factor_type=wechat
 
 ## 五. `Account.identities` 中 wechat 元素结构
 
-作为 `identities` 列表中 `factor_type=wechat` 的元素, 由公共字段(`id` / `factor_type` / `identifier` / `bound_at`, 详见[总文档 2.2 用户账号数据](App-Attest-Login.md#22-用户账号数据-account))与 IdP 原生字段两部分组成; 其中 IdP 原生字段与 `GET https://api.weixin.qq.com/sns/userinfo?access_token=ACCESS_TOKEN&openid=OPENID` 接口返回值保持一致:
+作为 `identities` 列表中 `factor_type=wechat` 的元素, 由公共字段(`id` / `factor_type` / `identifier` / `bound_at` / `last_verified_at`, 详见[总文档 2.2 用户账号数据](App-Attest-Login.md#22-用户账号数据-account))与 IdP 原生字段两部分组成; 其中 IdP 原生字段与 `GET https://api.weixin.qq.com/sns/userinfo?access_token=ACCESS_TOKEN&openid=OPENID` 接口返回值保持一致:
 
 ```json
 {
   "id": "idp_7h8j9k0l...",
   "factor_type": "wechat",
   "identifier": "oX1a2b3c4d5e6f",
-  "bound_at": "2026-05-10T09:00:00Z",
+  "bound_at": 1778899139687,
+  "last_verified_at": 1778899139687,
   "openid": "oX1a2b3c4d5e6f",
   "nickname": "微信原始昵称",
   "headimgurl": "https://wx.qlogo.cn/mmopen/xxx/132",
-  "unionid": " o6_bmasdasdsad6_2sgVt7hMZOPfL"
+  "unionid": "o6_bmasdasdsad6_2sgVt7hMZOPfL"
 }
 ```
 
@@ -158,7 +159,8 @@ factor_type=wechat
 | `id` | string | **公共字段** — 登录因素 ID, 服务端为该绑定记录签发的稳定标识 |
 | `factor_type` | string | **公共字段** — 固定为 `wechat`, 用于在 `identities` 列表中识别该元素的类型 |
 | `identifier` | string | **公共字段** — 登录因素的唯一标识, 对 `wechat` 而言取值与 `openid` 相同 |
-| `bound_at` | string (ISO8601) | **公共字段** — 首次绑定时间 |
+| `bound_at` | timestamp(3) | **公共字段** — 首次绑定时间, 毫秒级 Unix 时间戳 |
+| `last_verified_at` | timestamp(3) | **公共字段** — 最近一次验证该因素有效性的时间, 毫秒级 Unix 时间戳; 例如 IdP `code` 换取 `access_token` 成功 |
 | `openid` | string | **授权用户唯一标识** <br> 客户端一般不直接使用, 仅作"已绑定微信"的证据 |
 | `nickname` | string | **微信原始昵称** <br> 用于"社交账号绑定"管理页展示, 与 `profile.nickname` 独立 |
 | `headimgurl` | string | **微信原始头像** <br> 用于"社交账号绑定"管理页展示, 与 `profile.avatar_url` 独立 |

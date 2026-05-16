@@ -20,7 +20,7 @@
 |---|---|---|
 | `otp` | `otp_ticket` + `otp` + `attestation` | 标准 OTP 登录(含设备注册)— App Attestation 用法二 |
 
-> 注: 本平台自定义的 `grant_type=otp` 只负责"以 OTP 作为用户证明"这件事, 具体的通道类型(`sms` / `email` / 未来扩展)、下发目标(`target`)、业务用途(`purpose`)均在 `otp_ticket` 签发时记录于服务端, 客户端在 `/oauth2/token` 时无需重复提交.
+> 注: 本平台自定义的 `grant_type=otp` 只负责"以 OTP 作为用户证明"这件事, 具体的通道类型(`sms` / `email` / 未来扩展)、下发目标(`recipient`)、业务用途(`purpose`)均在 `otp_ticket` 签发时记录于服务端, 客户端在 `/oauth2/token` 时无需重复提交.
 
 ### OTP 侧关键角色
 
@@ -51,7 +51,7 @@ channel=sms
 |---|---|---|
 | `channel` | 是 | **下发通道**<br>`sms` / `email` / 未来扩展(如 `voice`) |
 | `recipient` | 是 | **下发目标**<br>手机号需符合 E.164 格式, 邮箱需为合法邮箱地址. |
-| `purpose` | 否 | **业务用途**<br>可选参数, 可以在后续的验证流程中验证是否是期望的用途, 若不指定表示可以用于任何用途.|
+| `purpose` | 否 | **业务用途**<br>可选参数, 可以在后续的验证流程中验证是否是期望的用途, 若不指定表示可以用于任何用途, 服务端采用缺省的文案模板 / 频率策略 / 有效期 / 后续允许的调用接口.|
 
 ### 2.2 响应
 
@@ -67,9 +67,9 @@ channel=sms
 |---|---|
 | `otp_ticket` | **本次 OTP 会话句柄**, 服务端签发的不可预测短随机串, 单次使用 |
 | `expires_in` | OTP 有效期(秒), 过期后 `otp_ticket` 连同 OTP 一起失效 |
-| `retry_after` | 调用方再次发起 `POST /otp/tickets` 的最短间隔(秒). 限流维度针对调用方, 即使更换 `target` / `purpose` 在该间隔内仍不会下发 |
+| `retry_after` | 调用方再次发起 `POST /otp/tickets` 的最短间隔(秒). 限流维度针对调用方, 即使更换 `recipient` / `purpose` 在该间隔内仍不会下发 |
 
-> `otp_ticket` 与 OTP 一一强绑定, 同时记录 `channel`、`target`、`purpose`、下发时间、已校验失败次数等. 客户端仅需持有 `otp_ticket`, 无需理解其内部结构.
+> `otp_ticket` 与 OTP 一一强绑定, 同时记录 `channel`、`recipient`、`purpose`、下发时间、已校验失败次数等. 客户端仅需持有 `otp_ticket`, 无需理解其内部结构.
 
 ---
 
@@ -85,7 +85,7 @@ sequenceDiagram
 
     Note over App,Server: 1. 请求下发 OTP
     App->>Server: POST /otp/tickets<br/>channel 和 recipient
-    Server->>Server: 生成 otp 与 otp_ticket<br/>存储 channel/target/purpose
+    Server->>Server: 生成 otp 与 otp_ticket<br/>存储 channel/recipient/purpose
     Server->>User: 通过 SMS/SMTP 下发 OTP
     Server-->>App: otp_ticket 和 expires_in
 
@@ -109,7 +109,7 @@ sequenceDiagram
 
 ## 四. 标准 OTP 登录完整流程
 
-本场景对应[总文档场景二](App-Attest-Login.md#场景二-标准登录). 客户端先走 `POST /otp/tickets`(无 `purpose`)拿到 `otp_ticket` 并等待用户输入 OTP, 再生成新 `kid` 与 `attestation`, 一并上行 `/oauth2/token`(`grant_type=otp`), 服务端一次性完成"OTP 验证 + 设备注册". 对于新注册(`recipient` 尚未绑定任何账号)的分支, 服务端将 `target` 写入新账号的 `identities`; 已绑定账号的分支直接复用原有 `identities`.
+本场景对应[总文档场景二](App-Attest-Login.md#场景二-标准登录). 客户端先走 `POST /otp/tickets`(无 `purpose`)拿到 `otp_ticket` 并等待用户输入 OTP, 再生成新 `kid` 与 `attestation`, 一并上行 `/oauth2/token`(`grant_type=otp`), 服务端一次性完成"OTP 验证 + 设备注册". 对于新注册(`recipient` 尚未绑定任何账号)的分支, 服务端将 `recipient` 写入新账号的 `identities`; 已绑定账号的分支直接复用原有 `identities`.
 
 ```mermaid
 sequenceDiagram
@@ -138,10 +138,10 @@ sequenceDiagram
     Server->>Server: 校验 otp 与 ticket 关联的验证码一致
     Server->>Server: 标记 otp_ticket 已使用
 
-    alt target 未绑定任何账号
+    alt recipient 未绑定任何账号
         Server->>Server: 新建实名 账号_new 挂 kid_A_new 并写入 identities 的 phone/email 元素
         Server-->>App: AT 和 RT 归属 账号_new
-    else target 已绑定某个 账号_2
+    else recipient 已绑定某个 账号_2
         Server->>Server: 将 kid_A_new 登记到 账号_2 的设备凭证
         Server-->>App: AT 和 RT 归属 账号_2
     end
@@ -195,15 +195,15 @@ factor_type=phone
 
 ## 六. `Account.identities` 中 phone / email 元素结构
 
-作为 `identities` 列表中 `factor_type=phone` / `factor_type=email` 的元素, 由公共字段(`id` / `factor_type` / `identifier` / `bound_at`, 详见[总文档 2.2 用户账号数据](App-Attest-Login.md#22-用户账号数据-account))与 OTP 原生字段两部分组成:
+作为 `identities` 列表中 `factor_type=phone` / `factor_type=email` 的元素, 由公共字段(`id` / `factor_type` / `identifier` / `bound_at` / `last_verified_at`, 详见[总文档 2.2 用户账号数据](App-Attest-Login.md#22-用户账号数据-account))与 OTP 原生字段两部分组成:
 
 ```json
 {
   "id": "idp_7h8j9k0l...",
   "factor_type": "phone",
   "identifier": "9c1b8e2a3f6d7e4b5a8c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a",
-  "bound_at": "2026-05-10T09:00:00Z",
-  "last_verified_at": "2026-05-10T09:00:00Z",
+  "bound_at": 1778899139687,
+  "last_verified_at": 1778899139687,
   "phone": "+8613*******00"
 }
 ```
@@ -213,8 +213,8 @@ factor_type=phone
   "id": "idp_7kbp651...",
   "factor_type": "email",
   "identifier": "3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b",
-  "bound_at": "2026-05-10T09:00:00Z",
-  "last_verified_at": "2026-05-10T09:00:00Z",
+  "bound_at": 1778899139687,
+  "last_verified_at": 1778899139687,
   "email": "u**r@e*****e.com"
 }
 ```
@@ -223,9 +223,9 @@ factor_type=phone
 |---|---|---|
 | `id` | string | **公共字段** — 登录因素 ID <br> 在 OTP 这一细分场景下可以替代原始手机号或邮箱调用 `POST /otp/tickets` 做 OTP 二次下发, 避免用户隐私信息频繁暴露于网络链路. |
 | `factor_type` | string | **公共字段** — 固定为 `phone` / `email`, 用于在 `identities` 列表中识别该元素的类型 |
-| `identifier` | string | **公共字段** — 登录因素的唯一标识, 取值为**原始手机号 / 邮箱的 SHA-256 哈希值**, 用于全局唯一性校验, 不作脱敏也不作业务展示 |
-| `bound_at` | string (ISO8601) | **公共字段** — 首次绑定时间 |
-| `last_verified_at` | string (ISO8601) | 最近一次通过 OTP 验证该因素的时间 |
+| `identifier` | string | **公共字段** — 登录因素的唯一标识, 取值为**原始手机号 / 邮箱的 SHA-256 哈希值**, 用于全局唯一性校验. |
+| `bound_at` | timestamp(3) | **公共字段** — 首次绑定时间, 毫秒级 Unix 时间戳 |
+| `last_verified_at` | timestamp(3) | **公共字段** — 最近一次通过 OTP 验证该因素的时间, 毫秒级 Unix 时间戳 |
 | `phone` / `email` | string | **脱敏后的手机号 / 邮箱地址**<br>用于管理页展示; 原始值仅服务端持久化, 不下发 |
 
 > 与微信 IdP 不同, `phone` / `email` 元素无需额外的原生用户资料字段(昵称、头像等), 故无 "/userinfo" 类二次拉取.
