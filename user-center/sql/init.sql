@@ -178,6 +178,36 @@ create table oauth2_client
   default collate utf8mb4_bin
     comment 'OAuth2 Clients';
 
+create table t_user_authentication_factor
+(
+    id               varchar(64)  not null comment 'idp_xxx, framework-generated',
+    user_id          varchar(36)  not null,
+    factor_type      varchar(32)  not null comment 'phone / email / wechat / ...',
+    identifier       varchar(255) not null comment 'factor-scoped unique id (e.g. SHA-256 of phone)',
+    bound_at         datetime(3)  not null,
+    last_verified_at datetime(3)  not null,
+    created_date     datetime(3)  not null comment 'Created time',
+    modified_date    datetime(3)  not null comment 'Last modified time',
+    primary key (id),
+    unique uk_user_authentication_factor_type_identifier (factor_type, identifier),
+    index idx_user_authentication_factor_user_type (user_id, factor_type)
+) engine = innodb
+  default character set utf8mb4
+  default collate utf8mb4_bin
+    comment 'User authentication factors (parent table)';
+
+create table t_user_authentication_factor_phone
+(
+    factor_id     varchar(64) not null,
+    phone         text        not null comment 'Encrypted E.164 phone number',
+    created_date  datetime(3) not null comment 'Created time',
+    modified_date datetime(3) not null comment 'Last modified time',
+    primary key (factor_id)
+) engine = innodb
+  default character set utf8mb4
+  default collate utf8mb4_bin
+    comment 'User authentication factor - phone details';
+
 create table oauth2_jwk
 (
     kid           varchar(128) not null comment 'JWK Key ID (UUID)',
