@@ -11,6 +11,7 @@ import org.eulerframework.uc.model.User;
 import org.eulerframework.uc.repository.DeviceUserMappingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 @Service
 public class DeviceUserDetailsService implements EulerDeviceUserDetailsService {
@@ -47,6 +48,23 @@ public class DeviceUserDetailsService implements EulerDeviceUserDetailsService {
         mappingEntity.setUserId(createdUser.getUserId());
         this.deviceUserMappingRepository.save(mappingEntity);
         return UserDetailsUtils.toEulerUserDetails(createdUser);
+    }
+
+    @Override
+    public void bindToUser(AppAttestUser appAttestUser, String userId) {
+        Assert.notNull(appAttestUser, "appAttestUser must not be null");
+        Assert.hasText(userId, "userId must not be empty");
+        this.deviceUserMappingRepository.findByKeyId(appAttestUser.getKeyId()).ifPresent(existing -> {
+            throw new IllegalStateException(
+                    "keyId '" + appAttestUser.getKeyId() + "' is already bound to user '"
+                            + existing.getUserId() + "'");
+        });
+        AppAttestAttestationUserMappingEntity mappingEntity = new AppAttestAttestationUserMappingEntity();
+        mappingEntity.setKeyId(appAttestUser.getKeyId());
+        mappingEntity.setTeamId(appAttestUser.getTeamId());
+        mappingEntity.setBundleId(appAttestUser.getBundleId());
+        mappingEntity.setUserId(userId);
+        this.deviceUserMappingRepository.save(mappingEntity);
     }
 
     @Autowired
