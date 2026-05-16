@@ -7,6 +7,14 @@
 - [JWK Key](Model-%23-Jwk-Key.md)
 - [JWK 密钥创建请求](Model-%23-Jwk-Key-Create-Request.md)
 - [JWK Cluster Status](Model-%23-Jwk-Cluster-Status.md)
+- [用户登录因素](Model-%23-User-Identity.md)
+
+## 用户登录因素接口
+
+- [绑定登录因素](APIs-%23-User-Indentities-Create.md)
+- [查询指定登录因素](APIs-%23-User-Indentities-Get.md)
+- [列出全部登录因素](APIs-%23-User-Indentities-List.md)
+- [删除登录因素](APIs-%23-User-Indentities-Delete.md)
 
 ## OAuth2 Token Grant
 
