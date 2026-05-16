@@ -29,6 +29,8 @@ public interface UserAuthenticationFactorRepository
     Optional<UserAuthenticationFactorEntity> findByIdAndUserIdAndFactorType(
             String id, String userId, String factorType);
 
+    Optional<UserAuthenticationFactorEntity> findByIdAndUserId(String id, String userId);
+
     List<UserAuthenticationFactorEntity> findAllByUserIdAndFactorType(
             String userId, String factorType);
 

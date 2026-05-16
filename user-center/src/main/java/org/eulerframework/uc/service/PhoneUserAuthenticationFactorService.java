@@ -19,7 +19,7 @@ import org.eulerframework.security.authentication.factor.IdentifierConflictExcep
 import org.eulerframework.security.authentication.factor.InvalidAuthenticationFactorRequestException;
 import org.eulerframework.security.authentication.factor.UserAuthenticationFactor;
 import org.eulerframework.security.authentication.factor.UserAuthenticationFactorIdGenerator;
-import org.eulerframework.security.authentication.factor.UserAuthenticationService;
+import org.eulerframework.security.authentication.factor.UserAuthenticationFactorService;
 import org.eulerframework.security.authentication.otp.OtpTicketService;
 import org.eulerframework.security.authentication.otp.OtpVerification;
 import org.eulerframework.uc.entity.UserAuthenticationFactorEntity;
@@ -42,7 +42,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * {@code phone} factor implementation of {@link UserAuthenticationService}.
+ * {@code phone} factor implementation of {@link UserAuthenticationFactorService}.
  * <p>
  * Bind flow:
  * <ol>
@@ -64,7 +64,7 @@ import java.util.Optional;
  * </ol>
  */
 @Service
-public class PhoneUserAuthenticationService implements UserAuthenticationService {
+public class PhoneUserAuthenticationFactorService implements UserAuthenticationFactorService {
 
     /**
      * Logical factor type advertised on the SPI; matches the
@@ -82,9 +82,9 @@ public class PhoneUserAuthenticationService implements UserAuthenticationService
     private final UserAuthenticationFactorPhoneRepository phoneRepository;
     private final UserAuthenticationFactorIdGenerator idGenerator;
 
-    public PhoneUserAuthenticationService(OtpTicketService otpTicketService,
-                                          UserAuthenticationFactorRepository factorRepository,
-                                          UserAuthenticationFactorPhoneRepository phoneRepository) {
+    public PhoneUserAuthenticationFactorService(OtpTicketService otpTicketService,
+                                                UserAuthenticationFactorRepository factorRepository,
+                                                UserAuthenticationFactorPhoneRepository phoneRepository) {
         Assert.notNull(otpTicketService, "otpTicketService is required");
         Assert.notNull(factorRepository, "factorRepository is required");
         Assert.notNull(phoneRepository, "phoneRepository is required");
@@ -185,7 +185,7 @@ public class PhoneUserAuthenticationService implements UserAuthenticationService
                 .findByIdAndUserIdAndFactorType(id, userId, FACTOR_TYPE);
         if (parent.isEmpty()) {
             // Either it's not a phone factor or it doesn't belong to this
-            // user — silently ignore so DelegatingUserAuthenticationService
+            // user — silently ignore so a business-layer composite router
             // can fan out without leaking ownership.
             return;
         }
