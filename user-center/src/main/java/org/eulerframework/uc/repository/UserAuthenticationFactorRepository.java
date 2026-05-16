@@ -35,4 +35,7 @@ public interface UserAuthenticationFactorRepository
             String userId, String factorType);
 
     boolean existsByFactorTypeAndIdentifier(String factorType, String identifier);
+
+    Optional<UserAuthenticationFactorEntity> findByFactorTypeAndIdentifier(
+            String factorType, String identifier);
 }

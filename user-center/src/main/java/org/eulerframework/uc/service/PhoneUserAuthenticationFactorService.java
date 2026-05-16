@@ -158,6 +158,25 @@ public class PhoneUserAuthenticationFactorService implements UserAuthenticationF
 
     @Override
     @Transactional(readOnly = true)
+    public Optional<UserAuthenticationFactor> findByOriginalIdentifier(String factorType, String originalIdentifier) {
+        if (!FACTOR_TYPE.equals(factorType)) {
+            // Not addressed at this backend — the composite router uses the
+            // factorType to pick the right backend, but defensive routing
+            // here keeps the SPI contract honest if a single-factor caller
+            // gets the wiring wrong.
+            return Optional.empty();
+        }
+        if (!StringUtils.hasText(originalIdentifier)) {
+            return Optional.empty();
+        }
+        String identifier = PhoneIdentifierHasher.hash(originalIdentifier);
+        return this.factorRepository
+                .findByFactorTypeAndIdentifier(FACTOR_TYPE, identifier)
+                .map(parent -> toModel(parent, loadPhone(parent.getId())));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<UserAuthenticationFactor> findAllByUserId(String userId) {
         Assert.hasText(userId, "userId must not be empty");
         List<UserAuthenticationFactorEntity> parents = this.factorRepository
@@ -204,6 +223,7 @@ public class PhoneUserAuthenticationFactorService implements UserAuthenticationF
             extensions.put(EXTENSION_PHONE, PhoneMasker.mask(child.getPhone()));
         }
         return new UserAuthenticationFactor(
+                parent.getUserId(),
                 parent.getId(),
                 parent.getFactorType(),
                 parent.getIdentifier(),

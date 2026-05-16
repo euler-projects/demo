@@ -144,6 +144,29 @@ public class CompositeUserAuthenticationFactorService implements UserAuthenticat
                 .toList();
     }
 
+    /**
+     * Routes the lookup precisely on {@code factorType} — we never fan-out
+     * across backends here. Fan-out would risk cross-namespace false
+     * positives (e.g. a SHA-256 hex emitted by the {@code phone} backend
+     * accidentally collides with a WeChat openid space) and would also
+     * defeat the whole point of carrying {@code factorType} on the SPI.
+     * Unknown factor types simply return {@link Optional#empty()} — this
+     * is a query, not a mutation, so {@link UnsupportedFactorTypeException}
+     * would be too loud.
+     */
+    @Override
+    public Optional<UserAuthenticationFactor> findByOriginalIdentifier(
+            String factorType, String originalIdentifier) {
+        if (!StringUtils.hasText(factorType) || !StringUtils.hasText(originalIdentifier)) {
+            return Optional.empty();
+        }
+        UserAuthenticationFactorService backend = this.routes.get(factorType);
+        if (backend == null) {
+            return Optional.empty();
+        }
+        return backend.findByOriginalIdentifier(factorType, originalIdentifier);
+    }
+
     @Override
     public void deleteById(String userId, String id) {
         Assert.hasText(userId, "userId must not be empty");
