@@ -12,8 +12,9 @@ Authorization: Bearer <access_token>
 ```json
 [
   {
-    "identity_id": "idp_7h8j9k0l...",
+    "id": "idp_7h8j9k0l...",
     "factor_type": "<factor_type>",
+    "identifier": "<登录因素的唯一标识>",
     "bound_at": 1778899139687,
     "last_verified_at": 1778899139687,
     "...": "扩展字段"

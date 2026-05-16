@@ -195,35 +195,38 @@ factor_type=phone
 
 ## 六. `Account.identities` 中 phone / email 元素结构
 
-作为 `identities` 列表中 `factor_type=phone` / `factor_type=email` 的元素, 由公共字段(`identity_id` / `factor_type` / `bound_at`, 详见[总文档 2.2 用户账号数据](App-Attest-Login.md#22-用户账号数据-account))与 OTP 原生字段两部分组成:
+作为 `identities` 列表中 `factor_type=phone` / `factor_type=email` 的元素, 由公共字段(`id` / `factor_type` / `identifier` / `bound_at`, 详见[总文档 2.2 用户账号数据](App-Attest-Login.md#22-用户账号数据-account))与 OTP 原生字段两部分组成:
 
 ```json
 {
-  "identity_id": "idp_7h8j9k0l...",
+  "id": "idp_7h8j9k0l...",
   "factor_type": "phone",
+  "identifier": "9c1b8e2a3f6d7e4b5a8c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a",
   "bound_at": "2026-05-10T09:00:00Z",
-  "recipient": "+8613*******00",
-  "last_verified_at": "2026-05-10T09:00:00Z"
+  "last_verified_at": "2026-05-10T09:00:00Z",
+  "phone": "+8613*******00"
 }
 ```
 
 ```json
 {
-  "identity_id": "idp_7kbp651...",
+  "id": "idp_7kbp651...",
   "factor_type": "email",
+  "identifier": "3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b",
   "bound_at": "2026-05-10T09:00:00Z",
-  "recipient": "u**r@e*****e.com",
-  "last_verified_at": "2026-05-10T09:00:00Z"
+  "last_verified_at": "2026-05-10T09:00:00Z",
+  "email": "u**r@e*****e.com"
 }
 ```
 
 | 字段 | 类型 | 含义 |
 |---|---|---|
-| `identity_id` | string | **公共字段** — 登录因素 ID <br> 在 OTP 这一细分场景下可以替代原始手机号或邮箱调用 `POST /otp/tickets` 做 OTP 二次下发, 避免用户隐私信息频繁暴露于网络链路. |
+| `id` | string | **公共字段** — 登录因素 ID <br> 在 OTP 这一细分场景下可以替代原始手机号或邮箱调用 `POST /otp/tickets` 做 OTP 二次下发, 避免用户隐私信息频繁暴露于网络链路. |
 | `factor_type` | string | **公共字段** — 固定为 `phone` / `email`, 用于在 `identities` 列表中识别该元素的类型 |
+| `identifier` | string | **公共字段** — 登录因素的唯一标识, 取值为**原始手机号 / 邮箱的 SHA-256 哈希值**, 用于全局唯一性校验, 不作脱敏也不作业务展示 |
 | `bound_at` | string (ISO8601) | **公共字段** — 首次绑定时间 |
-| `recipient` | string | **已验证且脱敏的手机号 / 邮箱地址** |
 | `last_verified_at` | string (ISO8601) | 最近一次通过 OTP 验证该因素的时间 |
+| `phone` / `email` | string | **脱敏后的手机号 / 邮箱地址**<br>用于管理页展示; 原始值仅服务端持久化, 不下发 |
 
 > 与微信 IdP 不同, `phone` / `email` 元素无需额外的原生用户资料字段(昵称、头像等), 故无 "/userinfo" 类二次拉取.
 

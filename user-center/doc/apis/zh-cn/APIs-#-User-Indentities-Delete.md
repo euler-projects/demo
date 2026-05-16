@@ -3,14 +3,14 @@
 ## 请求
 
 ```http
-DELETE /user/identities/{identity_id}
+DELETE /user/identities/{id}
 Authorization: Bearer <access_token>
 ```
 
 
 | 参数 | 类型 | 含义 |
 |---|---|---|
-| `identity_id` | string | **登录因素 ID** |
+| `id` | string | **登录因素 ID** |
 
 ## 响应
 

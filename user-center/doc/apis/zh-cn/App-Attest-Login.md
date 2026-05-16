@@ -151,8 +151,9 @@ OIDC 为成熟标准协议, 客户端按规范实现即可, 本文不再展开.
   },
   "identities": [
     {
-      "identity_id": "idp_7h8j9k0l...",
+      "id": "idp_7h8j9k0l...",
       "factor_type": "wechat",
+      "identifier": "oX1a2b3c4d5e6f",
       "bound_at": "2026-05-10T09:00:00Z",
       "openid": "oX1a2b3c4d5e6f",
       "nickname": "微信原始昵称",
@@ -175,20 +176,22 @@ OIDC 为成熟标准协议, 客户端按规范实现即可, 本文不再展开.
 | `app_attest_key.kid` | string | **Apple App Attest Key Identifier** |
 | `app_attest_key.iat` | date |  **Apple App Attest Key 的生成时间 (Issued At)** |
 | `identities` | list | **账号绑定的登录因素(微信 / 手机 / 邮箱 等)列表**<br>使用 AT 调用 `GET /user/identities` 获取, 列表中每个元素都包含下述公共字段; 各登录因素在公共字段之外可追加自身原生字段; 下文以 `wechat` 为例 |
-| `identities[].identity_id` | string | **公共字段 — 登录因素 ID**<br>服务端为该登录因素生成的唯一 ID. |
+| `identities[].id` | string | **公共字段 — 登录因素 ID**<br>服务端为该登录因素生成的唯一 ID. |
 | `identities[].factor_type` | string | **公共字段 — 登录因素类型标识**<br>例如 `wechat` / `apple` / `google` / `phone` / `email` 等 |
+| `identities[].identifier` | string | **公共字段 — 登录因素的唯一标识**<br>不同 `factor_type` 各自定义其含义(如 `wechat` 取值为 `openid` 原值、`phone` / `email` 取值为原始手机号 / 邮箱的哈希值) |
 | `identities[].bound_at` | string (ISO8601) | **公共字段 — 首次绑定时间** |
 
 #### IdP 示例: wechat
 
 > 本节以微信作为 `identities` 列表中某个元素(`factor_type=wechat`)的示例; 其他登录因素(Apple / Google / GitHub / 手机 / 邮箱 等)的元素结构类似, 由各自接入文档定义.
 
-`wechat` 元素由公共字段(`identity_id` / `factor_type` / `bound_at`)与 IdP 原生字段两部分组成; 其中 IdP 原生字段与 `GET https://api.weixin.qq.com/sns/userinfo?access_token=ACCESS_TOKEN&openid=OPENID` 接口返回值保持一致
+`wechat` 元素由公共字段(`id` / `factor_type` / `identifier` / `bound_at`)与 IdP 原生字段两部分组成; 其中 IdP 原生字段与 `GET https://api.weixin.qq.com/sns/userinfo?access_token=ACCESS_TOKEN&openid=OPENID` 接口返回值保持一致
 
 ```json
 {
-  "identity_id": "idp_7h8j9k0l...",
+  "id": "idp_7h8j9k0l...",
   "factor_type": "wechat",
+  "identifier": "oX1a2b3c4d5e6f",
   "bound_at": "2026-05-10T09:00:00Z",
   "openid": "oX1a2b3c4d5e6f",
   "nickname": "微信原始昵称",
