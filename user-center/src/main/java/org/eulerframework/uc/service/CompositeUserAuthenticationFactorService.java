@@ -168,6 +168,17 @@ public class CompositeUserAuthenticationFactorService implements UserAuthenticat
     }
 
     @Override
+    public UserAuthenticationFactor bindOriginalIdentifier(
+            String userId, String factorType, String originalIdentifier) {
+        Assert.hasText(userId, "userId must not be empty");
+        if (!StringUtils.hasText(factorType)) {
+            throw new InvalidAuthenticationFactorRequestException(
+                    "factor type is required");
+        }
+        return resolveBackend(factorType).bindOriginalIdentifier(userId, factorType, originalIdentifier);
+    }
+
+    @Override
     public void deleteById(String userId, String id) {
         Assert.hasText(userId, "userId must not be empty");
         Assert.hasText(id, "id must not be empty");

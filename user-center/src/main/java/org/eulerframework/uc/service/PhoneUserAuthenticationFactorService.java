@@ -147,6 +147,41 @@ public class PhoneUserAuthenticationFactorService implements UserAuthenticationF
     }
 
     @Override
+    @Transactional
+    public UserAuthenticationFactor bindOriginalIdentifier(String userId, String factorType, String originalIdentifier) {
+        Assert.hasText(userId, "userId must not be empty");
+        if (!FACTOR_TYPE.equals(factorType)) {
+            throw new InvalidAuthenticationFactorRequestException(
+                    "factor type '" + factorType + "' is not supported by phone backend");
+        }
+        if (!StringUtils.hasText(originalIdentifier)) {
+            throw new InvalidAuthenticationFactorRequestException("originalIdentifier is required");
+        }
+
+        String identifier = PhoneIdentifierHasher.hash(originalIdentifier);
+        if (this.factorRepository.existsByFactorTypeAndIdentifier(FACTOR_TYPE, identifier)) {
+            throw new IdentifierConflictException("phone already bound");
+        }
+
+        Instant now = Instant.now();
+        UserAuthenticationFactorEntity parent = new UserAuthenticationFactorEntity();
+        parent.setId(this.idGenerator.generate());
+        parent.setUserId(userId);
+        parent.setFactorType(FACTOR_TYPE);
+        parent.setIdentifier(identifier);
+        parent.setBoundAt(now);
+        parent.setLastVerifiedAt(now);
+        this.factorRepository.save(parent);
+
+        UserAuthenticationFactorPhoneEntity child = new UserAuthenticationFactorPhoneEntity();
+        child.setFactorId(parent.getId());
+        child.setPhone(originalIdentifier);
+        this.phoneRepository.save(child);
+
+        return toModel(parent, child);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public Optional<UserAuthenticationFactor> findById(String userId, String id) {
         Assert.hasText(userId, "userId must not be empty");
