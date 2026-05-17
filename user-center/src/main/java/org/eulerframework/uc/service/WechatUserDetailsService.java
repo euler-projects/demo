@@ -4,6 +4,7 @@ import org.eulerframework.common.util.StringUtils;
 import org.eulerframework.security.authentication.wechat.WechatUser;
 import org.eulerframework.security.core.userdetails.EulerUserDetails;
 import org.eulerframework.security.core.userdetails.EulerWechatUserDetailsService;
+import org.eulerframework.security.core.userdetails.RandomUsernameGenerator;
 import org.eulerframework.security.core.userdetails.UserDetailsNotFoundException;
 import org.eulerframework.security.util.UserDetailsUtils;
 import org.eulerframework.uc.entity.WechatUserMappingEntity;
@@ -41,7 +42,7 @@ public class WechatUserDetailsService implements EulerWechatUserDetailsService {
         wechatUserMappingEntity.setAvatarUrl(wechatUser.getAvatarUrl());
 
         EulerUserDetails userDetails = EulerUserDetails.builder()
-                .username("wx_" + wechatUser.getOpenId())
+                .username(RandomUsernameGenerator.generate())
                 .password("{noop}" + StringUtils.randomString(32))
                 .authorities("user")
                 .build();

@@ -64,13 +64,23 @@ final class AppSession: ObservableObject {
     }
 
     /// 标准 OTP 登录（App Attestation 用法 2）。
-    func signInWithPhoneOTP(recipient: String, ticket: String, otp: String) async {
-        await runAuth {
-            try await self.auth.signInWithPhoneOTP(
-                recipient: recipient,
-                otpTicket: ticket,
-                otp: otp
+    ///
+    /// 错误直接抛出, 由调用方(PhoneOTPSheet)就地处理 — 避免走 `lastError`
+    /// 触发全局 alert 导致 sheet 被关闭。仅 kid 被吊销时同时写入 `lastError`
+    /// 以触发全局登出提示。
+    func signInWithPhoneOTP(recipient: String, ticket: String, otp: String) async throws {
+        do {
+            let result = try await auth.signInWithPhoneOTP(
+                recipient: recipient, otpTicket: ticket, otp: otp
             )
+            phase = .signedIn(result)
+            lastError = nil
+        } catch let error as APIError {
+            if case .kidRevoked = error {
+                phase = .unauthenticated
+                lastError = error.errorDescription
+            }
+            throw error
         }
     }
 
@@ -84,8 +94,19 @@ final class AppSession: ObservableObject {
 
     // MARK: - 绑定 / 解绑
 
-    func bindPhone(ticket: String, otp: String) async {
-        await runAuth { try await self.auth.bindPhone(otpTicket: ticket, otp: otp) }
+    /// 绑定手机号。错误直接抛出, 由调用方就地处理。
+    func bindPhone(ticket: String, otp: String) async throws {
+        do {
+            let result = try await auth.bindPhone(otpTicket: ticket, otp: otp)
+            phase = .signedIn(result)
+            lastError = nil
+        } catch let error as APIError {
+            if case .kidRevoked = error {
+                phase = .unauthenticated
+                lastError = error.errorDescription
+            }
+            throw error
+        }
     }
 
     func unbind(factorId: String) async {

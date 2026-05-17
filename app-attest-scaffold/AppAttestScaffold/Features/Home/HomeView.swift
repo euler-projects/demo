@@ -13,12 +13,7 @@ struct HomeView: View {
     @EnvironmentObject private var session: AppSession
 
     @State private var showSettings = false
-
-    // MARK: Issuer 编辑态
-
-    @State private var issuerDraft: String = AppConfiguration.issuer
     @State private var showIssuerEditor = false
-    @State private var showIssuerConfirm = false
 
     /// 复制反馈: 点击复制后短暂显示对勾, 然后恢复图标。
     @State private var copiedField: String?
@@ -45,37 +40,9 @@ struct HomeView: View {
                 SettingsView()
                     .environmentObject(session)
             }
-            .alert("修改 Issuer", isPresented: $showIssuerEditor) {
-                TextField("https://...", text: $issuerDraft)
-                    .textInputAutocapitalization(.never)
-                    .keyboardType(.URL)
-                    .autocorrectionDisabled()
-                Button("取消", role: .cancel) {
-                    issuerDraft = AppConfiguration.issuer
-                }
-                Button("应用") {
-                    if issuerChanged && isValidIssuer(issuerDraft) {
-                        showIssuerConfirm = true
-                    } else {
-                        issuerDraft = AppConfiguration.issuer
-                    }
-                }
-            } message: {
-                Text("修改后会清除当前会话, 必须重新登录。")
-            }
-            .confirmationDialog(
-                "切换 issuer 会清除会话",
-                isPresented: $showIssuerConfirm,
-                titleVisibility: .visible
-            ) {
-                Button("切换并退出登录", role: .destructive) {
-                    Task { await session.updateIssuer(issuerDraft) }
-                }
-                Button("取消", role: .cancel) {
-                    issuerDraft = AppConfiguration.issuer
-                }
-            } message: {
-                Text("更换 issuer 将使现有访问令牌与设备密钥失效, 必须重新登录。")
+            .sheet(isPresented: $showIssuerEditor) {
+                IssuerEditorSheet()
+                    .environmentObject(session)
             }
         }
     }
@@ -125,11 +92,10 @@ struct HomeView: View {
         }
     }
 
-    /// Issuer 配置: 只读展示当前地址, 点击弹出 alert 修改。
+    /// Issuer 配置: 只读展示当前地址, 点击打开 IssuerEditorSheet 修改。
     private var serviceSection: some View {
         Section {
             Button {
-                issuerDraft = AppConfiguration.issuer
                 showIssuerEditor = true
             } label: {
                 Text(AppConfiguration.issuer)
@@ -264,23 +230,6 @@ struct HomeView: View {
         if m > 0 { parts.append("\(m)分") }
         parts.append("\(s)秒")
         return parts.joined()
-    }
-
-    private var issuerChanged: Bool {
-        let trimmed = issuerDraft.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed != AppConfiguration.issuer && !trimmed.isEmpty
-    }
-
-    /// 保守校验: 必须是 `https://`(开发环境放行 `http://`)且能解析为 URL。
-    private func isValidIssuer(_ value: String) -> Bool {
-        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let url = URL(string: trimmed),
-              let scheme = url.scheme?.lowercased(),
-              scheme == "https" || scheme == "http",
-              url.host != nil else {
-            return false
-        }
-        return true
     }
 }
 

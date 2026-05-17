@@ -260,29 +260,42 @@ struct PhoneOTPSheet: View {
         localError = nil
         isSubmitting = true
         Task {
-            switch mode {
-            case .signIn:
-                await session.signInWithPhoneOTP(
-                    recipient: phoneE164,
-                    ticket: ticket.otpTicket,
-                    otp: otpCode
-                )
-            case .bindPhone:
-                await session.bindPhone(ticket: ticket.otpTicket, otp: otpCode)
-            }
-            isSubmitting = false
-            // phase 切换或 `lastError` 写入由 `AppSession` 负责。
-            // 仅当成功(lastError 为空)时才关闭; 否则清空 OTP 让用户重输,
-            // 并把 session 的错误透传到本地行内提示。
-            if session.lastError == nil {
+            do {
+                switch mode {
+                case .signIn:
+                    try await session.signInWithPhoneOTP(
+                        recipient: phoneE164,
+                        ticket: ticket.otpTicket,
+                        otp: otpCode
+                    )
+                case .bindPhone:
+                    try await session.bindPhone(ticket: ticket.otpTicket, otp: otpCode)
+                }
+                // 成功 — 关闭 sheet。
                 dismiss()
-            } else {
+            } catch {
+                // 失败 — 清空验证码, 行内提示, 焦点回到 OTP 字段让用户重输。
                 otpCode = ""
-                localError = session.lastError
-                // 校验失败 — 重新让 OTP 字段拿到焦点, 准备让用户重输。
+                localError = Self.friendlyError(error)
                 otpFocused = true
             }
+            isSubmitting = false
         }
+    }
+
+    /// 将 API 错误映射为用户友好的行内提示文案。
+    private static func friendlyError(_ error: Error) -> String {
+        if let apiError = error as? APIError {
+            switch apiError {
+            case .oauth(let code, _, _) where code == "invalid_grant":
+                return "验证码错误, 请重新输入"
+            case .factorOccupied:
+                return apiError.errorDescription ?? "该手机号已绑定其他账号"
+            default:
+                return apiError.errorDescription ?? error.localizedDescription
+            }
+        }
+        return error.localizedDescription
     }
 
     private func startCountdown(seconds: Int) {

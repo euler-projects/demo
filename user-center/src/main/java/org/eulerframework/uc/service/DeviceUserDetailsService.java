@@ -4,6 +4,7 @@ import org.eulerframework.common.util.StringUtils;
 import org.eulerframework.security.authentication.appattest.AppAttestUser;
 import org.eulerframework.security.core.userdetails.EulerDeviceUserDetailsService;
 import org.eulerframework.security.core.userdetails.EulerUserDetails;
+import org.eulerframework.security.core.userdetails.RandomUsernameGenerator;
 import org.eulerframework.security.core.userdetails.UserDetailsNotFoundException;
 import org.eulerframework.security.util.UserDetailsUtils;
 import org.eulerframework.uc.entity.AppAttestAttestationUserMappingEntity;
@@ -37,7 +38,7 @@ public class DeviceUserDetailsService implements EulerDeviceUserDetailsService {
         mappingEntity.setBundleId(appAttestUser.getBundleId());
 
         EulerUserDetails userDetails = EulerUserDetails.builder()
-                .username("attest_" + appAttestUser.getKeyId().substring(0, Math.min(8, appAttestUser.getKeyId().length())))
+                .username(RandomUsernameGenerator.generate())
                 .password("{noop}" + StringUtils.randomString(32))
                 .authorities("user")
                 .build();

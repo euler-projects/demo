@@ -126,8 +126,8 @@ struct LoginView: View {
         .environmentObject(AppSession())
 }
 
-/// 轻量级的 issuer 编辑 sheet, 由 `LoginView`(右上角齿轮按钮)与 `SettingsView`(服务配置 section)
-/// 共同复用。新值通过 `AppSession.updateIssuer(_:)` 写入持久化, 同时使 OIDC Discovery 缓存失效,
+/// 轻量级的 issuer 编辑 sheet, 由 `LoginView`、`HomeView` 共同复用。
+/// 新值通过 `AppSession.updateIssuer(_:)` 写入持久化, 同时使 OIDC Discovery 缓存失效,
 /// 并把当前会话登出, 以保证一致性。
 struct IssuerEditorSheet: View {
 
@@ -157,18 +157,20 @@ struct IssuerEditorSheet: View {
                     Button {
                         showConfirm = true
                     } label: {
-                        HStack {
-                            Spacer()
-                            if isApplying {
-                                ProgressView()
-                            } else {
-                                Text("应用 issuer").fontWeight(.semibold)
-                            }
-                            Spacer()
+                        if isApplying {
+                            ProgressView()
+                                .frame(maxWidth: .infinity)
+                        } else {
+                            Text("保存")
+                                .fontWeight(.semibold)
+                                .frame(maxWidth: .infinity)
                         }
                     }
                     .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
                     .disabled(!issuerChanged || !isValidIssuer || isApplying)
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
                 }
             }
             .navigationTitle("服务配置")
