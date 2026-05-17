@@ -141,7 +141,7 @@ create table app_attest_attestation_user_mapping
     created_date  datetime(3)  not null comment 'Created time',
     modified_date datetime(3)  not null comment 'Last modified time',
     primary key (key_id),
-    unique uk_app_attest_attestation_user_mapping_user_id (user_id)
+    key idx_app_attest_attestation_user_mapping_user_id (user_id)
 ) engine = innodb
   default character set utf8mb4
   default collate utf8mb4_bin
