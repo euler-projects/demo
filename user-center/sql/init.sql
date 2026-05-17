@@ -180,7 +180,7 @@ create table oauth2_client
 
 create table t_user_authentication_factor
 (
-    id               varchar(64)  not null comment 'idp_xxx, framework-generated',
+    factor_id        varchar(36)  not null comment 'UUID, framework-generated',
     user_id          varchar(36)  not null,
     factor_type      varchar(32)  not null comment 'phone / email / wechat / ...',
     identifier       varchar(255) not null comment 'factor-scoped unique id (e.g. SHA-256 of phone)',
@@ -188,7 +188,7 @@ create table t_user_authentication_factor
     last_verified_at datetime(3)  not null,
     created_date     datetime(3)  not null comment 'Created time',
     modified_date    datetime(3)  not null comment 'Last modified time',
-    primary key (id),
+    primary key (factor_id),
     unique uk_user_authentication_factor_type_identifier (factor_type, identifier),
     index idx_user_authentication_factor_user_type (user_id, factor_type)
 ) engine = innodb
@@ -198,7 +198,7 @@ create table t_user_authentication_factor
 
 create table t_user_authentication_factor_phone
 (
-    factor_id     varchar(64) not null,
+    factor_id     varchar(36) not null comment 'UUID, references t_user_authentication_factor.factor_id',
     phone         text        not null comment 'Encrypted E.164 phone number',
     created_date  datetime(3) not null comment 'Created time',
     modified_date datetime(3) not null comment 'Last modified time',

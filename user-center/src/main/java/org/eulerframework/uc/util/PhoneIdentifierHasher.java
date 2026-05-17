@@ -28,7 +28,7 @@ import java.util.HexFormat;
  * <p>
  * The output is the lowercase hex-encoded SHA-256 digest of the raw phone
  * number, matching the contract documented in
- * {@code Model-#-User-Identity.md}: a one-way function used purely for
+ * {@code Model-#-User-Authentication-Factor.md}: a one-way function used purely for
  * uniqueness checks across accounts; never surfaced to clients.
  */
 public final class PhoneIdentifierHasher {

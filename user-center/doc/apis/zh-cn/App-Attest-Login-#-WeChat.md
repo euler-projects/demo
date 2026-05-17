@@ -31,7 +31,7 @@
 
 ## 二. 绑定微信完整流程
 
-本场景对应[总文档场景一步骤 3](App-Attest-Login.md#场景一-首次使用--匿名登录--绑定登录因素--日常使用)(匿名账号追加微信绑定). 客户端通过微信 Open SDK 发起 OAuth2.0 授权登录请求, 拿到授权临时票据 `code` 后, 凭匿名 AT 调用 `POST /user/identities` 上行 `code`; 本平台服务端再用 `code` + `AppSecret` 向微信开放平台换 `access_token` 与 `openid`, 再用 `access_token` + `openid` 去 [`/sns/userinfo`](https://developers.weixin.qq.com/doc/oplatform/Mobile_App/WeChat_Login/Authorized_API_call_UnionID.html) 读取昵称 / 头像 / `unionid` 等用户资料, 写入 `identities` 列表完成绑定.
+本场景对应[总文档场景一步骤 3](App-Attest-Login.md#场景一-首次使用--匿名登录--绑定用户认证因素--日常使用)(匿名账号追加微信绑定). 客户端通过微信 Open SDK 发起 OAuth2.0 授权登录请求, 拿到授权临时票据 `code` 后, 凭匿名 AT 调用 `POST /user/identities` 上行 `code`; 本平台服务端再用 `code` + `AppSecret` 向微信开放平台换 `access_token` 与 `openid`, 再用 `access_token` + `openid` 去 [`/sns/userinfo`](https://developers.weixin.qq.com/doc/oplatform/Mobile_App/WeChat_Login/Authorized_API_call_UnionID.html) 读取昵称 / 头像 / `unionid` 等用户资料, 写入 `identities` 列表完成绑定.
 
 ```mermaid
 sequenceDiagram
@@ -58,7 +58,7 @@ sequenceDiagram
     Note over App: 会话凭证保持不变 继续用原匿名 AT
 ```
 
-> 若 `openid` 已被其他账号占用, 服务端返回 `409 factor_occupied` 附带 `conflict_token`, 处置方式参见[总文档步骤 3 异常](App-Attest-Login.md#步骤-3-异常-登录因素已被其他账号占用).
+> 若 `openid` 已被其他账号占用, 服务端返回 `409 factor_occupied` 附带 `conflict_token`, 处置方式参见[总文档步骤 3 异常](App-Attest-Login.md#步骤-3-异常-用户认证因素已被其他账号占用).
 
 ---
 
@@ -138,11 +138,11 @@ factor_type=wechat
 
 ## 五. `Account.identities` 中 wechat 元素结构
 
-作为 `identities` 列表中 `factor_type=wechat` 的元素, 由公共字段(`id` / `factor_type` / `identifier` / `bound_at` / `last_verified_at`, 详见[总文档 2.2 用户账号数据](App-Attest-Login.md#22-用户账号数据-account))与 IdP 原生字段两部分组成; 其中 IdP 原生字段与 `GET https://api.weixin.qq.com/sns/userinfo?access_token=ACCESS_TOKEN&openid=OPENID` 接口返回值保持一致:
+作为 `identities` 列表中 `factor_type=wechat` 的元素, 由公共字段(`factor_id` / `factor_type` / `identifier` / `bound_at` / `last_verified_at`, 详见[总文档 2.2 用户账号数据](App-Attest-Login.md#22-用户账号数据-account))与 IdP 原生字段两部分组成; 其中 IdP 原生字段与 `GET https://api.weixin.qq.com/sns/userinfo?access_token=ACCESS_TOKEN&openid=OPENID` 接口返回值保持一致:
 
 ```json
 {
-  "id": "idp_7h8j9k0l...",
+  "factor_id": "550e8400-e29b-41d4-a716-446655440000",
   "factor_type": "wechat",
   "identifier": "oX1a2b3c4d5e6f",
   "bound_at": 1778899139687,
@@ -156,9 +156,9 @@ factor_type=wechat
 
 | 字段 | 类型 | 含义 |
 |---|---|---|
-| `id` | string | **公共字段** — 登录因素 ID, 服务端为该绑定记录签发的稳定标识 |
+| `factor_id` | string | **公共字段** — 用户认证因素 ID (UUID), 服务端为该绑定记录签发的稳定标识 |
 | `factor_type` | string | **公共字段** — 固定为 `wechat`, 用于在 `identities` 列表中识别该元素的类型 |
-| `identifier` | string | **公共字段** — 登录因素的唯一标识, 对 `wechat` 而言取值与 `openid` 相同 |
+| `identifier` | string | **公共字段** — 用户认证因素的唯一标识, 对 `wechat` 而言取值与 `openid` 相同 |
 | `bound_at` | timestamp(3) | **公共字段** — 首次绑定时间, 毫秒级 Unix 时间戳 |
 | `last_verified_at` | timestamp(3) | **公共字段** — 最近一次验证该因素有效性的时间, 毫秒级 Unix 时间戳; 例如 IdP `code` 换取 `access_token` 成功 |
 | `openid` | string | **授权用户唯一标识** <br> 客户端一般不直接使用, 仅作"已绑定微信"的证据 |
@@ -179,4 +179,4 @@ factor_type=wechat
 - [APIs # Apple App Attest](APIs-%23-Apple-App-Attest.md)
 - [APIs # OAuth2 Grant](APIs-%23-OAuth2-Grant.md)
 - [APIs # OAuth2 Challenge](APIs-%23-OAuth2-Challenge.md)
-- [APIs # IdentityProvider Bind](APIs-%23-IdentityProvider-Bind.md)
+- [绑定用户认证因素](APIs-%23-User-Identities-Create.md)

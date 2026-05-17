@@ -42,7 +42,7 @@ import java.util.Optional;
  * <p>
  * Routing strategy is driven by the parent table {@code t_user_authentication_factor},
  * which already carries the {@code factor_type} discriminator alongside
- * {@code user_id} and {@code id}. Compared to a fan-out over every backend
+ * {@code user_id} and {@code factor_id}. Compared to a fan-out over every backend
  * service, this avoids querying every per-factor child table when the
  * caller only addresses one factor:
  * <ul>
@@ -120,20 +120,20 @@ public class CompositeUserAuthenticationFactorService implements UserAuthenticat
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<UserAuthenticationFactor> findById(String userId, String id) {
+    public Optional<UserAuthenticationFactor> findById(String userId, String factorId) {
         Assert.hasText(userId, "userId must not be empty");
-        Assert.hasText(id, "id must not be empty");
-        Optional<UserAuthenticationFactorEntity> entity = this.factorRepository.findByIdAndUserId(id, userId);
+        Assert.hasText(factorId, "factorId must not be empty");
+        Optional<UserAuthenticationFactorEntity> entity = this.factorRepository.findByIdAndUserId(factorId, userId);
         if (entity.isEmpty()) {
             return Optional.empty();
         }
         UserAuthenticationFactorService backend = this.routes.get(entity.get().getFactorType());
         if (backend == null) {
-            // Persisted factor whose backend is no longer configured \u2014
+            // Persisted factor whose backend is no longer configured —
             // surface as not-found rather than 500 so the client can move on.
             return Optional.empty();
         }
-        return backend.findById(userId, id);
+        return backend.findById(userId, factorId);
     }
 
     @Override
@@ -179,16 +179,16 @@ public class CompositeUserAuthenticationFactorService implements UserAuthenticat
     }
 
     @Override
-    public void deleteById(String userId, String id) {
+    public void deleteById(String userId, String factorId) {
         Assert.hasText(userId, "userId must not be empty");
-        Assert.hasText(id, "id must not be empty");
-        UserAuthenticationFactorEntity entity = this.factorRepository.findByIdAndUserId(id, userId)
-                .orElseThrow(() -> new UserAuthenticationFactorNotFoundException(id));
+        Assert.hasText(factorId, "factorId must not be empty");
+        UserAuthenticationFactorEntity entity = this.factorRepository.findByIdAndUserId(factorId, userId)
+                .orElseThrow(() -> new UserAuthenticationFactorNotFoundException(factorId));
         UserAuthenticationFactorService backend = this.routes.get(entity.getFactorType());
         if (backend == null) {
             throw new UnsupportedFactorTypeException(entity.getFactorType());
         }
-        backend.deleteById(userId, id);
+        backend.deleteById(userId, factorId);
     }
 
     private UserAuthenticationFactorService resolveBackend(String factorType) {

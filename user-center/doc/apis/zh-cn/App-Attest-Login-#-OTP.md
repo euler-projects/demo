@@ -75,7 +75,7 @@ channel=sms
 
 ## 三. 绑定场景: 匿名账号追加手机 / 邮箱绑定
 
-本场景对应[总文档场景一步骤 3](App-Attest-Login.md#场景一-首次使用--匿名登录--绑定登录因素--日常使用)(匿名账号追加手机 / 邮箱绑定). 客户端先调 `POST /otp/tickets`触发下发, 用户输入 OTP 后, 凭匿名 AT 调 `POST /user/identities` 上行 `otp_ticket` + `otp` 二元组, 服务端校验通过后在当前账号下新增 `phone` / `email` 元素.
+本场景对应[总文档场景一步骤 3](App-Attest-Login.md#场景一-首次使用--匿名登录--绑定用户认证因素--日常使用)(匿名账号追加手机 / 邮箱绑定). 客户端先调 `POST /otp/tickets`触发下发, 用户输入 OTP 后, 凭匿名 AT 调 `POST /user/identities` 上行 `otp_ticket` + `otp` 二元组, 服务端校验通过后在当前账号下新增 `phone` / `email` 元素.
 
 ```mermaid
 sequenceDiagram
@@ -103,7 +103,7 @@ sequenceDiagram
     Note over App: 会话凭证保持不变 继续用原匿名 AT
 ```
 
-> 若目标手机号 / 邮箱已被其他账号占用, 服务端返回 `409 factor_occupied` 附带 `conflict_token`, 处置方式参见[总文档步骤 3 异常](App-Attest-Login.md#步骤-3-异常-登录因素已被其他账号占用).
+> 若目标手机号 / 邮箱已被其他账号占用, 服务端返回 `409 factor_occupied` 附带 `conflict_token`, 处置方式参见[总文档步骤 3 异常](App-Attest-Login.md#步骤-3-异常-用户认证因素已被其他账号占用).
 
 ---
 
@@ -195,11 +195,11 @@ factor_type=phone
 
 ## 六. `Account.identities` 中 phone / email 元素结构
 
-作为 `identities` 列表中 `factor_type=phone` / `factor_type=email` 的元素, 由公共字段(`id` / `factor_type` / `identifier` / `bound_at` / `last_verified_at`, 详见[总文档 2.2 用户账号数据](App-Attest-Login.md#22-用户账号数据-account))与 OTP 原生字段两部分组成:
+作为 `identities` 列表中 `factor_type=phone` / `factor_type=email` 的元素, 由公共字段(`factor_id` / `factor_type` / `identifier` / `bound_at` / `last_verified_at`, 详见[总文档 2.2 用户账号数据](App-Attest-Login.md#22-用户账号数据-account))与 OTP 原生字段两部分组成:
 
 ```json
 {
-  "id": "idp_7h8j9k0l...",
+  "factor_id": "550e8400-e29b-41d4-a716-446655440000",
   "factor_type": "phone",
   "identifier": "9c1b8e2a3f6d7e4b5a8c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a",
   "bound_at": 1778899139687,
@@ -210,7 +210,7 @@ factor_type=phone
 
 ```json
 {
-  "id": "idp_7kbp651...",
+  "factor_id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
   "factor_type": "email",
   "identifier": "3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b",
   "bound_at": 1778899139687,
@@ -221,9 +221,9 @@ factor_type=phone
 
 | 字段 | 类型 | 含义 |
 |---|---|---|
-| `id` | string | **公共字段** — 登录因素 ID <br> 在 OTP 这一细分场景下可以替代原始手机号或邮箱调用 `POST /otp/tickets` 做 OTP 二次下发, 避免用户隐私信息频繁暴露于网络链路. |
+| `factor_id` | string | **公共字段** — 用户认证因素 ID (UUID) <br> 在 OTP 这一细分场景下可以替代原始手机号或邮箱调用 `POST /otp/tickets` 做 OTP 二次下发, 避免用户隐私信息频繁暴露于网络链路. |
 | `factor_type` | string | **公共字段** — 固定为 `phone` / `email`, 用于在 `identities` 列表中识别该元素的类型 |
-| `identifier` | string | **公共字段** — 登录因素的唯一标识, 取值为**原始手机号 / 邮箱的 SHA-256 哈希值**, 用于全局唯一性校验. |
+| `identifier` | string | **公共字段** — 用户认证因素的唯一标识, 取值为**原始手机号 / 邮箱的 SHA-256 哈希值**, 用于全局唯一性校验. |
 | `bound_at` | timestamp(3) | **公共字段** — 首次绑定时间, 毫秒级 Unix 时间戳 |
 | `last_verified_at` | timestamp(3) | **公共字段** — 最近一次通过 OTP 验证该因素的时间, 毫秒级 Unix 时间戳 |
 | `phone` / `email` | string | **脱敏后的手机号 / 邮箱地址**<br>用于管理页展示; 原始值仅服务端持久化, 不下发 |
@@ -240,4 +240,4 @@ factor_type=phone
 - [APIs # Apple App Attest](APIs-%23-Apple-App-Attest.md)
 - [APIs # OAuth2 Grant](APIs-%23-OAuth2-Grant.md)
 - [APIs # OAuth2 Challenge](APIs-%23-OAuth2-Challenge.md)
-- [APIs # IdentityProvider Bind](APIs-%23-IdentityProvider-Bind.md)
+- [绑定用户认证因素](APIs-%23-User-Identities-Create.md)

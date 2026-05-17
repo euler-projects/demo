@@ -1,4 +1,4 @@
-# 获取当前用户的全部登录因素
+# 获取当前用户的全部用户认证因素
 
 ## 请求
 
@@ -12,9 +12,9 @@ Authorization: Bearer <access_token>
 ```json
 [
   {
-    "id": "idp_7h8j9k0l...",
+    "factor_id": "550e8400-e29b-41d4-a716-446655440000",
     "factor_type": "<factor_type>",
-    "identifier": "<登录因素的唯一标识>",
+    "identifier": "<用户认证因素的唯一标识>",
     "bound_at": 1778899139687,
     "last_verified_at": 1778899139687,
     "...": "扩展字段"
@@ -22,4 +22,4 @@ Authorization: Bearer <access_token>
 ]
 ```
 
-字段定义详见 [用户登录因素](Model-%23-User-Identity.md).
+字段定义详见 [User Authentication Factor](Model-%23-User-Authentication-Factor.md).

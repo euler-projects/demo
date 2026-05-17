@@ -22,11 +22,11 @@ graph TB
     P -- 否, 未登录 --> B{是否为首次使用?}
     B -- 是, 首次使用 --> ANONYMOUS_LOGIN[匿名体验]
     B -- 否, 非首次使用 --> STANDARD_LOGIN[标准登录\n 微信登录, 短信验证码等]
-    ANONYMOUS_LOGIN --> L{绑定登录因素}
+    ANONYMOUS_LOGIN --> L{绑定用户认证因素}
     L -- 成功 --> M[完成实名绑定]
-    L -- 该登录因素已绑定其他账号 --> N{用户选择}
-    N -- 换一个未占用的登录因素 --> M
-    N -- 切换到该登录因素对应的账号 --> I1[一键切换, 本期不实现]
+    L -- 该用户认证因素已绑定其他账号 --> N{用户选择}
+    N -- 换一个未占用的用户认证因素 --> M
+    N -- 切换到该用户认证因素对应的账号 --> I1[一键切换, 本期不实现]
     P -- 是, 已登录 --> T{AT 是否临期/过期?}
     T -- 是, 已临期/过期 --> E[用 App Assertion 续 AT]
     T -- 否, 未临期/过期 --> U[正常使用]
@@ -58,8 +58,8 @@ graph TB
 | `<credential>` 提供方 | **Credential Provider, CP**<br>代指为当前 `<user_grant>` 提供 `<credential>` 的实体, 既可能是外部 IdP 的授权服务器(授权码场景), 也可能就是用户本人(验证码场景). |
 | AT | Access Token. |
 | RT | Refresh Token. |
-| 匿名账号 | 除系统分配的用户名外, 未绑定任何其他登录因素的账号. |
-| 实名账号 | 除系统分配的用户名外, 至少绑定一个其他登录因素的账号. |
+| 匿名账号 | 除系统分配的用户名外, 未绑定任何其他用户认证因素的账号. |
+| 实名账号 | 除系统分配的用户名外, 至少绑定一个其他用户认证因素的账号. |
 
 ### App Attestation 使用场景
 
@@ -73,9 +73,9 @@ graph TB
 
 通过 `/oauth2/token`(`grant_type=<user_grant>`) + `attestation` + `<credential>` 参数一次性完成用户认证与设备注册, 为标准模式.
 
-#### 用法三: 绑定登录因素发生冲突时直接用 Conflict Token 一键切换至已绑定的账号(本期不实现)
+#### 用法三: 绑定用户认证因素发生冲突时直接用 Conflict Token 一键切换至已绑定的账号(本期不实现)
 
-绑定登录因素时, 如果服务端检测到该登录因素已绑定至其他账号, 会通过 `409` 响应返回 `conflict_token`, APP 可以通过 `/oauth2/token`(`grant_type=conflict_token`) + `attestation` + `conflict_token` 参数一键切换至该登录因素已绑定的账号.
+绑定用户认证因素时, 如果服务端检测到该用户认证因素已绑定至其他账号, 会通过 `409` 响应返回 `conflict_token`, APP 可以通过 `/oauth2/token`(`grant_type=conflict_token`) + `attestation` + `conflict_token` 参数一键切换至该用户认证因素已绑定的账号.
 
 ### App Assertion 使用场景
 
@@ -151,7 +151,7 @@ OIDC 为成熟标准协议, 客户端按规范实现即可, 本文不再展开.
   },
   "identities": [
     {
-      "id": "idp_7h8j9k0l...",
+      "factor_id": "550e8400-e29b-41d4-a716-446655440000",
       "factor_type": "wechat",
       "identifier": "oX1a2b3c4d5e6f",
       "bound_at": 1778899139687,
@@ -176,22 +176,22 @@ OIDC 为成熟标准协议, 客户端按规范实现即可, 本文不再展开.
 | `app_attest_key` | dict | **Apple App Attest Key 摘要数据**<br>APP `generateKey()` 后一次写入, 之后只读, 服务端不下发; 删除 `Account` 即丢失 `kid`, Secure Enclave 中对应的私钥随即不可寻址 |
 | `app_attest_key.kid` | string | **Apple App Attest Key Identifier** |
 | `app_attest_key.iat` | date |  **Apple App Attest Key 的生成时间 (Issued At)** |
-| `identities` | list | **账号绑定的登录因素(微信 / 手机 / 邮箱 等)列表**<br>使用 AT 调用 `GET /user/identities` 获取, 列表中每个元素都包含下述公共字段; 各登录因素在公共字段之外可追加自身原生字段; 下文以 `wechat` 为例 |
-| `identities[].id` | string | **公共字段 — 登录因素 ID**<br>服务端为该登录因素生成的唯一 ID. |
-| `identities[].factor_type` | string | **公共字段 — 登录因素类型标识**<br>例如 `wechat` / `apple` / `google` / `phone` / `email` 等 |
-| `identities[].identifier` | string | **公共字段 — 登录因素的唯一标识**<br>不同 `factor_type` 各自定义其含义(如 `wechat` 取值为 `openid` 原值、`phone` / `email` 取值为原始手机号 / 邮箱的哈希值) |
+| `identities` | list | **账号绑定的用户认证因素(微信 / 手机 / 邮箱 等)列表**<br>使用 AT 调用 `GET /user/identities` 获取, 列表中每个元素都包含下述公共字段; 各用户认证因素在公共字段之外可追加自身原生字段; 下文以 `wechat` 为例 |
+| `identities[].factor_id` | string | **公共字段 — 用户认证因素 ID**<br>服务端为该用户认证因素生成的 UUID. |
+| `identities[].factor_type` | string | **公共字段 — 用户认证因素类型标识**<br>例如 `wechat` / `apple` / `google` / `phone` / `email` 等 |
+| `identities[].identifier` | string | **公共字段 — 用户认证因素的唯一标识**<br>不同 `factor_type` 各自定义其含义(如 `wechat` 取值为 `openid` 原值、`phone` / `email` 取值为原始手机号 / 邮箱的哈希值) |
 | `identities[].bound_at` | timestamp(3) | **公共字段 — 首次绑定时间**<br>毫秒级 Unix 时间戳 |
 | `identities[].last_verified_at` | timestamp(3) | **公共字段 — 最近一次验证该因素有效性的时间**<br>毫秒级 Unix 时间戳; 例如 OTP 通过、IdP `code` 换取 `access_token` 成功等 |
 
 #### IdP 示例: wechat
 
-> 本节以微信作为 `identities` 列表中某个元素(`factor_type=wechat`)的示例; 其他登录因素(Apple / Google / GitHub / 手机 / 邮箱 等)的元素结构类似, 由各自接入文档定义.
+> 本节以微信作为 `identities` 列表中某个元素(`factor_type=wechat`)的示例; 其他用户认证因素(Apple / Google / GitHub / 手机 / 邮箱 等)的元素结构类似, 由各自接入文档定义.
 
-`wechat` 元素由公共字段(`id` / `factor_type` / `identifier` / `bound_at` / `last_verified_at`)与 IdP 原生字段两部分组成; 其中 IdP 原生字段与 `GET https://api.weixin.qq.com/sns/userinfo?access_token=ACCESS_TOKEN&openid=OPENID` 接口返回值保持一致
+`wechat` 元素由公共字段(`factor_id` / `factor_type` / `identifier` / `bound_at` / `last_verified_at`)与 IdP 原生字段两部分组成; 其中 IdP 原生字段与 `GET https://api.weixin.qq.com/sns/userinfo?access_token=ACCESS_TOKEN&openid=OPENID` 接口返回值保持一致
 
 ```json
 {
-  "id": "idp_7h8j9k0l...",
+  "factor_id": "550e8400-e29b-41d4-a716-446655440000",
   "factor_type": "wechat",
   "identifier": "oX1a2b3c4d5e6f",
   "bound_at": 1778899139687,
@@ -212,7 +212,7 @@ OIDC 为成熟标准协议, 客户端按规范实现即可, 本文不再展开.
 
 > **`nickname / avatar_url` 分两层存储的作用**:
 > - `profile.nickname / avatar_url` 是**用户的最终展示值**, 用于 APP 主页、评论、排行榜; 用户可在设置中自定义, 自定义后不再随 IdP 资料变化.
-> - `identities` 列表中对应登录因素元素的 nickname / 头像等字段是**对应登录因素的原始资料**, 用于"账号与安全 - 已绑定账号"管理页, 供用户辨识所绑账号; 重新绑定或主动拉取时刷新, 不影响外层展示值.
+> - `identities` 列表中对应用户认证因素元素的 nickname / 头像等字段是**对应用户认证因素的原始资料**, 用于"账号与安全 - 已绑定账号"管理页, 供用户辨识所绑账号; 重新绑定或主动拉取时刷新, 不影响外层展示值.
 
 ### 2.3 判断"是否在线"
 
@@ -235,11 +235,11 @@ APP 应自行设计适当机制标记是否为首次使用. 若非首次使用, 
 
 ## 三. 典型场景
 
-下文将分别介绍**首次使用 → 匿名登录 → 绑定登录因素 → 日常使用**(场景一)和**标准登录**(场景二)两种典型场景的完整流程.
+下文将分别介绍**首次使用 → 匿名登录 → 绑定用户认证因素 → 日常使用**(场景一)和**标准登录**(场景二)两种典型场景的完整流程.
 
-### 场景一: 首次使用 → 匿名登录 → 绑定登录因素 → 日常使用
+### 场景一: 首次使用 → 匿名登录 → 绑定用户认证因素 → 日常使用
 
-最常见的主流程: 当前设备从未使用过本 APP, 且用于绑定的登录因素从未在本 APP 登录过.
+最常见的主流程: 当前设备从未使用过本 APP, 且用于绑定的用户认证因素从未在本 APP 登录过.
 
 #### 步骤
 
@@ -261,18 +261,18 @@ APP 应自行设计适当机制标记是否为首次使用. 若非首次使用, 
      - Body: `grant_type=urn:ietf:params:oauth:grant-type:app_assertion&kid=...&assertion=...&challenge=...`
    - 响应**只有 AT, 没有 RT**. AT 过期后重复本步骤即可.
 
-3. **绑定登录因素(升级为实名账号)**
-   - 客户端按所选登录因素的流程拿到 `<credential>`(例如 IdP 的 `code`、手机/邮箱 OTP 等)
+3. **绑定用户认证因素(升级为实名账号)**
+   - 客户端按所选用户认证因素的流程拿到 `<credential>`(例如 IdP 的 `code`、手机/邮箱 OTP 等)
    - 客户端**使用步骤 2 获得的匿名 AT** 调用专用绑定接口 `POST /user/identities`:
      - Header: `Authorization: Bearer {匿名 AT}`
      - Body: `factor_type=<factor_type>&<credential>`
    - 服务端:
      - 解析 AT 归属 `账号_1`
-     - 验证 `<credential>`, 得到该登录因素对外的 `唯一标识` (例如 微信登录的 openid 或 短信验证码登录的手机号)
+     - 验证 `<credential>`, 得到该用户认证因素对外的 `唯一标识` (例如 微信登录的 openid 或 短信验证码登录的手机号)
      - 确认 `唯一标识` 未被任何账号占用
-     - 在 `账号_1` 下追加一条该登录因素的绑定记录, 该账号从此具备登录因素.
-   - 响应包含该登录因素的绑定结果(格式与 `Account.identities` 列表中对应登录因素元素一致, 客户端追加到本地数组中)
-   - **异常: `唯一标识` 已被其他账号占用**— `POST /user/identities` 返回错误, 当前仍为匿名 `账号_1`. 应引导用户二选一, 详见下文[步骤 3 异常: 登录因素已被其他账号占用](#步骤-3-异常-登录因素已被其他账号占用).
+     - 在 `账号_1` 下追加一条该用户认证因素的绑定记录, 该账号从此具备用户认证因素.
+   - 响应包含该用户认证因素的绑定结果(格式与 `Account.identities` 列表中对应用户认证因素元素一致, 客户端追加到本地数组中)
+   - **异常: `唯一标识` 已被其他账号占用**— `POST /user/identities` 返回错误, 当前仍为匿名 `账号_1`. 应引导用户二选一, 详见下文[步骤 3 异常: 用户认证因素已被其他账号占用](#步骤-3-异常-用户认证因素已被其他账号占用).
 
 4. **日常使用 (始终用 App Assertion 续 AT)**
    - 当 AT 临期/过期后, 客户端 **重新跑一次 App Assertion** (步骤 2 的流程) 即可续期 AT:
@@ -302,13 +302,13 @@ sequenceDiagram
     App->>Server: POST /oauth2/token 携带 grant_type=app_assertion 和 kid 和 assertion 和 challenge
     Server-->>App: 新 AT 无 RT
 
-    Note over App,Server: 3. 绑定登录因素 升级为实名 走专用绑定接口
+    Note over App,Server: 3. 绑定用户认证因素 升级为实名 走专用绑定接口
     App->>CP: 请求 <credential>
     CP-->>App: <credential><br>IdP 返回的 code, 用户输入的验证码, 等等
     App->>Server: POST /user/identities<br/>Authorization Bearer 匿名 AT<br/>factor_type 和 <credential>
     Server->>Server: 解析 AT 归属 账号_1
     Server->>Server: 验证 <credential> 得到 唯一标识 (例如 微信登录的 openid 或 短信验证码登录的手机号)
-    Server->>Server: 唯一标识 未占用 在 账号_1 下新增该登录因素绑定
+    Server->>Server: 唯一标识 未占用 在 账号_1 下新增该用户认证因素绑定
     Server-->>App: 绑定结果
     Note over App: 会话凭证保持不变 继续用原匿名 AT
 
@@ -320,12 +320,12 @@ sequenceDiagram
     Server-->>App: 新 AT 带实名 附送 RT 备用
 ```
 
-#### 步骤 3 异常: 登录因素已被其他账号占用
+#### 步骤 3 异常: 用户认证因素已被其他账号占用
 
-本次使用的登录因素对应 `唯一标识` 在服务端已属于另一个 `账号_2`, `POST /user/identities` 直接拒绝(固定不改变当前账号). 客户端仍为匿名 `账号_1`, 会话凭证不变, 弹窗引导用户二选一:
+本次使用的用户认证因素对应 `唯一标识` 在服务端已属于另一个 `账号_2`, `POST /user/identities` 直接拒绝(固定不改变当前账号). 客户端仍为匿名 `账号_1`, 会话凭证不变, 弹窗引导用户二选一:
 
-- **方式 A — 换一个未被占用的登录因素**: 用户重新按所选登录因素流程取得新的 `<credential>`, 再调 `POST /user/identities`. `账号_1` 保持不变, 绑定成功后升级为实名账号.
-- **方式 B — 一键切换到该登录因素已绑定的账号(本期不实现)**: 服务端在 `POST /user/identities` 返回 `409` 时附带短期 `conflict_token`. APP 清本地 `Account`(含 `kid_A`)后 `generateKey()` 生成 `kid_2`, 用 `attestation` + `conflict_token` 调 `/oauth2/token`(`grant_type=conflict_token`)一键切换至 `账号_2`, 服务端在 `账号_2` 名下登记 `kid_2` 并返回该账号的 AT/RT. 原 `账号_1` 在服务端保留, 但自身无任何登录因素且客户端已丢失 `kid_A`, 成为**孤儿账号**— 试用数据留在服务端但客户端无法再访问, 且不会迁移到 `账号_2`. 对应 **[App Attestation 使用场景] 用法三: Conflict Token 一键切换**.
+- **方式 A — 换一个未被占用的用户认证因素**: 用户重新按所选用户认证因素流程取得新的 `<credential>`, 再调 `POST /user/identities`. `账号_1` 保持不变, 绑定成功后升级为实名账号.
+- **方式 B — 一键切换到该用户认证因素已绑定的账号(本期不实现)**: 服务端在 `POST /user/identities` 返回 `409` 时附带短期 `conflict_token`. APP 清本地 `Account`(含 `kid_A`)后 `generateKey()` 生成 `kid_2`, 用 `attestation` + `conflict_token` 调 `/oauth2/token`(`grant_type=conflict_token`)一键切换至 `账号_2`, 服务端在 `账号_2` 名下登记 `kid_2` 并返回该账号的 AT/RT. 原 `账号_1` 在服务端保留, 但自身无任何用户认证因素且客户端已丢失 `kid_A`, 成为**孤儿账号**— 试用数据留在服务端但客户端无法再访问, 且不会迁移到 `账号_2`. 对应 **[App Attestation 使用场景] 用法三: Conflict Token 一键切换**.
 
 #### 异常流程时序图
 
@@ -337,7 +337,7 @@ sequenceDiagram
 
     Note over App,Server: 前置: 步骤 1, 2 已完成, 当前持有匿名 账号_1 与 kid_A
 
-    Note over App,Server: 3a. bind 检测到该登录因素已被其他账号占用 直接拒绝
+    Note over App,Server: 3a. bind 检测到该用户认证因素已被其他账号占用 直接拒绝
     App->>CP: 请求 <credential>
     CP-->>App: <credential><br>IdP 返回的 code, 用户输入的验证码, 等等
     App->>Server: POST /user/identities<br/>Authorization Bearer 匿名 AT<br/>factor_type 和 <credential>
@@ -347,7 +347,7 @@ sequenceDiagram
     Server-->>App: 409 factor_occupied 附带 conflict_token
     Note over App: 仍为匿名 账号_1 弹窗让用户二选一
 
-    alt 方式 A 换一个未被占用的登录因素
+    alt 方式 A 换一个未被占用的用户认证因素
         App->>CP: 重新请求 <credential>
         CP-->>App: <credential_Y>
         App->>Server: POST /user/identities<br/>factor_type 和 <credential>=<credential_Y>
@@ -370,10 +370,10 @@ sequenceDiagram
 
 ### 场景二: 标准登录
 
-本场景为**标准登录**流程: 客户端按所选登录因素的流程取得 `<credential>` 上行, 服务端验证后得到该登录因素的 `唯一标识` (例如 微信登录的 openid 或 短信验证码登录的手机号):
+本场景为**标准登录**流程: 客户端按所选用户认证因素的流程取得 `<credential>` 上行, 服务端验证后得到该用户认证因素的 `唯一标识` (例如 微信登录的 openid 或 短信验证码登录的手机号):
 
 - **`唯一标识` 已有绑定账号** → 直接登录到对应的账号
-- **`唯一标识` 尚无绑定账号** → 自动注册一个新的实名账号(以该登录因素为第一个登录因素)并登录
+- **`唯一标识` 尚无绑定账号** → 自动注册一个新的实名账号(以该用户认证因素为第一个用户认证因素)并登录
 
 #### 流程说明
 
@@ -450,7 +450,7 @@ sequenceDiagram
 
 ### 4.3 匿名账号
 
-本地无可恢复的登录因素. 按 2.4 节约束(非首次使用不再放行匿名), 退出后必须走[标准登录]流程重新登录. 原匿名账号留在服务端但客户端不可再访问, 匿名试用数据丢失.
+本地无可恢复的用户认证因素. 按 2.4 节约束(非首次使用不再放行匿名), 退出后必须走[标准登录]流程重新登录. 原匿名账号留在服务端但客户端不可再访问, 匿名试用数据丢失.
 
 ---
 
@@ -468,7 +468,7 @@ sequenceDiagram
 
 > Secure Enclave 中的 Apple App Attest 私钥由 iOS 管理, APP 无法显式销毁; 但随 `Account.app_attest_key.kid` 被删除, 客户端失去了寻址该私钥的 Key ID, 即便私钥物理存在也不可再使用.
 
-**下次登录路径**: 本地既无 `Account` 也无可用 `kid` 与 AT/RT, 但首次使用标记仍在, 客户端走[标准登录]. 若登录因素对应服务端已有账号, 就登录到原账号并在该账号下新增本次生成的 `kid`; 若为新登录因素, 则创建实名新账号.
+**下次登录路径**: 本地既无 `Account` 也无可用 `kid` 与 AT/RT, 但首次使用标记仍在, 客户端走[标准登录]. 若用户认证因素对应服务端已有账号, 就登录到原账号并在该账号下新增本次生成的 `kid`; 若为新用户认证因素, 则创建实名新账号.
 
 ### 5.2 为何不保留 `kid` 以加速下次登录
 
@@ -484,14 +484,14 @@ sequenceDiagram
 ## 六. 常见坑位
 
 1. **AT 续期首选 App Assertion(匿名/实名通用)**: 匿名账号无 RT; 实名账号即便持有 RT, 也推荐以 Assertion 为首选续期通道 — 只要 `kid` 有效, Assertion 毫秒级完成且不受 RT 过期影响.
-2. **绑定登录因素不下发新 AT, 也不改账号**: `POST /user/identities` 只为当前 AT 对应的账号追加一条绑定, 客户端不要替换会话凭证. 匿名过渡到实名会话的时机是下次 AT 临期时的 App Assertion, 服务端会返回带实名语义的新 AT 并附送 RT.
-3. **绑定登录因素与标准登录用不同接口**: 匿名账号追加登录因素走 `POST /user/identities`(携带 AT); 退出后重登或 `kid` 吊销后重登走 `/oauth2/token`.
-4. **绑定登录因素返回 `409 factor_occupied` 时需用户抉择**: 服务端响应附带 `conflict_token`, 客户端弹出二选一: **换一个未被占用的登录因素**继续调 `POST /user/identities`(当前匿名账号不变), 或**一键切换到该登录因素对应的已有账号**(用 `conflict_token` 走 `/oauth2/token`(`grant_type=conflict_token`) + `attestation`, **本期不实现**). 后者会让原匿名账号成为孤儿账号, 试用数据留在服务端但客户端无法再访问.
+2. **绑定用户认证因素不下发新 AT, 也不改账号**: `POST /user/identities` 只为当前 AT 对应的账号追加一条绑定, 客户端不要替换会话凭证. 匿名过渡到实名会话的时机是下次 AT 临期时的 App Assertion, 服务端会返回带实名语义的新 AT 并附送 RT.
+3. **绑定用户认证因素与标准登录用不同接口**: 匿名账号追加用户认证因素走 `POST /user/identities`(携带 AT); 退出后重登或 `kid` 吊销后重登走 `/oauth2/token`.
+4. **绑定用户认证因素返回 `409 factor_occupied` 时需用户抉择**: 服务端响应附带 `conflict_token`, 客户端弹出二选一: **换一个未被占用的用户认证因素**继续调 `POST /user/identities`(当前匿名账号不变), 或**一键切换到该用户认证因素对应的已有账号**(用 `conflict_token` 走 `/oauth2/token`(`grant_type=conflict_token`) + `attestation`, **本期不实现**). 后者会让原匿名账号成为孤儿账号, 试用数据留在服务端但客户端无法再访问.
 5. **是否放行匿名注册只能用首次使用标记判断**(见 [2.4](#24-判断-app-是否有匿名试用机会)): 退出登录会清空整个 `Account`, 若用 `Account` 存在性作判据会在退出后误判为首次启动, 生成新的孤儿匿名账号.
 6. **`assertion` vs `attestation` 不要混用**:
    - 已注册设备的日常/续期: 用 `assertion`
    - 退出后重新生成 `kid` 的首次请求: 用 `attestation`
-7. **方式 B(一键切换, 本期不实现)是账号切换而非数据合并**: 完成后从 `账号_1` 切换到 `账号_2`, 本地旧 `Account`(含 `kid_A`)整体删除, 客户端为 `账号_2` 重新 `generateKey()` 生成 `kid_2`. 原 `账号_1` 在服务端保留但客户端已无任何登录因素, 成为孤儿账号, 试用数据无法再访问. 本期冲突时只提供方式 A(换登录因素); 未来一键切换落地后, 产品层面应在调用前明确告知用户数据不合并.
+7. **方式 B(一键切换, 本期不实现)是账号切换而非数据合并**: 完成后从 `账号_1` 切换到 `账号_2`, 本地旧 `Account`(含 `kid_A`)整体删除, 客户端为 `账号_2` 重新 `generateKey()` 生成 `kid_2`. 原 `账号_1` 在服务端保留但客户端已无任何用户认证因素, 成为孤儿账号, 试用数据无法再访问. 本期冲突时只提供方式 A(换用户认证因素); 未来一键切换落地后, 产品层面应在调用前明确告知用户数据不合并.
 8. **Challenge 一次性, 5 分钟过期**: 客户端不要缓存 challenge 跨请求复用.
 9. **所有敏感数据必须存 Keychain**: 会话凭证与 `Account` 都要放 Keychain, 明文存 `UserDefaults` 在越狱设备上可被直接读取.
 10. **`Account` 与会话凭证生命周期不同**: 前者随账号切换才变化, 后者随每次 Token 刷新都会变化, 建议分两个 Keychain Entry 存储, 避免一次写入失败导致全部丢失.
@@ -508,7 +508,7 @@ sequenceDiagram
 - [APIs # Apple App Attest](APIs-%23-Apple-App-Attest.md)
 - [APIs # OAuth2 Grant](APIs-%23-OAuth2-Grant.md)
 - [APIs # OAuth2 Challenge](APIs-%23-OAuth2-Challenge.md)
-- [APIs # IdentityProvider Bind](APIs-%23-IdentityProvider-Bind.md)
+- [绑定用户认证因素](APIs-%23-User-Identities-Create.md)
 
 [App Attestation 使用场景]: #app-attestation-使用场景
 [App Assertion 使用场景]: #app-assertion-使用场景

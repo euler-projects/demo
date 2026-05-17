@@ -18,7 +18,6 @@ package org.eulerframework.uc.service;
 import org.eulerframework.security.authentication.factor.IdentifierConflictException;
 import org.eulerframework.security.authentication.factor.InvalidAuthenticationFactorRequestException;
 import org.eulerframework.security.authentication.factor.UserAuthenticationFactor;
-import org.eulerframework.security.authentication.factor.UserAuthenticationFactorIdGenerator;
 import org.eulerframework.security.authentication.factor.UserAuthenticationFactorService;
 import org.eulerframework.security.authentication.otp.OtpTicketService;
 import org.eulerframework.security.authentication.otp.OtpVerification;
@@ -80,7 +79,6 @@ public class PhoneUserAuthenticationFactorService implements UserAuthenticationF
     private final OtpTicketService otpTicketService;
     private final UserAuthenticationFactorRepository factorRepository;
     private final UserAuthenticationFactorPhoneRepository phoneRepository;
-    private final UserAuthenticationFactorIdGenerator idGenerator;
 
     public PhoneUserAuthenticationFactorService(OtpTicketService otpTicketService,
                                                 UserAuthenticationFactorRepository factorRepository,
@@ -91,7 +89,6 @@ public class PhoneUserAuthenticationFactorService implements UserAuthenticationF
         this.otpTicketService = otpTicketService;
         this.factorRepository = factorRepository;
         this.phoneRepository = phoneRepository;
-        this.idGenerator = new UserAuthenticationFactorIdGenerator();
     }
 
     @Override
@@ -130,12 +127,13 @@ public class PhoneUserAuthenticationFactorService implements UserAuthenticationF
 
         Instant now = Instant.now();
         UserAuthenticationFactorEntity parent = new UserAuthenticationFactorEntity();
-        parent.setId(this.idGenerator.generate());
         parent.setUserId(userId);
         parent.setFactorType(FACTOR_TYPE);
         parent.setIdentifier(identifier);
         parent.setBoundAt(now);
         parent.setLastVerifiedAt(now);
+        // Hibernate populates the UUID primary key during persist; child row
+        // is then linked via the freshly-assigned factor id.
         this.factorRepository.save(parent);
 
         UserAuthenticationFactorPhoneEntity child = new UserAuthenticationFactorPhoneEntity();
@@ -165,7 +163,6 @@ public class PhoneUserAuthenticationFactorService implements UserAuthenticationF
 
         Instant now = Instant.now();
         UserAuthenticationFactorEntity parent = new UserAuthenticationFactorEntity();
-        parent.setId(this.idGenerator.generate());
         parent.setUserId(userId);
         parent.setFactorType(FACTOR_TYPE);
         parent.setIdentifier(identifier);
@@ -183,11 +180,11 @@ public class PhoneUserAuthenticationFactorService implements UserAuthenticationF
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<UserAuthenticationFactor> findById(String userId, String id) {
+    public Optional<UserAuthenticationFactor> findById(String userId, String factorId) {
         Assert.hasText(userId, "userId must not be empty");
-        Assert.hasText(id, "id must not be empty");
+        Assert.hasText(factorId, "factorId must not be empty");
         return this.factorRepository
-                .findByIdAndUserIdAndFactorType(id, userId, FACTOR_TYPE)
+                .findByIdAndUserIdAndFactorType(factorId, userId, FACTOR_TYPE)
                 .map(parent -> toModel(parent, loadPhone(parent.getId())));
     }
 
@@ -232,11 +229,11 @@ public class PhoneUserAuthenticationFactorService implements UserAuthenticationF
 
     @Override
     @Transactional
-    public void deleteById(String userId, String id) {
+    public void deleteById(String userId, String factorId) {
         Assert.hasText(userId, "userId must not be empty");
-        Assert.hasText(id, "id must not be empty");
+        Assert.hasText(factorId, "factorId must not be empty");
         Optional<UserAuthenticationFactorEntity> parent = this.factorRepository
-                .findByIdAndUserIdAndFactorType(id, userId, FACTOR_TYPE);
+                .findByIdAndUserIdAndFactorType(factorId, userId, FACTOR_TYPE);
         if (parent.isEmpty()) {
             // Either it's not a phone factor or it doesn't belong to this
             // user — silently ignore so a business-layer composite router

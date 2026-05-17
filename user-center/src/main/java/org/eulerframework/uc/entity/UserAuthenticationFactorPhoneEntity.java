@@ -35,7 +35,7 @@ import org.eulerframework.uc.entity.converter.PhoneNumberAttributeConverter;
 public class UserAuthenticationFactorPhoneEntity extends AuditingEntity {
 
     @Id
-    @Column(name = "factor_id")
+    @Column(name = "factor_id", length = 36)
     private String factorId;
 
     @Column(name = "phone", nullable = false, columnDefinition = "text")

@@ -21,7 +21,7 @@ import org.springframework.util.Assert;
  * Renders an E.164 phone number in its display-only masked form, used for
  * the {@code phone} extension surfaced by {@code GET /user/identities}.
  * <p>
- * Masking rules (per {@code Model-#-User-Identity.md}):
+ * Masking rules (per {@code Model-#-User-Authentication-Factor.md}):
  * <ul>
  *     <li>Mainland-China numbers ({@code +86} + 11 digits) → keep the
  *         country code plus the first two digits and the last two digits,

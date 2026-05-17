@@ -15,26 +15,28 @@
  */
 package org.eulerframework.uc.entity;
 
+import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import org.eulerframework.data.entity.AuditingEntity;
+import org.eulerframework.data.entity.AuditingUUIDEntity;
 
 import java.time.Instant;
 
 /**
- * Parent row of an authentication factor (登录因素) bound to a user.
+ * Parent row of an authentication factor (用户认证因素) bound to a user.
  * Factor-specific state lives in dedicated child tables, e.g.
  * {@link UserAuthenticationFactorPhoneEntity}.
+ * <p>
+ * Inherits a UUID primary key from {@link AuditingUUIDEntity}; the column is
+ * remapped to {@code factor_id} so the public API contract
+ * ({@code factor_id} / {@code factor_type} / ...) is honoured at the
+ * persistence layer as well.
  */
 @Entity
 @Table(name = "t_user_authentication_factor")
-public class UserAuthenticationFactorEntity extends AuditingEntity {
-
-    @Id
-    @Column(name = "id")
-    private String id;
+@AttributeOverride(name = "id", column = @Column(name = "factor_id", length = 36))
+public class UserAuthenticationFactorEntity extends AuditingUUIDEntity {
 
     @Column(name = "user_id", nullable = false)
     private String userId;
@@ -50,14 +52,6 @@ public class UserAuthenticationFactorEntity extends AuditingEntity {
 
     @Column(name = "last_verified_at", nullable = false)
     private Instant lastVerifiedAt;
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
 
     public String getUserId() {
         return userId;

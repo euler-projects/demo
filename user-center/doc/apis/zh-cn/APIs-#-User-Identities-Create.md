@@ -1,6 +1,6 @@
-# 为用户绑定一个新的登录因素
+# 为用户绑定一个新的用户认证因素
 
-为当前 `access_token` 归属的账号追加一条登录因素绑定记录. 同一账号下 `factor_type` 可以重复(例如同时绑定两个手机号).
+为当前 `access_token` 归属的账号追加一条用户认证因素绑定记录. 同一账号下 `factor_type` 可以重复(例如同时绑定两个手机号).
 
 ## 1. 请求
 
@@ -10,29 +10,29 @@ Authorization: Bearer <access_token>
 Content-Type: application/x-www-form-urlencoded
 
 factor_type=<factor_type>
-&...=<不同登录因素的定制参数>
+&...=<不同用户认证因素的定制参数>
 ```
 
 
 | 参数 | 类型 | 含义 |
 |---|---|---|
-| `factor_type` | string | **登录因素类型**<br>例如: `phone`, `email`, `wechat`, `google`(占位, 暂未接入) |
-| ... | ... | **不同登录因素的定制参数**<br>根据具体的因素类型决定 |
+| `factor_type` | string | **用户认证因素类型**<br>例如: `phone`, `email`, `wechat`, `google`(占位, 暂未接入) |
+| ... | ... | **不同用户认证因素的定制参数**<br>根据具体的因素类型决定 |
 
 ## 2. 响应
 
 ```json
 {
-  "id": "idp_7h8j9k0l...",
+  "factor_id": "550e8400-e29b-41d4-a716-446655440000",
   "factor_type": "<factor_type>",
-  "identifier": "<登录因素的唯一标识>",
+  "identifier": "<用户认证因素的唯一标识>",
   "bound_at": 1778899139687,
   "last_verified_at": 1778899139687,
   "...": "扩展字段"
 }
 ```
 
-字段定义详见 [用户登录因素](Model-%23-User-Identity.md).
+字段定义详见 [User Authentication Factor](Model-%23-User-Authentication-Factor.md).
 
 ## 3. `factor_type` 完整请求举例
 
