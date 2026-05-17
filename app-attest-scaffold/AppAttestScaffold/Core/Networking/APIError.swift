@@ -3,7 +3,7 @@ import Foundation
 /// 网络层 / 鉴权层向上抛出的所有错误。
 ///
 /// `LocalizedError` 描述可直接用于 UI 展示。需要按错误类型分发处理时使用结构化 case，
-/// 例如 `.factorOccupied` 触发 UI 弹窗、`.kidRevoked` 强制登出。
+/// 例如 `.identityOccupied` 触发 UI 弹窗、`.kidRevoked` 强制登出。
 enum APIError: LocalizedError, Equatable {
 
     /// URLSession 层网络错误（无响应、DNS 错误、TLS 错误等）。
@@ -21,9 +21,9 @@ enum APIError: LocalizedError, Equatable {
     /// 非 2xx 且不属于 OAuth 错误格式的通用响应。
     case http(statusCode: Int, body: String)
 
-    /// `POST /user/identities` 返回 `409 factor_occupied` —— UI 应提示用户改用其他凭证
+    /// `POST /user/identities` 返回 `409 identity_occupied` —— UI 应提示用户改用其他凭证
     /// 重试（方案 A）；方案 B（Conflict Token 换绑）不在脚手架范畴。
-    case factorOccupied(conflictToken: String?)
+    case identityOccupied(conflictToken: String?)
 
     /// Apple App Attest key 已被服务器吊销（例如风控信号）。当前会话不可恢复，
     /// 调用方必须登出并强制走一次完整的标准登录。
@@ -53,7 +53,7 @@ enum APIError: LocalizedError, Equatable {
             return "[\(statusCode)] \(error)"
         case .http(let statusCode, let body):
             return "[\(statusCode)] \(body)"
-        case .factorOccupied:
+        case .identityOccupied:
             return "该手机号已绑定其他账号, 请更换一个手机号"
         case .kidRevoked:
             return "设备凭证已被服务器吊销, 请重新登录"

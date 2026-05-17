@@ -196,13 +196,13 @@ final class AuthService {
 
     // MARK: - 解绑
 
-    /// 按 `factor_id` 解绑某个已绑定 factor。
-    func unbind(factorId: String) async throws -> AuthResult {
+    /// 按 `identity_id` 解绑某个已绑定登录身份。
+    func unbind(identityId: String) async throws -> AuthResult {
         guard let tokens = SessionStore.loadTokenBundle() else {
             throw APIError.invalidConfiguration(message: "缺少访问令牌, 请重新登录")
         }
         let fresh = try await ensureFreshTokens(tokens)
-        try await identities.unbind(accessToken: fresh.accessToken, factorId: factorId)
+        try await identities.unbind(accessToken: fresh.accessToken, identityId: identityId)
         let identitiesList = (try? await identities.list(accessToken: fresh.accessToken)) ?? []
         var account = AccountStore.load() ?? Account(
             profile: Account.Profile(username: "user", nickname: nil, avatarUrl: nil),

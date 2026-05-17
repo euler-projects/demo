@@ -14,7 +14,7 @@ iOS 业务接入脚手架，对接 [`euler-uc` user-center](../user-center) 的 
 - 匿名登录（App Attestation usage 1）
 - 手机号 OTP 登录（App Attestation usage 2）
 - App Assertion 续期（透明触发；提前 60s 刷新）
-- 手机号绑定 / 解绑（仅 `phone` 因子，未实现 email/wechat）
+- 手机号绑定 / 解绑（仅 `phone` 登录身份，未实现 email/wechat）
 - Keychain 持久化：`access_token` / `kid` / 最近账号
 - 卸载重装首启检测（`FirstLaunchFlag`）自动清理 Keychain 残留
 - 运行时切换 issuer（设置页 → 服务配置）
@@ -31,7 +31,7 @@ AppAttestScaffold/
     DeviceAttest/         # AppAttestService: 包装 DCAppAttestService
     Storage/              # Keychain CRUD + Session/Account 持久化
   Auth/
-    Models/               # Account / Identity / TokenBundle
+    Models/               # Account / Identity (登录身份) / TokenBundle
     Clients/              # OAuth / OTP / UserIdentities / UserInfo 四个 API 客户端
     AuthService.swift     # 业务编排：登录、续期、绑定、退出
   Components/             # AvatarView / PhoneNumberField / OTPCodeField
@@ -82,7 +82,7 @@ bootstrapping ──► unauthenticated ──► signedIn(AuthResult)
 | 想增加 ... | 入口 |
 | --- | --- |
 | email 绑定 | 复用 `OTPClient`, 在 `UserIdentitiesClient` 增加 `bindEmail`, `AuthService` 暴露 `bindEmail`, UI 仿 `BindPhoneView` |
-| WeChat 绑定 | 在 `OAuthClient` 增加 wechat code 交换, `Identity.FactorType` 已有 `.wechat` |
+| WeChat 绑定 | 在 `OAuthClient` 增加 wechat code 交换, `Identity.IdentityType` 已有 `.wechat` |
 | 业务接口 | 共用 `HTTPClient`, 通过 `AuthService.refreshIfNeeded()` 拿 fresh AT, 再走自有 client |
 | 自定义 401 重试 | `HTTPClient` 不处理 401, 拦截在 `AuthService` 层加 `try await refreshIfNeeded()` 后重发 |
 | 第三方头像/昵称 | `Account.Profile` 已预留 `nickname` / `avatarUrl`, 后端补齐字段后 `UserInfoClient` 自动拾取 |

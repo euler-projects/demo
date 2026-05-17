@@ -2,7 +2,7 @@ import SwiftUI
 
 /// 账号与安全 sheet — 由 `HomeView` 右上角头像按钮以 sheet 形式呈现。
 ///
-/// 定位: 围绕「这个人是谁、用什么 factor 登录、如何退出」三件事, 不掺杂运行态
+/// 定位: 围绕「这个人是谁、用什么登录身份登录、如何退出」三件事, 不掺杂运行态
 /// 信息(那部分在首页的服务配置 / 诊断分组里)。
 /// - 账号: 只读资料(用户名 / 昵称兜底)。
 /// - 登录与安全: 手机号绑定 / 解绑。Email、WeChat 按脚手架规约不在范围内。
@@ -15,7 +15,7 @@ struct SettingsView: View {
     @State private var showBindSheet = false
     @State private var showUnbindConfirm = false
     @State private var showSignOutConfirm = false
-    @State private var pendingFactorId: String?
+    @State private var pendingIdentityId: String?
 
     var body: some View {
         NavigationStack {
@@ -41,8 +41,8 @@ struct SettingsView: View {
                 titleVisibility: .visible
             ) {
                 Button("解除绑定", role: .destructive) {
-                    if let id = pendingFactorId {
-                        Task { await session.unbind(factorId: id) }
+                    if let id = pendingIdentityId {
+                        Task { await session.unbind(identityId: id) }
                     }
                 }
                 Button("取消", role: .cancel) {}
@@ -99,7 +99,7 @@ struct SettingsView: View {
             if let phone = session.phase.account?.phoneIdentity {
                 LabeledContent("手机号", value: phone.phone ?? phone.identifier)
                 Button(role: .destructive) {
-                    pendingFactorId = phone.factorId
+                    pendingIdentityId = phone.identityId
                     showUnbindConfirm = true
                 } label: {
                     Text("解除绑定")

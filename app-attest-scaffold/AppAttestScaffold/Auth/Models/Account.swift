@@ -48,8 +48,8 @@ struct Account: Codable, Equatable {
         case identities
     }
 
-    /// 便捷取值：已绑定的手机号 identity（若有）。脚手架仅处理 `phone` 一种 factor。
+    /// 便捷取值：已绑定的手机号 identity（若有）。脚手架仅处理 `phone` 一种登录身份。
     var phoneIdentity: Identity? {
-        identities.first { $0.factorType == .phone }
+        identities.first { $0.identityType == .phone }
     }
 }

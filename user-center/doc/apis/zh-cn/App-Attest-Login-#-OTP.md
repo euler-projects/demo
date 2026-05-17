@@ -10,7 +10,7 @@
 |---|---|
 | `<user_grant>` | `otp`(自定义 grant type, 统一承载所有 OTP 通道) |
 | `<credential>` | `otp_ticket` + `otp` 二元组 |
-| `factor_type` | `phone`(短信通道绑定结果) / `email`(邮箱通道绑定结果) |
+| `identity_type` | `phone`(短信通道绑定结果) / `email`(邮箱通道绑定结果) |
 | 唯一标识 | E.164 手机号 / 邮箱地址 |
 | CP(Credential Provider) | 用户本人(在设备上输入 OTP) + 平台下发通道(SMS / SMTP) |
 
@@ -75,7 +75,7 @@ channel=sms
 
 ## 三. 绑定场景: 匿名账号追加手机 / 邮箱绑定
 
-本场景对应[总文档场景一步骤 3](App-Attest-Login.md#场景一-首次使用--匿名登录--绑定用户认证因素--日常使用)(匿名账号追加手机 / 邮箱绑定). 客户端先调 `POST /otp/tickets`触发下发, 用户输入 OTP 后, 凭匿名 AT 调 `POST /user/identities` 上行 `otp_ticket` + `otp` 二元组, 服务端校验通过后在当前账号下新增 `phone` / `email` 元素.
+本场景对应[总文档场景一步骤 3](App-Attest-Login.md#场景一-首次使用--匿名登录--绑定登录身份--日常使用)(匿名账号追加手机 / 邮箱绑定). 客户端先调 `POST /otp/tickets`触发下发, 用户输入 OTP 后, 凭匿名 AT 调 `POST /user/identities` 上行 `otp_ticket` + `otp` 二元组, 服务端校验通过后在当前账号下新增 `phone` / `email` 元素.
 
 ```mermaid
 sequenceDiagram
@@ -93,7 +93,7 @@ sequenceDiagram
     User-->>App: 用户读取验证码并输入
 
     Note over App,Server: 3. 上行 <credential> 二元组完成绑定
-    App->>Server: POST /user/identities<br/>Authorization Bearer 匿名 AT<br/>factor_type=phone/email 和 otp_ticket 和 otp
+    App->>Server: POST /user/identities<br/>Authorization Bearer 匿名 AT<br/>identity_type=phone/email 和 otp_ticket 和 otp
     Server->>Server: 解析 AT 归属 账号_1
     Server->>Server: 校验 ticket 未过期未使用
     Server->>Server: 校验 otp 与 ticket 关联的验证码一致
@@ -103,7 +103,7 @@ sequenceDiagram
     Note over App: 会话凭证保持不变 继续用原匿名 AT
 ```
 
-> 若目标手机号 / 邮箱已被其他账号占用, 服务端返回 `409 factor_occupied` 附带 `conflict_token`, 处置方式参见[总文档步骤 3 异常](App-Attest-Login.md#步骤-3-异常-用户认证因素已被其他账号占用).
+> 若目标手机号 / 邮箱已被其他账号占用, 服务端返回 `409 identity_occupied` 附带 `conflict_token`, 处置方式参见[总文档步骤 3 异常](App-Attest-Login.md#步骤-3-异常-登录身份已被其他账号占用).
 
 ---
 
@@ -186,7 +186,7 @@ POST /user/identities
 Authorization: Bearer {匿名 AT}
 Content-Type: application/x-www-form-urlencoded
 
-factor_type=phone
+identity_type=phone
 &otp_ticket={otp_ticket}
 &otp={用户输入的验证码}
 ```
@@ -195,37 +195,34 @@ factor_type=phone
 
 ## 六. `Account.identities` 中 phone / email 元素结构
 
-作为 `identities` 列表中 `factor_type=phone` / `factor_type=email` 的元素, 由公共字段(`factor_id` / `factor_type` / `identifier` / `bound_at` / `last_verified_at`, 详见[总文档 2.2 用户账号数据](App-Attest-Login.md#22-用户账号数据-account))与 OTP 原生字段两部分组成:
+作为 `identities` 列表中 `identity_type=phone` / `identity_type=email` 的元素, 由公共字段(`identity_id` / `identity_type` / `identifier` / `bound_at`, 详见[总文档 2.2 用户账号数据](App-Attest-Login.md#22-用户账号数据-account))与 OTP 原生字段两部分组成:
 
 ```json
 {
-  "factor_id": "550e8400-e29b-41d4-a716-446655440000",
-  "factor_type": "phone",
+  "identity_id": "550e8400-e29b-41d4-a716-446655440000",
+  "identity_type": "phone",
   "identifier": "9c1b8e2a3f6d7e4b5a8c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a",
   "bound_at": 1778899139687,
-  "last_verified_at": 1778899139687,
   "phone": "+8613*******00"
 }
 ```
 
 ```json
 {
-  "factor_id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
-  "factor_type": "email",
+  "identity_id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+  "identity_type": "email",
   "identifier": "3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b",
   "bound_at": 1778899139687,
-  "last_verified_at": 1778899139687,
   "email": "u**r@e*****e.com"
 }
 ```
 
 | 字段 | 类型 | 含义 |
 |---|---|---|
-| `factor_id` | string | **公共字段** — 用户认证因素 ID (UUID) <br> 在 OTP 这一细分场景下可以替代原始手机号或邮箱调用 `POST /otp/tickets` 做 OTP 二次下发, 避免用户隐私信息频繁暴露于网络链路. |
-| `factor_type` | string | **公共字段** — 固定为 `phone` / `email`, 用于在 `identities` 列表中识别该元素的类型 |
-| `identifier` | string | **公共字段** — 用户认证因素的唯一标识, 取值为**原始手机号 / 邮箱的 SHA-256 哈希值**, 用于全局唯一性校验. |
+| `identity_id` | string | **公共字段** — 登录身份 ID (UUID) <br> 在 OTP 这一细分场景下可以替代原始手机号或邮箱调用 `POST /otp/tickets` 做 OTP 二次下发, 避免用户隐私信息频繁暴露于网络链路. |
+| `identity_type` | string | **公共字段** — 固定为 `phone` / `email`, 用于在 `identities` 列表中识别该元素的类型 |
+| `identifier` | string | **公共字段** — 登录身份的唯一标识, 取值为**原始手机号 / 邮箱的 SHA-256 哈希值**, 用于全局唯一性校验. |
 | `bound_at` | timestamp(3) | **公共字段** — 首次绑定时间, 毫秒级 Unix 时间戳 |
-| `last_verified_at` | timestamp(3) | **公共字段** — 最近一次通过 OTP 验证该因素的时间, 毫秒级 Unix 时间戳 |
 | `phone` / `email` | string | **脱敏后的手机号 / 邮箱地址**<br>用于管理页展示; 原始值仅服务端持久化, 不下发 |
 
 > 与微信 IdP 不同, `phone` / `email` 元素无需额外的原生用户资料字段(昵称、头像等), 故无 "/userinfo" 类二次拉取.
@@ -240,4 +237,4 @@ factor_type=phone
 - [APIs # Apple App Attest](APIs-%23-Apple-App-Attest.md)
 - [APIs # OAuth2 Grant](APIs-%23-OAuth2-Grant.md)
 - [APIs # OAuth2 Challenge](APIs-%23-OAuth2-Challenge.md)
-- [绑定用户认证因素](APIs-%23-User-Identities-Create.md)
+- [绑定登录身份](APIs-%23-User-Identities-Create.md)

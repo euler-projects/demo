@@ -109,8 +109,8 @@ final class AppSession: ObservableObject {
         }
     }
 
-    func unbind(factorId: String) async {
-        await runAuth { try await self.auth.unbind(factorId: factorId) }
+    func unbind(identityId: String) async {
+        await runAuth { try await self.auth.unbind(identityId: identityId) }
     }
 
     // MARK: - 诊断

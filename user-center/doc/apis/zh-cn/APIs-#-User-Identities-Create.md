@@ -1,6 +1,6 @@
-# 为用户绑定一个新的用户认证因素
+# 为用户绑定一个新的登录身份
 
-为当前 `access_token` 归属的账号追加一条用户认证因素绑定记录. 同一账号下 `factor_type` 可以重复(例如同时绑定两个手机号).
+为当前 `access_token` 归属的账号追加一条登录身份绑定记录. 同一账号下 `identity_type` 可以重复(例如同时绑定两个手机号).
 
 ## 1. 请求
 
@@ -9,32 +9,31 @@ POST /user/identities
 Authorization: Bearer <access_token>
 Content-Type: application/x-www-form-urlencoded
 
-factor_type=<factor_type>
-&...=<不同用户认证因素的定制参数>
+identity_type=<identity_type>
+&...=<不同登录身份的定制参数>
 ```
 
 
 | 参数 | 类型 | 含义 |
 |---|---|---|
-| `factor_type` | string | **用户认证因素类型**<br>例如: `phone`, `email`, `wechat`, `google`(占位, 暂未接入) |
-| ... | ... | **不同用户认证因素的定制参数**<br>根据具体的因素类型决定 |
+| `identity_type` | string | **登录身份类型**<br>例如: `phone`, `email`, `wechat`, `google`(占位, 暂未接入) |
+| ... | ... | **不同登录身份的定制参数**<br>根据具体的身份类型决定 |
 
 ## 2. 响应
 
 ```json
 {
-  "factor_id": "550e8400-e29b-41d4-a716-446655440000",
-  "factor_type": "<factor_type>",
-  "identifier": "<用户认证因素的唯一标识>",
+  "identity_id": "550e8400-e29b-41d4-a716-446655440000",
+  "identity_type": "<identity_type>",
+  "identifier": "<登录身份的唯一标识>",
   "bound_at": 1778899139687,
-  "last_verified_at": 1778899139687,
   "...": "扩展字段"
 }
 ```
 
-字段定义详见 [User Authentication Factor](Model-%23-User-Authentication-Factor.md).
+字段定义详见 [User Identity](Model-%23-User-Identity.md).
 
-## 3. `factor_type` 完整请求举例
+## 3. `identity_type` 完整请求举例
 
 ### 3.1 微信开放平台登录 `wechat`
 
@@ -45,7 +44,7 @@ POST /user/identities
 Authorization: Bearer <access_token>
 Content-Type: application/x-www-form-urlencoded
 
-factor_type=wechat
+identity_type=wechat
 &code={wxCode}
 ```
 
@@ -62,7 +61,7 @@ POST /user/identities
 Authorization: Bearer <access_token>
 Content-Type: application/x-www-form-urlencoded
 
-factor_type=phone
+identity_type=phone
 &otp_ticket={otp_ticket}
 &otp={用户输入的验证码}
 ```
@@ -81,7 +80,7 @@ POST /user/identities
 Authorization: Bearer <access_token>
 Content-Type: application/x-www-form-urlencoded
 
-factor_type=email
+identity_type=email
 &otp_ticket={otp_ticket}
 &otp={用户输入的验证码}
 ```

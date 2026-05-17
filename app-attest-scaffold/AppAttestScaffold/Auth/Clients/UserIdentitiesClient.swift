@@ -3,10 +3,10 @@ import Foundation
 /// `/user/identities` —— 账号绑定端点的客户端封装。
 ///
 /// 脚手架共有三种使用方式：
-/// - `GET`    → 枚举当前账号上已绑定的 factor，用于设置页渲染。
-/// - `POST`   → 在当前账号上新增手机号 factor（匿名升级为真实账号）。
-/// - `DELETE` → 解绑某个已绑定的 factor（仅在还会保留至少一个 factor 时可用，
-///   或部署方允许解绑最后一个 factor 时也可用）。
+/// - `GET`    → 枚举当前账号上已绑定的登录身份，用于设置页渲染。
+/// - `POST`   → 在当前账号上新增手机号登录身份（匿名升级为真实账号）。
+/// - `DELETE` → 解绑某个已绑定的登录身份（仅在还会保留至少一个登录身份时可用，
+///   或部署方允许解绑最后一个登录身份时也可用）。
 ///
 /// 所有调用都需要带上 `Authorization: Bearer {AT}`。401 时 "刷新 + 重试" 由
 /// `AuthService` 负责，不由该 client 处理。
@@ -22,7 +22,7 @@ final class UserIdentitiesClient {
 
     // MARK: - 列表查询
 
-    /// `GET /user/identities` —— 当前账号上所有已绑定 factor 的完整列表。
+    /// `GET /user/identities` —— 当前账号上所有已绑定登录身份的完整列表。
     func list(accessToken: String) async throws -> [Identity] {
         let endpoints = await discovery.endpoints()
         let request = http.jsonRequest(
@@ -36,9 +36,9 @@ final class UserIdentitiesClient {
 
     // MARK: - 绑定手机号
 
-    /// 携带 `factor_type=phone` 与 OTP 凭证向 `POST /user/identities` 发起绑定。
-    /// 当手机号已被其他账号占用时端点返回 `409 factor_occupied`，HTTP 层会将其映射为
-    /// `APIError.factorOccupied`。
+    /// 携带 `identity_type=phone` 与 OTP 凭证向 `POST /user/identities` 发起绑定。
+    /// 当手机号已被其他账号占用时端点返回 `409 identity_occupied`，HTTP 层会将其映射为
+    /// `APIError.identityOccupied`。
     func bindPhone(
         accessToken: String,
         otpTicket: String,
@@ -46,7 +46,7 @@ final class UserIdentitiesClient {
     ) async throws -> Identity {
         let endpoints = await discovery.endpoints()
         let pairs: [(String, String)] = [
-            ("factor_type", FactorType.phone.rawValue),
+            ("identity_type", IdentityType.phone.rawValue),
             ("otp_ticket", otpTicket),
             ("otp", otp)
         ]
@@ -60,12 +60,12 @@ final class UserIdentitiesClient {
 
     // MARK: - 解绑
 
-    /// `DELETE /user/identities/{factor_id}` —— 解绑某个已绑定的 factor。
-    /// 用于 "设置 → 已绑定手机号 → 解绑" 这类入口。是否允许解绑最后一个 factor
+    /// `DELETE /user/identities/{identity_id}` —— 解绑某个已绑定的登录身份。
+    /// 用于 "设置 → 已绑定手机号 → 解绑" 这类入口。是否允许解绑最后一个登录身份
     /// 完全由服务端策略决定。
-    func unbind(accessToken: String, factorId: String) async throws {
+    func unbind(accessToken: String, identityId: String) async throws {
         let endpoints = await discovery.endpoints()
-        let url = endpoints.userIdentitiesEndpoint.appendingPathComponent(factorId)
+        let url = endpoints.userIdentitiesEndpoint.appendingPathComponent(identityId)
         let request = http.jsonRequest(url: url, method: "DELETE", bearerToken: accessToken)
         _ = try await http.sendVoid(request)
     }

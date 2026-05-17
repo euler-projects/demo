@@ -1,16 +1,16 @@
-# 删除用户认证因素
+# 删除登录身份
 
 ## 请求
 
 ```http
-DELETE /user/identities/{factor_id}
+DELETE /user/identities/{identity_id}
 Authorization: Bearer <access_token>
 ```
 
 
 | 参数 | 类型 | 含义 |
 |---|---|---|
-| `factor_id` | string | **用户认证因素 ID** (UUID) |
+| `identity_id` | string | **登录身份 ID** (UUID) |
 
 ## 响应
 

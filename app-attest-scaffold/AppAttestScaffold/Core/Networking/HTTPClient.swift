@@ -146,9 +146,9 @@ final class HTTPClient {
         let bodyString = String(data: data, encoding: .utf8) ?? ""
         let oauthError = try? decoder.decode(OAuthErrorPayload.self, from: data)
 
-        // 409 factor_occupied：把 conflict_token 透传给 UI 处理。
-        if response.statusCode == 409, oauthError?.error == "factor_occupied" {
-            throw APIError.factorOccupied(conflictToken: oauthError?.conflictToken)
+        // 409 identity_occupied：把 conflict_token 透传给 UI 处理。
+        if response.statusCode == 409, oauthError?.error == "identity_occupied" {
+            throw APIError.identityOccupied(conflictToken: oauthError?.conflictToken)
         }
 
         // 启发式判定：服务端明确指出 kid 已失效 / 被吊销时，向上抛出供调用方登出后重新走一次完整

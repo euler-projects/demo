@@ -289,7 +289,7 @@ struct PhoneOTPSheet: View {
             switch apiError {
             case .oauth(let code, _, _) where code == "invalid_grant":
                 return "验证码错误, 请重新输入"
-            case .factorOccupied:
+            case .identityOccupied:
                 return apiError.errorDescription ?? "该手机号已绑定其他账号"
             default:
                 return apiError.errorDescription ?? error.localizedDescription
