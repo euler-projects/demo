@@ -21,7 +21,7 @@ import org.eulerframework.common.http.HttpResponse;
 import org.eulerframework.common.http.HttpTemplate;
 import org.eulerframework.common.http.JdkHttpClientTemplate;
 import org.eulerframework.common.http.ResponseBody;
-import org.eulerframework.common.http.request.FormUrlEncodedRequestBody;
+import org.eulerframework.common.http.request.UrlEncodedRequestBody;
 import org.eulerframework.security.authentication.otp.OtpChannel;
 import org.eulerframework.security.authentication.otp.OtpDelivering;
 import org.eulerframework.security.authentication.otp.OtpDeliveryException;
@@ -88,7 +88,7 @@ public class YunPianSmsOtpChannel implements OtpChannel {
     }
 
     public static void doSend(HttpTemplate httpTemplate, String apiUrl, String apiKey, String phone, String message) throws OtpDeliveryException {
-        FormUrlEncodedRequestBody body = FormUrlEncodedRequestBody.newBuilder()
+        UrlEncodedRequestBody body = UrlEncodedRequestBody.newBuilder()
                 .add("apikey", apiKey)
                 .add("mobile", phone)
                 .add("text", message)
