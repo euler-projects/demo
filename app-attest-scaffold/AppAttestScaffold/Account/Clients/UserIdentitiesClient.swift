@@ -1,32 +1,40 @@
 import Foundation
 
-/// `/user/identities` —— 账号绑定端点的客户端封装。
+/// 用户账号服务上 `/user/identities` 端点的客户端封装。
 ///
-/// 脚手架共有三种使用方式：
+/// 三种使用方式：
 /// - `GET`    → 枚举当前账号上已绑定的登录身份，用于设置页渲染。
 /// - `POST`   → 在当前账号上新增手机号登录身份（匿名升级为真实账号）。
 /// - `DELETE` → 解绑某个已绑定的登录身份（仅在还会保留至少一个登录身份时可用，
 ///   或部署方允许解绑最后一个登录身份时也可用）。
 ///
-/// 所有调用都需要带上 `Authorization: Bearer {AT}`。401 时 "刷新 + 重试" 由
-/// `AuthService` 负责，不由该 client 处理。
+/// 所有调用都需要带上 `Authorization: Bearer {AT}`。token 续期的"刷新 + 重试"由
+/// `AppSession` 在调用前通过 `AuthService.refreshIfNeeded()` 完成 —— 该 client 不感知
+/// 也不依赖 OIDC Discovery，体现"账号服务可独立部署"的边界。
 final class UserIdentitiesClient {
 
     private let http: HTTPClient
-    private let discovery: OIDCDiscoveryService
+    private let endpointsResolver: () -> AccountServiceEndpoints
 
-    init(http: HTTPClient = .shared, discovery: OIDCDiscoveryService = .shared) {
+    /// - Parameters:
+    ///   - http: HTTP 传输层；测试中可注入 mock。
+    ///   - endpoints: 端点解析闭包。默认每次取用 `AccountServiceEndpoints.current()`，
+    ///     使设置页修改账号服务基地址后能立即生效；测试中可注入固定端点。
+    init(
+        http: HTTPClient = .shared,
+        endpoints: @escaping () -> AccountServiceEndpoints = AccountServiceEndpoints.current
+    ) {
         self.http = http
-        self.discovery = discovery
+        self.endpointsResolver = endpoints
     }
 
     // MARK: - 列表查询
 
     /// `GET /user/identities` —— 当前账号上所有已绑定登录身份的完整列表。
     func list(accessToken: String) async throws -> [Identity] {
-        let endpoints = await discovery.endpoints()
+        let endpoints = endpointsResolver()
         let request = http.jsonRequest(
-            url: endpoints.userIdentitiesEndpoint,
+            url: endpoints.identitiesEndpoint,
             method: "GET",
             bearerToken: accessToken
         )
@@ -44,14 +52,14 @@ final class UserIdentitiesClient {
         otpTicket: String,
         otp: String
     ) async throws -> Identity {
-        let endpoints = await discovery.endpoints()
+        let endpoints = endpointsResolver()
         let pairs: [(String, String)] = [
             ("identity_type", IdentityType.phone.rawValue),
             ("otp_ticket", otpTicket),
             ("otp", otp)
         ]
         let request = http.formRequest(
-            url: endpoints.userIdentitiesEndpoint,
+            url: endpoints.identitiesEndpoint,
             pairs: pairs,
             bearerToken: accessToken
         )
@@ -64,8 +72,8 @@ final class UserIdentitiesClient {
     /// 用于 "设置 → 已绑定手机号 → 解绑" 这类入口。是否允许解绑最后一个登录身份
     /// 完全由服务端策略决定。
     func unbind(accessToken: String, identityId: String) async throws {
-        let endpoints = await discovery.endpoints()
-        let url = endpoints.userIdentitiesEndpoint.appendingPathComponent(identityId)
+        let endpoints = endpointsResolver()
+        let url = endpoints.identitiesEndpoint.appendingPathComponent(identityId)
         let request = http.jsonRequest(url: url, method: "DELETE", bearerToken: accessToken)
         _ = try await http.sendVoid(request)
     }

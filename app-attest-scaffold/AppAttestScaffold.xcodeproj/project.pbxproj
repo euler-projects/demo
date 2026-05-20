@@ -37,6 +37,9 @@
 		A14E5C0F2D0A00000000201C /* PhoneNumberField.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A00000000101C /* PhoneNumberField.swift */; };
 		A14E5C0F2D0A00000000201D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A00000000101D /* Assets.xcassets */; };
 		A14E5C0F2D0A00000000201E /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A00000000101E /* Preview Assets.xcassets */; };
+		A14E5C0F2D0A000000002020 /* AuthorizationServerEndpoints.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001020 /* AuthorizationServerEndpoints.swift */; };
+		A14E5C0F2D0A000000002021 /* AccountServiceEndpoints.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001021 /* AccountServiceEndpoints.swift */; };
+		A14E5C0F2D0A000000002022 /* AccountService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001022 /* AccountService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -71,6 +74,9 @@
 		A14E5C0F2D0A00000000101D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A14E5C0F2D0A00000000101E /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		A14E5C0F2D0A00000000101F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A14E5C0F2D0A000000001020 /* AuthorizationServerEndpoints.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthorizationServerEndpoints.swift; sourceTree = "<group>"; };
+		A14E5C0F2D0A000000001021 /* AccountServiceEndpoints.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountServiceEndpoints.swift; sourceTree = "<group>"; };
+		A14E5C0F2D0A000000001022 /* AccountService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountService.swift; sourceTree = "<group>"; };
 		A14E5C0F2D0A000000004006 /* AppAttestScaffold.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AppAttestScaffold.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -85,20 +91,13 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		A14E5C0F2D0A000000004002 /* MainGroup */ = {
-			isa = PBXGroup;
-			children = (
-				A14E5C0F2D0A000000003001 /* AppAttestScaffold */,
-				A14E5C0F2D0A000000004004 /* Products */,
-			);
-			sourceTree = "<group>";
-		};
 		A14E5C0F2D0A000000003001 /* AppAttestScaffold */ = {
 			isa = PBXGroup;
 			children = (
 				A14E5C0F2D0A000000003002 /* App */,
 				A14E5C0F2D0A000000003003 /* Core */,
 				A14E5C0F2D0A000000003008 /* Auth */,
+				A14E5C0F2D0A000000003021 /* Account */,
 				A14E5C0F2D0A00000000300B /* Features */,
 				A14E5C0F2D0A00000000300F /* Components */,
 				A14E5C0F2D0A000000003010 /* Resources */,
@@ -163,20 +162,10 @@
 			path = DeviceAttest;
 			sourceTree = "<group>";
 		};
-		A14E5C0F2D0A000000003012 /* Storage */ = {
-			isa = PBXGroup;
-			children = (
-				A14E5C0F2D0A00000000100A /* KeychainStore.swift */,
-				A14E5C0F2D0A00000000100B /* SessionStore.swift */,
-				A14E5C0F2D0A00000000100C /* AccountStore.swift */,
-				A14E5C0F2D0A00000000100D /* FirstLaunchFlag.swift */,
-			);
-			path = Storage;
-			sourceTree = "<group>";
-		};
 		A14E5C0F2D0A000000003008 /* Auth */ = {
 			isa = PBXGroup;
 			children = (
+				A14E5C0F2D0A000000003020 /* Endpoints */,
 				A14E5C0F2D0A000000003009 /* Models */,
 				A14E5C0F2D0A00000000300A /* Clients */,
 				A14E5C0F2D0A000000001015 /* AuthService.swift */,
@@ -187,8 +176,6 @@
 		A14E5C0F2D0A000000003009 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				A14E5C0F2D0A00000000100E /* Account.swift */,
-				A14E5C0F2D0A00000000100F /* Identity.swift */,
 				A14E5C0F2D0A000000001010 /* TokenBundle.swift */,
 			);
 			path = Models;
@@ -199,7 +186,6 @@
 			children = (
 				A14E5C0F2D0A000000001011 /* OAuthClient.swift */,
 				A14E5C0F2D0A000000001012 /* OTPClient.swift */,
-				A14E5C0F2D0A000000001013 /* UserIdentitiesClient.swift */,
 				A14E5C0F2D0A000000001014 /* UserInfoClient.swift */,
 			);
 			path = Clients;
@@ -267,6 +253,69 @@
 			path = "Preview Content";
 			sourceTree = "<group>";
 		};
+		A14E5C0F2D0A000000003012 /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				A14E5C0F2D0A00000000100A /* KeychainStore.swift */,
+				A14E5C0F2D0A00000000100B /* SessionStore.swift */,
+				A14E5C0F2D0A00000000100C /* AccountStore.swift */,
+				A14E5C0F2D0A00000000100D /* FirstLaunchFlag.swift */,
+			);
+			path = Storage;
+			sourceTree = "<group>";
+		};
+		A14E5C0F2D0A000000003020 /* Endpoints */ = {
+			isa = PBXGroup;
+			children = (
+				A14E5C0F2D0A000000001020 /* AuthorizationServerEndpoints.swift */,
+			);
+			path = Endpoints;
+			sourceTree = "<group>";
+		};
+		A14E5C0F2D0A000000003021 /* Account */ = {
+			isa = PBXGroup;
+			children = (
+				A14E5C0F2D0A000000003022 /* Endpoints */,
+				A14E5C0F2D0A000000003023 /* Models */,
+				A14E5C0F2D0A000000003024 /* Clients */,
+				A14E5C0F2D0A000000001022 /* AccountService.swift */,
+			);
+			path = Account;
+			sourceTree = "<group>";
+		};
+		A14E5C0F2D0A000000003022 /* Endpoints */ = {
+			isa = PBXGroup;
+			children = (
+				A14E5C0F2D0A000000001021 /* AccountServiceEndpoints.swift */,
+			);
+			path = Endpoints;
+			sourceTree = "<group>";
+		};
+		A14E5C0F2D0A000000003023 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A14E5C0F2D0A00000000100E /* Account.swift */,
+				A14E5C0F2D0A00000000100F /* Identity.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A14E5C0F2D0A000000003024 /* Clients */ = {
+			isa = PBXGroup;
+			children = (
+				A14E5C0F2D0A000000001013 /* UserIdentitiesClient.swift */,
+			);
+			path = Clients;
+			sourceTree = "<group>";
+		};
+		A14E5C0F2D0A000000004002 = {
+			isa = PBXGroup;
+			children = (
+				A14E5C0F2D0A000000003001 /* AppAttestScaffold */,
+				A14E5C0F2D0A000000004004 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
 		A14E5C0F2D0A000000004004 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -319,7 +368,7 @@
 				Base,
 				"zh-Hans",
 			);
-			mainGroup = A14E5C0F2D0A000000004002 /* MainGroup */;
+			mainGroup = A14E5C0F2D0A000000004002;
 			productRefGroup = A14E5C0F2D0A000000004004 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -373,6 +422,9 @@
 				A14E5C0F2D0A000000002019 /* LoginView.swift in Sources */,
 				A14E5C0F2D0A00000000201A /* AvatarView.swift in Sources */,
 				A14E5C0F2D0A00000000201B /* OTPCodeField.swift in Sources */,
+				A14E5C0F2D0A000000002020 /* AuthorizationServerEndpoints.swift in Sources */,
+				A14E5C0F2D0A000000002021 /* AccountServiceEndpoints.swift in Sources */,
+				A14E5C0F2D0A000000002022 /* AccountService.swift in Sources */,
 				A14E5C0F2D0A00000000201C /* PhoneNumberField.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -522,7 +574,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.eulerframework.appattest.scaffold;
+				PRODUCT_BUNDLE_IDENTIFIER = com.xiaoyuxinchuang.demo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -553,7 +605,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.eulerframework.appattest.scaffold;
+				PRODUCT_BUNDLE_IDENTIFIER = com.xiaoyuxinchuang.demo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;

@@ -7,8 +7,8 @@ import SwiftUI
 /// 2. **第二步 — 验证码** — 6 个独立的数字方块。填满 6 位自动触发校验/登录, 不再有"提交"按钮。
 ///    倒计时结束后顶部出现"重新发送"链接, 左上角箭头返回上一步修改手机号。
 ///
-/// 两条流程的 UI 完全一致, 区别仅在 (1) OTP 由哪个 `AuthService` 方法消费, 以及
-/// (2) 申领 ticket 时声明的 `purpose` 不同(脚手架这里都留作 `nil`)。
+/// 两条流程的 UI 完全一致, 区别仅在 OTP 由哪个 `AuthService` 方法消费。
+/// 脚手架不区分业务用途, 申领 ticket 时统一省略 `purpose`。
 ///
 /// **键盘稳定性** — 两个 step 同时存在于 `ZStack` 中, 通过透明度切换可见性,
 /// 两个 TextField 始终在视图层级中。发送验证码后, 焦点从手机号字段直接转移到
@@ -236,8 +236,7 @@ struct PhoneOTPSheet: View {
         Task {
             do {
                 let issued = try await session.sendPhoneOTP(
-                    phone: phoneE164,
-                    purpose: nil
+                    phone: phoneE164
                 )
                 ticket = issued
                 startCountdown(seconds: max(issued.retryAfter, 30))

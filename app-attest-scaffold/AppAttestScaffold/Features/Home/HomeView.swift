@@ -92,25 +92,46 @@ struct HomeView: View {
         }
     }
 
-    /// Issuer 配置: 只读展示当前地址, 点击打开 IssuerEditorSheet 修改。
+    /// 服务配置: 只读展示 issuer 与账号服务基地址, 点击打开 IssuerEditorSheet 修改。
     private var serviceSection: some View {
         Section {
             Button {
                 showIssuerEditor = true
             } label: {
-                Text(AppConfiguration.issuer)
-                    .font(.callout.monospaced())
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("Issuer")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                            .frame(width: 96, alignment: .leading)
+                        Text(AppConfiguration.issuer)
+                            .font(.callout.monospaced())
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("Account Service")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                            .frame(width: 96, alignment: .leading)
+                        Text(AppConfiguration.accountServiceBaseURL)
+                            .font(.callout.monospaced())
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .buttonStyle(.plain)
             .contentShape(Rectangle())
         } header: {
-            Text("Issuer 配置")
+            Text("服务配置")
         } footer: {
-            Text("Issuer 会作为 OIDC Discovery 与各端点的根 URL。点击可修改, 修改后会清除当前会话。")
+            Text("Issuer 作为授权服务与 OIDC Discovery 的根 URL; Account Service 作为 `/user/identities` 等账号身份管理接口的根 URL。点击可修改, 修改后会清除当前会话。")
         }
     }
 

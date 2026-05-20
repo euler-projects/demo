@@ -7,6 +7,9 @@ import Foundation
 ///   UI 会回退使用 `username` 与内置 SF Symbol。
 /// - `appAttestKey.iat` 由客户端在 attestation 时刻记录（服务端不会回显），其精度对于
 ///   "显示设备注册时间" 这类 UX 已足够。
+///
+/// `profile` 来自授权服务 `/userinfo`，`identities` 来自账号服务 `/user/identities`，
+/// 在客户端层面合并为同一个聚合根，便于持久化与 UI 渲染。
 struct Account: Codable, Equatable {
 
     var profile: Profile

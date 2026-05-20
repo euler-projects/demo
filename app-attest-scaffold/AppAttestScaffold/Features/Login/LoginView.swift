@@ -126,15 +126,17 @@ struct LoginView: View {
         .environmentObject(AppSession())
 }
 
-/// 轻量级的 issuer 编辑 sheet, 由 `LoginView`、`HomeView` 共同复用。
-/// 新值通过 `AppSession.updateIssuer(_:)` 写入持久化, 同时使 OIDC Discovery 缓存失效,
-/// 并把当前会话登出, 以保证一致性。
+/// 轻量级的服务配置编辑 sheet, 由 `LoginView`、`HomeView` 共同复用。
+/// 同时维护授权服务 issuer 与用户账号服务 (Account Service) 基地址。
+/// 新值通过 `AppSession.updateServiceConfiguration(issuer:accountServiceBaseURL:)` 写入持久化,
+/// 同时使 OIDC Discovery 缓存失效, 并把当前会话登出, 以保证一致性。
 struct IssuerEditorSheet: View {
 
     @EnvironmentObject private var session: AppSession
     @Environment(\.dismiss) private var dismiss
 
-    @State private var draft: String = AppConfiguration.issuer
+    @State private var issuerDraft: String = AppConfiguration.issuer
+    @State private var accountServiceDraft: String = AppConfiguration.accountServiceBaseURL
     @State private var showConfirm = false
     @State private var isApplying = false
 
@@ -142,15 +144,27 @@ struct IssuerEditorSheet: View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("https://...", text: $draft)
+                    TextField("https://...", text: $issuerDraft)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .keyboardType(.URL)
+                        .submitLabel(.next)
+                } header: {
+                    Text("Issuer")
+                } footer: {
+                    Text("授权服务 issuer, 作为 OIDC Discovery 与 `/oauth2/token`、`/oauth2/challenge` 等端点的根 URL。")
+                }
+
+                Section {
+                    TextField("https://...", text: $accountServiceDraft)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .keyboardType(.URL)
                         .submitLabel(.done)
                 } header: {
-                    Text("Issuer")
+                    Text("Account Service")
                 } footer: {
-                    Text("Issuer 会作为 OIDC Discovery 与各端点的根 URL。\n修改后将清除当前会话与设备密钥, 需要重新登录。")
+                    Text("用户账号服务基地址, 作为 `/user/identities` 等账号身份管理接口的根 URL。\ndemo 环境与授权服务合部署, 但仍独立配置以适应未来拆分。")
                 }
 
                 Section {
@@ -168,7 +182,7 @@ struct IssuerEditorSheet: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
-                    .disabled(!issuerChanged || !isValidIssuer || isApplying)
+                    .disabled(!hasChanges || !isValidConfiguration || isApplying)
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
                 }
@@ -181,7 +195,7 @@ struct IssuerEditorSheet: View {
                 }
             }
             .confirmationDialog(
-                "切换 issuer 会清除会话",
+                "切换服务配置会清除会话",
                 isPresented: $showConfirm,
                 titleVisibility: .visible
             ) {
@@ -193,14 +207,28 @@ struct IssuerEditorSheet: View {
         }
     }
 
-    private var issuerChanged: Bool {
-        let trimmed = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-        return !trimmed.isEmpty && trimmed != AppConfiguration.issuer
+    private var trimmedIssuer: String {
+        issuerDraft.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private var isValidIssuer: Bool {
-        let trimmed = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let url = URL(string: trimmed),
+    private var trimmedAccountService: String {
+        accountServiceDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var hasChanges: Bool {
+        let issuerChanged = !trimmedIssuer.isEmpty && trimmedIssuer != AppConfiguration.issuer
+        let accountChanged = !trimmedAccountService.isEmpty
+            && trimmedAccountService != AppConfiguration.accountServiceBaseURL
+        return issuerChanged || accountChanged
+    }
+
+    private var isValidConfiguration: Bool {
+        return Self.isValidHTTPURL(trimmedIssuer) && Self.isValidHTTPURL(trimmedAccountService)
+    }
+
+    private static func isValidHTTPURL(_ raw: String) -> Bool {
+        guard !raw.isEmpty,
+              let url = URL(string: raw),
               let scheme = url.scheme?.lowercased(),
               scheme == "https" || scheme == "http",
               url.host != nil else {
@@ -212,7 +240,10 @@ struct IssuerEditorSheet: View {
     private func apply() {
         isApplying = true
         Task {
-            await session.updateIssuer(draft)
+            await session.updateServiceConfiguration(
+                issuer: trimmedIssuer,
+                accountServiceBaseURL: trimmedAccountService
+            )
             isApplying = false
             dismiss()
         }

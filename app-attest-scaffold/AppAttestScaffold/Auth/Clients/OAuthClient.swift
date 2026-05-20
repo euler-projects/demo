@@ -15,11 +15,14 @@ import Foundation
 final class OAuthClient {
 
     private let http: HTTPClient
-    private let discovery: OIDCDiscoveryService
+    private let endpoints: AuthorizationEndpointsProvider
 
-    init(http: HTTPClient = .shared, discovery: OIDCDiscoveryService = .shared) {
+    init(
+        http: HTTPClient = .shared,
+        endpoints: AuthorizationEndpointsProvider = .shared
+    ) {
         self.http = http
-        self.discovery = discovery
+        self.endpoints = endpoints
     }
 
     // MARK: - Challenge
@@ -27,9 +30,9 @@ final class OAuthClient {
     /// 从服务端获取一次性 challenge。按规范 challenge 仅可使用一次，且约 5 分钟过期 ——
     /// 切勿跨请求缓存。
     func fetchChallenge() async throws -> String {
-        let endpoints = await discovery.endpoints()
+        let resolved = await endpoints.endpoints()
         // 服务端允许空请求体；按规范我们仍以 POST 发起。
-        let request = http.formRequest(url: endpoints.oauth2ChallengeEndpoint, pairs: [])
+        let request = http.formRequest(url: resolved.challengeEndpoint, pairs: [])
         let payload = try await http.send(request, as: ChallengeResponse.self)
         return payload.challenge
     }
@@ -43,7 +46,7 @@ final class OAuthClient {
         challenge: String,
         scope: String = AppConfiguration.defaultScope
     ) async throws -> TokenBundle {
-        let endpoints = await discovery.endpoints()
+        let resolved = await endpoints.endpoints()
         let pairs: [(String, String)] = [
             ("grant_type", AppConfiguration.appAssertionGrantType),
             ("kid", kid),
@@ -52,7 +55,7 @@ final class OAuthClient {
             ("scope", scope)
         ]
         let request = http.formRequest(
-            url: endpoints.oauth2TokenEndpoint,
+            url: resolved.tokenEndpoint,
             pairs: pairs,
             extraHeaders: ["OAuth-Client-Attestation-Type": AppConfiguration.attestationType]
         )
@@ -72,7 +75,7 @@ final class OAuthClient {
         challenge: String,
         scope: String = AppConfiguration.defaultScope
     ) async throws -> TokenBundle {
-        let endpoints = await discovery.endpoints()
+        let resolved = await endpoints.endpoints()
         let pairs: [(String, String)] = [
             ("grant_type", AppConfiguration.appAssertionGrantType),
             ("kid", kid),
@@ -81,7 +84,7 @@ final class OAuthClient {
             ("scope", scope)
         ]
         let request = http.formRequest(
-            url: endpoints.oauth2TokenEndpoint,
+            url: resolved.tokenEndpoint,
             pairs: pairs,
             extraHeaders: ["OAuth-Client-Attestation-Type": AppConfiguration.attestationType]
         )
@@ -101,7 +104,7 @@ final class OAuthClient {
         challenge: String,
         scope: String = AppConfiguration.defaultScope
     ) async throws -> TokenBundle {
-        let endpoints = await discovery.endpoints()
+        let resolved = await endpoints.endpoints()
         let pairs: [(String, String)] = [
             ("grant_type", AppConfiguration.otpGrantType),
             ("otp_ticket", otpTicket),
@@ -112,7 +115,7 @@ final class OAuthClient {
             ("scope", scope)
         ]
         let request = http.formRequest(
-            url: endpoints.oauth2TokenEndpoint,
+            url: resolved.tokenEndpoint,
             pairs: pairs,
             extraHeaders: ["OAuth-Client-Attestation-Type": AppConfiguration.attestationType]
         )

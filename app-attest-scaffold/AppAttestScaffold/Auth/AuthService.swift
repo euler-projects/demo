@@ -1,64 +1,59 @@
 import Foundation
 
-/// 一次成功登录或刷新的产出。`AppSession` 据此切换 phase。
-struct AuthResult: Equatable {
-    let account: Account
-    let tokens: TokenBundle
-    /// 当前账号尚未绑定任何实名 factor 时为 `true`。
-    /// 脚手架仅检查 `phone`；下游若新增 email / wechat，应同步扩展 `Account.identities`
-    /// 并相应调整该判断。
-    let isAnonymous: Bool
-
-    init(account: Account, tokens: TokenBundle) {
-        self.account = account
-        self.tokens = tokens
-        self.isAnonymous = account.phoneIdentity == nil
-    }
+/// 一次成功登录或刷新后由授权服务（OAuth 2.1 Authorization Server）产出的认证态。
+///
+/// 仅包含授权域内的事实：token bundle、来自 `/userinfo` 的用户档案、当前会话所绑定的
+/// App Attest key 元数据。账号身份信息（identities）属于用户账号服务，由 `AccountService`
+/// 维护，不在此结构中体现 —— 上层 `AppSession` 会把二者合成 UI 层使用的 `AuthResult`。
+struct AuthSession: Equatable {
+    var tokens: TokenBundle
+    var profile: Account.Profile
+    var appAttestKey: Account.AppAttestKey
 }
 
-/// 高层编排器，把 "用户希望登录 / 绑定 / 刷新" 翻译为正确顺序的
-/// challenge → attestation → token → identities → userinfo 调用链。
+/// 与「OAuth 2.1 Authorization Server」交互的高层编排器，把 "用户希望登录 / 刷新" 翻译为
+/// 正确顺序的 challenge → attestation → token 调用链。
 ///
-/// 所有耗时调用均为 async；UI 状态由 `AppSession` 持有，它会观察各方法的结果并据此更新
-/// 自身的 `Phase`。
+/// 仅承担授权域职责：
+/// - App Attest key 生成、attestation / assertion 取证。
+/// - challenge / token / userinfo 端点调用。
+/// - access token 续期与会话凭证持久化。
+///
+/// 账号身份管理（绑定 / 解绑 / 列表）属于用户账号服务的职责，由 `AccountService` 处理。
+/// `AppSession` 在调用账号服务前先调用 `refreshIfNeeded()` 拿到 fresh AT，使得
+/// `AccountService` 不必感知 App Attest 续期细节。
 final class AuthService {
 
     private let oauth: OAuthClient
     private let otp: OTPClient
-    private let identities: UserIdentitiesClient
     private let userInfo: UserInfoClient
     private let attest: AppAttestService
-    private let discovery: OIDCDiscoveryService
 
     init(
         oauth: OAuthClient = OAuthClient(),
         otp: OTPClient = OTPClient(),
-        identities: UserIdentitiesClient = UserIdentitiesClient(),
         userInfo: UserInfoClient = UserInfoClient(),
-        attest: AppAttestService = .shared,
-        discovery: OIDCDiscoveryService = .shared
+        attest: AppAttestService = .shared
     ) {
         self.oauth = oauth
         self.otp = otp
-        self.identities = identities
         self.userInfo = userInfo
         self.attest = attest
-        self.discovery = discovery
     }
 
     // MARK: - Bootstrap
 
-    /// 决定冷启动时显示哪种 UI。
-    /// - Returns: 需要登录时返回 `nil`（无 kid / 无 token）；恢复成功（必要时已完成刷新）
-    ///            时返回 `AuthResult`。
-    func bootstrap() async -> AuthResult? {
+    /// 冷启动尝试从持久化中恢复授权域会话。
+    /// - Returns: 没有可用 kid / token 时返回 `nil`（应展示登录页）；
+    ///            否则返回 `AuthSession`，必要时已完成一次 token 刷新。
+    func resumeFromStorage() async -> AuthSession? {
         guard
             let kid = SessionStore.loadKid(),
-            !kid.isEmpty,
-            let cachedAccount = AccountStore.load()
+            !kid.isEmpty
         else { return nil }
+        guard let cachedAccount = AccountStore.load() else { return nil }
+        guard let key = cachedAccount.appAttestKey else { return nil }
 
-        // 已有 kid + 缓存的 account。尝试加载（或刷新）token bundle。
         let tokens: TokenBundle
         if let cached = SessionStore.loadTokenBundle(), !cached.willExpireSoon {
             tokens = cached
@@ -66,7 +61,7 @@ final class AuthService {
             do {
                 tokens = try await refreshTokens(kid: kid)
             } catch APIError.kidRevoked {
-                await fullSignOut()
+                await wipeSession()
                 return nil
             } catch {
                 // 冷启动遇到网络抖动 —— 回退到任何已缓存的 AT。
@@ -78,19 +73,18 @@ final class AuthService {
             }
         }
 
-        // 尽力同步一次身份信息。这里失败不阻塞 bootstrap。
-        var account = cachedAccount
-        if let updated = try? await identities.list(accessToken: tokens.accessToken) {
-            account.identities = updated
-            try? AccountStore.save(account)
-        }
-        return AuthResult(account: account, tokens: tokens)
+        return AuthSession(
+            tokens: tokens,
+            profile: cachedAccount.profile,
+            appAttestKey: key
+        )
     }
 
     // MARK: - 匿名登录（App Attestation 用法 1）
 
     /// 全新设备 + 全新匿名账号。生成新的 kid、attest 之后再用 attestation 换取 AT。
-    func anonymousSignIn() async throws -> AuthResult {
+    /// 服务端可能不下发 userinfo（匿名账号），此时回退到占位 profile，由调用方决定如何展示。
+    func anonymousSignIn() async throws -> AuthSession {
         guard attest.isSupported else { throw APIError.appAttestNotSupported }
 
         let kid = try await attest.generateKey()
@@ -108,21 +102,22 @@ final class AuthService {
 
         let profile = (try? await userInfo.fetch(accessToken: tokens.accessToken))
             ?? Account.Profile(username: "anonymous", nickname: nil, avatarUrl: nil)
-        let account = Account(
+        return AuthSession(
+            tokens: tokens,
             profile: profile,
-            appAttestKey: Account.AppAttestKey(kid: kid, iat: Date()),
-            identities: []
+            appAttestKey: Account.AppAttestKey(kid: kid, iat: Date())
         )
-        try AccountStore.save(account)
-
-        return AuthResult(account: account, tokens: tokens)
     }
 
     // MARK: - 标准 OTP 登录（App Attestation 用法 2）
 
     /// 标准登录：在同一个 `/oauth2/token` 调用中完成 OTP 校验 + 设备注册。
     /// `recipient` 为 E.164 手机号；OTP ticket 通过 `sendPhoneOTP` 预先获取。
-    func signInWithPhoneOTP(recipient: String, otpTicket: String, otp: String) async throws -> AuthResult {
+    func signInWithPhoneOTP(
+        recipient: String,
+        otpTicket: String,
+        otp: String
+    ) async throws -> AuthSession {
         guard attest.isSupported else { throw APIError.appAttestNotSupported }
 
         let kid = try await attest.generateKey()
@@ -142,76 +137,24 @@ final class AuthService {
 
         let profile = (try? await userInfo.fetch(accessToken: tokens.accessToken))
             ?? Account.Profile(username: recipient, nickname: nil, avatarUrl: nil)
-        let identitiesList = (try? await identities.list(accessToken: tokens.accessToken)) ?? []
-        let account = Account(
+        return AuthSession(
+            tokens: tokens,
             profile: profile,
-            appAttestKey: Account.AppAttestKey(kid: kid, iat: Date()),
-            identities: identitiesList
+            appAttestKey: Account.AppAttestKey(kid: kid, iat: Date())
         )
-        try AccountStore.save(account)
-
-        return AuthResult(account: account, tokens: tokens)
     }
 
     // MARK: - OTP 投递
 
-    /// 触发一次 SMS OTP。返回的 ticket 在用户输入验证码后交给
-    /// `signInWithPhoneOTP` / `bindPhone` 使用。
+    /// 触发一次 SMS OTP。返回的 ticket 在用户输入验证码后交给 `signInWithPhoneOTP`
+    /// 或账号服务的绑定接口使用。
     /// - Parameters:
     ///   - phone: E.164 格式手机号，例如 `+8613900000000`。
-    ///   - purpose: 登录场景传 `nil`；绑定场景传该绑定流程对应的标签。
-    func sendPhoneOTP(phone: String, purpose: String? = nil) async throws -> OTPTicket {
+    func sendPhoneOTP(phone: String) async throws -> OTPTicket {
         try await otp.sendOTP(
             channel: AppConfiguration.otpChannelSMS,
-            recipient: phone,
-            purpose: purpose
+            recipient: phone
         )
-    }
-
-    // MARK: - 绑定手机号（匿名账号 → 实名）
-
-    /// 将手机号 factor 绑定到当前（匿名或实名）账号上。调用方必须已持有有效 AT —— 不确定时
-    /// 先调用 `refreshIfNeeded()` 刷新一次。
-    func bindPhone(otpTicket: String, otp: String) async throws -> AuthResult {
-        guard let tokens = SessionStore.loadTokenBundle() else {
-            throw APIError.invalidConfiguration(message: "缺少访问令牌, 请重新登录")
-        }
-        let fresh = try await ensureFreshTokens(tokens)
-        _ = try await identities.bindPhone(
-            accessToken: fresh.accessToken,
-            otpTicket: otpTicket,
-            otp: otp
-        )
-        // 重新拉一次完整列表，确保本地与服务端规范状态一致。
-        let identitiesList = try await identities.list(accessToken: fresh.accessToken)
-        var account = AccountStore.load() ?? Account(
-            profile: Account.Profile(username: "user", nickname: nil, avatarUrl: nil),
-            appAttestKey: SessionStore.loadKid().map { Account.AppAttestKey(kid: $0, iat: Date()) },
-            identities: []
-        )
-        account.identities = identitiesList
-        try AccountStore.save(account)
-        return AuthResult(account: account, tokens: fresh)
-    }
-
-    // MARK: - 解绑
-
-    /// 按 `identity_id` 解绑某个已绑定登录身份。
-    func unbind(identityId: String) async throws -> AuthResult {
-        guard let tokens = SessionStore.loadTokenBundle() else {
-            throw APIError.invalidConfiguration(message: "缺少访问令牌, 请重新登录")
-        }
-        let fresh = try await ensureFreshTokens(tokens)
-        try await identities.unbind(accessToken: fresh.accessToken, identityId: identityId)
-        let identitiesList = (try? await identities.list(accessToken: fresh.accessToken)) ?? []
-        var account = AccountStore.load() ?? Account(
-            profile: Account.Profile(username: "user", nickname: nil, avatarUrl: nil),
-            appAttestKey: SessionStore.loadKid().map { Account.AppAttestKey(kid: $0, iat: Date()) },
-            identities: []
-        )
-        account.identities = identitiesList
-        try AccountStore.save(account)
-        return AuthResult(account: account, tokens: fresh)
     }
 
     // MARK: - 刷新
@@ -227,11 +170,11 @@ final class AuthService {
         return try await ensureFreshTokens(tokens)
     }
 
-    /// 诊断用: 忽略过期检查强制走一轮 App Assertion 续期。
+    /// 诊断用：忽略过期检查强制走一轮 App Assertion 续期。
     ///
-    /// 与 `refreshIfNeeded()` 的区别: `refreshIfNeeded` 仅在 `willExpireSoon` 时才走, 适用于
-    /// 业务调用前的手动保鲜; 本方法不论剩余有效期多长都会重新签发, 仅供
-    /// 设置页诊断入口驱动。遇到 `kidRevoked` 会走完整登出清理。
+    /// 与 `refreshIfNeeded()` 的区别：`refreshIfNeeded` 仅在 `willExpireSoon` 时才走，适用于
+    /// 业务调用前的手动保鲜；本方法不论剩余有效期多长都会重新签发，仅供设置页诊断入口
+    /// 驱动。遇到 `kidRevoked` 会走完整登出清理。
     @discardableResult
     func forceRefresh() async throws -> TokenBundle {
         guard let kid = SessionStore.loadKid() else {
@@ -240,7 +183,7 @@ final class AuthService {
         do {
             return try await refreshTokens(kid: kid)
         } catch APIError.kidRevoked {
-            await fullSignOut()
+            await wipeSession()
             throw APIError.kidRevoked
         }
     }
@@ -250,7 +193,7 @@ final class AuthService {
     /// 清除会话凭证与 account，但保留首次启动标志位
     /// （详见 App-Attest-Login.md §5.1）。
     func signOut() async {
-        await fullSignOut()
+        await wipeSession()
     }
 
     // MARK: - 内部实现
@@ -264,7 +207,7 @@ final class AuthService {
         do {
             return try await refreshTokens(kid: kid)
         } catch APIError.kidRevoked {
-            await fullSignOut()
+            await wipeSession()
             throw APIError.kidRevoked
         }
     }
@@ -283,7 +226,7 @@ final class AuthService {
     }
 
     /// 登出清理；`kid` 被吊销时也会调用。
-    private func fullSignOut() async {
+    private func wipeSession() async {
         SessionStore.clearAll()
         AccountStore.clear()
     }

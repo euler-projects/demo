@@ -105,17 +105,35 @@ graph TB
 
 ### 服务端点发现 (OIDC Discovery)
 
-本平台授权服务遵循 [OpenID Connect Discovery 1.0](https://openid.net/specs/openid-connect-discovery-1_0.html) 规范, 客户端**不要硬编码或单独配置** `/oauth2/token`、`/userinfo`、JWKS 等具体端点路径, 应在启动后从 Discovery 拉取并缓存.
+本文涉及的端点分为两类, 客户端寻址方式不同:
 
-- **唯一需要配置的是 `issuer`**(例: `https://uc.kidostory.com`).
+1. **授权服务端点**(随授权服务一起部署): 包括 `/oauth2/token`、`/userinfo`、JWKS 等 OIDC/OAuth2 标准端点, 以及 `/oauth2/challenge` 这类**非标准但仍归属于授权服务**的扩展端点.
+2. **用户账号服务端点** (Account Service, 可能部署在独立域名): 例如 `/user/identities` 等账号身份管理接口, 与授权服务的 `issuer` 无直接关系.
+
+#### 授权服务端点: 通过 OIDC Discovery 发现
+
+本平台授权服务遵循 [OpenID Connect Discovery 1.0](https://openid.net/specs/openid-connect-discovery-1_0.html) 规范, 客户端**不要硬编码或单独配置** `/oauth2/token`、`/userinfo`、JWKS 等标准端点路径, 应在启动后从 Discovery 拉取并缓存.
+
+- **唯一需要配置的是授权服务的 `issuer`**(例: `https://auth.example.com`).
 - 客户端从 `https://{issuer}/.well-known/openid-configuration` 拉取 `OpenID Provider Metadata`, 从中读取实际端点, 例如:
   - `token_endpoint` —— 本文 `POST /oauth2/token` 的实际地址
   - `userinfo_endpoint` —— 本文 `GET /userinfo` 的实际地址
   - `jwks_uri` —— 拉取 JWKS, 用于验签 `id_token`
   - 其他端点(如 `end_session_endpoint`)按需使用
-- 本文为简洁起见沿用 `/oauth2/token`、`/userinfo` 等简写, 客户端实际请求请以 Discovery 返回值为准.
+- `/oauth2/challenge` 虽非 OIDC/OAuth2 标准端点, 但与授权服务一起部署, 与 `token_endpoint` 同源(同 `issuer`), 客户端可基于已发现的授权服务基地址按 `/oauth2/challenge` 路径拼接.
+- 本文为简洁起见沿用 `/oauth2/token`、`/userinfo`、`/oauth2/challenge` 等简写, 客户端实际请求请以 Discovery 返回值(及与之同源的扩展路径)为准.
 
 OIDC 为成熟标准协议, 客户端按规范实现即可, 本文不再展开.
+
+#### 用户账号服务端点: 独立配置
+
+`/user/identities` 等账号身份管理接口由**用户账号服务 (Account Service)** 提供, **不属于授权服务**, 也不会出现在 OIDC Discovery 元数据中, 其基地址可能与授权服务的 `issuer` 不同.
+
+- 客户端应**独立配置用户账号服务基地址**(例: `https://account.example.com`), 与 `issuer` 解耦.
+- 本文中形如 `POST /user/identities`、`GET /user/identities` 的写法均为相对路径简写, 实际请求时拼接到用户账号服务基地址即可.
+- 调用账号服务接口时统一使用 `Authorization: Bearer <access_token>`, 由账号服务作为资源服务校验 AT.
+
+> **demo 环境说明**: 本 demo 中用户账号服务与授权服务合部署, 共享同一个端点 `https://auth.example.com`. 但客户端实现时仍应**将二者作为独立配置项分别维护**, 以免将来账号服务拆分、端点变更时需要发版修复.
 
 ---
 
@@ -143,7 +161,7 @@ OIDC 为成熟标准协议, 客户端按规范实现即可, 本文不再展开.
   "profile": {
     "username": "apple_app_f3a2",
     "nickname": "小龙包",
-    "avatar_url": "https://cdn.kidostory.com/avatar/u_7b2e9c31.png"
+    "avatar_url": "https://cdn.example.com/avatar/u_7b2e9c31.png"
   },
   "app_attest_key": {
     "kid": "<base64-url-encoded-kid>",

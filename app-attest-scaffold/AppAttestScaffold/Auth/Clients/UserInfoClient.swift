@@ -8,18 +8,21 @@ import Foundation
 final class UserInfoClient {
 
     private let http: HTTPClient
-    private let discovery: OIDCDiscoveryService
+    private let endpoints: AuthorizationEndpointsProvider
 
-    init(http: HTTPClient = .shared, discovery: OIDCDiscoveryService = .shared) {
+    init(
+        http: HTTPClient = .shared,
+        endpoints: AuthorizationEndpointsProvider = .shared
+    ) {
         self.http = http
-        self.discovery = discovery
+        self.endpoints = endpoints
     }
 
     /// 用 `accessToken` 拉取当前用户的 userinfo profile。
     func fetch(accessToken: String) async throws -> Account.Profile {
-        let endpoints = await discovery.endpoints()
+        let resolved = await endpoints.endpoints()
         let request = http.jsonRequest(
-            url: endpoints.userinfoEndpoint,
+            url: resolved.userinfoEndpoint,
             method: "GET",
             bearerToken: accessToken
         )

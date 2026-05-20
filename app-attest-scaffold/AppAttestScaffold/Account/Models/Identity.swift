@@ -2,9 +2,9 @@ import Foundation
 
 /// 当前账号上已绑定的一个登录身份（`phone`、`email`、`wechat` ……）。
 ///
-/// 脚手架会解析 `GET /user/identities` 返回的所有元素结构，但 UI 中仅渲染并支持编辑
-/// `phone` 这一种登录身份；其他类型作为不透明条目透传，留待后续迭代加入支持时不必触动
-/// 持久化层。
+/// 由用户账号服务 (Account Service) 的 `/user/identities` 接口下发。脚手架会解析返回的所有
+/// 元素，但 UI 中仅渲染并支持编辑 `phone` 这一种登录身份；其他类型作为不透明条目透传，留待
+/// 后续迭代加入支持时不必触动持久化层。
 struct Identity: Codable, Equatable, Identifiable {
 
     /// 服务端分配的 UUID。在重新绑定后保持稳定 —— 用于 `DELETE /user/identities/{id}`。
