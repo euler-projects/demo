@@ -32,7 +32,7 @@ struct OTPCodeField: View {
                 .focused($focused)
                 .opacity(0.001)
                 .frame(maxWidth: .infinity)
-                .onChange(of: code) { newValue in
+                .onChange(of: code) { _, newValue in
                     let filtered = newValue.filter(\.isNumber)
                     let clipped = String(filtered.prefix(length))
                     if clipped != newValue {

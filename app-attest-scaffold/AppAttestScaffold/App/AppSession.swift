@@ -82,7 +82,7 @@ final class AppSession: ObservableObject {
         // 接住 weak self、并在 init 尾部赋值。
         let holder = WeakSessionHolder()
         let facade = AuthorizationFacade(http: session) { [holder] error in
-            guard let session = await holder.session else { return }
+            guard let session = holder.session else { return }
             await session.handleRefreshFailure(error)
         }
         self.auth = facade

@@ -56,7 +56,7 @@ struct PhoneNumberField: View {
                 .focused($focused)
                 .padding(.vertical, 12)
                 .padding(.trailing, 12)
-                .onChange(of: display) { newValue in
+                .onChange(of: display) { _, newValue in
                     applyDisplayChange(newValue)
                 }
 
