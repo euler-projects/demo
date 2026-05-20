@@ -1,4 +1,5 @@
 import Foundation
+import Alamofire
 
 /// `POST /otp/tickets` 的客户端封装。
 ///
@@ -9,11 +10,11 @@ import Foundation
 /// 强类型属性向上层暴露。
 final class OTPClient {
 
-    private let http: HTTPClient
+    private let http: Session
     private let endpoints: AuthorizationEndpointsProvider
 
     init(
-        http: HTTPClient = .shared,
+        http: Session,
         endpoints: AuthorizationEndpointsProvider = .shared
     ) {
         self.http = http
@@ -33,8 +34,8 @@ final class OTPClient {
             ("channel", channel),
             ("recipient", recipient)
         ]
-        let request = http.formRequest(url: resolved.otpTicketsEndpoint, pairs: pairs)
-        return try await http.send(request, as: OTPTicket.self)
+        let request = OAuthRequestBuilder.formRequest(url: resolved.otpTicketsEndpoint, pairs: pairs)
+        return try await OAuthTransport.send(request, on: http)
     }
 }
 

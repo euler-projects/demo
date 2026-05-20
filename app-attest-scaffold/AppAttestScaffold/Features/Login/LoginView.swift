@@ -166,10 +166,21 @@ struct IssuerEditorSheet: View {
                         .autocorrectionDisabled()
                         .keyboardType(.URL)
                         .submitLabel(.done)
+                    Button {
+                        accountServiceDraft = trimmedIssuer
+                    } label: {
+                        HStack {
+                            Image(systemName: "arrow.up.doc.on.clipboard")
+                            Text("使用 Issuer 配置")
+                            Spacer()
+                        }
+                        .font(.footnote)
+                    }
+                    .disabled(!canCopyFromIssuer)
                 } header: {
                     Text("Account Service")
                 } footer: {
-                    Text("用户账号服务基地址, 作为 `/user/identities` 等账号身份管理接口的根 URL。\ndemo 环境与授权服务合部署, 但仍独立配置以适应未来拆分。")
+                    Text("用户账号服务基地址, 作为 `/user/identities` 等账号身份管理接口的根 URL。\ndemo 环境与授权服务合部署, 可点击上方「使用 Issuer 配置」同步为当前 Issuer。")
                 }
 
                 Section {
@@ -190,6 +201,21 @@ struct IssuerEditorSheet: View {
                     .disabled(!hasChanges || !isValidConfiguration || isApplying)
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
+                }
+
+                Section {
+                    Button(role: .destructive) {
+                        restoreDefaults()
+                    } label: {
+                        HStack {
+                            Spacer()
+                            Text("恢复默认")
+                            Spacer()
+                        }
+                    }
+                    .disabled(isAtDefaults || isApplying)
+                } footer: {
+                    Text("将两个输入框重置为默认值，仍需点击「保存」后才会生效。")
                 }
             }
             .navigationTitle("服务配置")
@@ -225,6 +251,26 @@ struct IssuerEditorSheet: View {
         let accountChanged = !trimmedAccountService.isEmpty
             && trimmedAccountService != AppConfiguration.accountServiceBaseURL
         return issuerChanged || accountChanged
+    }
+
+    /// 当前 Issuer 输入是否可作为 Account Service 的一键填充源。
+    /// 仅要求格式有效，不要求与当前 Account Service draft 不同 —— 即使相同
+    /// 也允许点击，避免按钮状态频繁切换引起迷惑。
+    private var canCopyFromIssuer: Bool {
+        Self.isValidHTTPURL(trimmedIssuer)
+    }
+
+    /// 两个 draft 是否均与默认值一致。
+    private var isAtDefaults: Bool {
+        trimmedIssuer == AppConfiguration.defaultIssuer
+            && trimmedAccountService == AppConfiguration.defaultAccountServiceBaseURL
+    }
+
+    /// 把两个 draft 重置为默认值。仅修改表单状态，不会自动保存，
+    /// 用户仍需点击「保存」才会写入 UserDefaults 并触发登出。
+    private func restoreDefaults() {
+        issuerDraft = AppConfiguration.defaultIssuer
+        accountServiceDraft = AppConfiguration.defaultAccountServiceBaseURL
     }
 
     private var isValidConfiguration: Bool {

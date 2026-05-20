@@ -1,4 +1,5 @@
 import Foundation
+import Alamofire
 
 /// `POST /oauth2/challenge` 与 `POST /oauth2/token` 的客户端封装。
 ///
@@ -14,11 +15,11 @@ import Foundation
 /// 详见 [FormURLEncoder.swift](file:///Users/cfrost/Documents/code/GitHub/euler-projects/demo/app-attest-scaffold/AppAttestScaffold/Core/Networking/FormURLEncoder.swift)）。
 final class OAuthClient {
 
-    private let http: HTTPClient
+    private let http: Session
     private let endpoints: AuthorizationEndpointsProvider
 
     init(
-        http: HTTPClient = .shared,
+        http: Session,
         endpoints: AuthorizationEndpointsProvider = .shared
     ) {
         self.http = http
@@ -32,8 +33,8 @@ final class OAuthClient {
     func fetchChallenge() async throws -> String {
         let resolved = await endpoints.endpoints()
         // 服务端允许空请求体；按规范我们仍以 POST 发起。
-        let request = http.formRequest(url: resolved.challengeEndpoint, pairs: [])
-        let payload = try await http.send(request, as: ChallengeResponse.self)
+        let request = OAuthRequestBuilder.formRequest(url: resolved.challengeEndpoint, pairs: [])
+        let payload: ChallengeResponse = try await OAuthTransport.send(request, on: http)
         return payload.challenge
     }
 
@@ -54,12 +55,12 @@ final class OAuthClient {
             ("challenge", challenge),
             ("scope", scope)
         ]
-        let request = http.formRequest(
+        let request = OAuthRequestBuilder.formRequest(
             url: resolved.tokenEndpoint,
             pairs: pairs,
             extraHeaders: ["OAuth-Client-Attestation-Type": AppConfiguration.attestationType]
         )
-        let response = try await http.send(request, as: TokenResponse.self)
+        let response: TokenResponse = try await OAuthTransport.send(request, on: http)
         return response.materialize()
     }
 
@@ -83,12 +84,12 @@ final class OAuthClient {
             ("challenge", challenge),
             ("scope", scope)
         ]
-        let request = http.formRequest(
+        let request = OAuthRequestBuilder.formRequest(
             url: resolved.tokenEndpoint,
             pairs: pairs,
             extraHeaders: ["OAuth-Client-Attestation-Type": AppConfiguration.attestationType]
         )
-        let response = try await http.send(request, as: TokenResponse.self)
+        let response: TokenResponse = try await OAuthTransport.send(request, on: http)
         return response.materialize()
     }
 
@@ -114,12 +115,12 @@ final class OAuthClient {
             ("challenge", challenge),
             ("scope", scope)
         ]
-        let request = http.formRequest(
+        let request = OAuthRequestBuilder.formRequest(
             url: resolved.tokenEndpoint,
             pairs: pairs,
             extraHeaders: ["OAuth-Client-Attestation-Type": AppConfiguration.attestationType]
         )
-        let response = try await http.send(request, as: TokenResponse.self)
+        let response: TokenResponse = try await OAuthTransport.send(request, on: http)
         return response.materialize()
     }
 }

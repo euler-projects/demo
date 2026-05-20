@@ -1,4 +1,5 @@
 import Foundation
+import Alamofire
 
 /// 从 `/.well-known/openid-configuration` 加载的 OpenID Provider Metadata 子集。
 ///
@@ -30,13 +31,13 @@ struct OIDCProviderMetadata: Decodable, Equatable {
 actor OIDCDiscoveryService {
 
     /// 全局共享实例。在生产代码中由 `AuthorizationEndpointsProvider` 持有；测试中可直接
-    /// 构造独立实例并注入 mock HTTPClient。
+    /// 构造独立实例并注入 mock `Alamofire.Session`。
     static let shared = OIDCDiscoveryService()
 
-    private let http: HTTPClient
+    private let http: Session
     private var cache: (issuer: String, metadata: OIDCProviderMetadata?)?
 
-    init(http: HTTPClient = .shared) {
+    init(http: Session = .default) {
         self.http = http
     }
 
@@ -66,7 +67,17 @@ actor OIDCDiscoveryService {
         guard let url = URL(string: base + "/.well-known/openid-configuration") else {
             throw APIError.invalidConfiguration(message: "无法基于 issuer 构造 discovery URL: \(issuer)")
         }
-        let request = http.jsonRequest(url: url, method: "GET")
-        return try await http.send(request, as: OIDCProviderMetadata.self)
+        do {
+            return try await http.request(
+                url,
+                method: .get,
+                headers: HTTPHeaders(["Accept": "application/json"])
+            )
+            .validate()
+            .serializingDecodable(OIDCProviderMetadata.self)
+            .value
+        } catch {
+            throw APIError.network(message: error.localizedDescription)
+        }
     }
 }

@@ -11,7 +11,6 @@
 		A14E5C0F2D0A000000002002 /* AppSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001002 /* AppSession.swift */; };
 		A14E5C0F2D0A000000002003 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001003 /* RootView.swift */; };
 		A14E5C0F2D0A000000002004 /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001004 /* AppConfiguration.swift */; };
-		A14E5C0F2D0A000000002005 /* HTTPClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001005 /* HTTPClient.swift */; };
 		A14E5C0F2D0A000000002006 /* APIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001006 /* APIError.swift */; };
 		A14E5C0F2D0A000000002007 /* FormURLEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001007 /* FormURLEncoder.swift */; };
 		A14E5C0F2D0A000000002008 /* OIDCDiscoveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001008 /* OIDCDiscoveryService.swift */; };
@@ -27,7 +26,6 @@
 		A14E5C0F2D0A000000002012 /* OTPClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001012 /* OTPClient.swift */; };
 		A14E5C0F2D0A000000002013 /* UserIdentitiesClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001013 /* UserIdentitiesClient.swift */; };
 		A14E5C0F2D0A000000002014 /* UserInfoClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001014 /* UserInfoClient.swift */; };
-		A14E5C0F2D0A000000002015 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001015 /* AuthService.swift */; };
 		A14E5C0F2D0A000000002016 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001016 /* HomeView.swift */; };
 		A14E5C0F2D0A000000002017 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001017 /* SettingsView.swift */; };
 		A14E5C0F2D0A000000002018 /* BindPhoneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001018 /* BindPhoneView.swift */; };
@@ -40,6 +38,11 @@
 		A14E5C0F2D0A000000002020 /* AuthorizationServerEndpoints.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001020 /* AuthorizationServerEndpoints.swift */; };
 		A14E5C0F2D0A000000002021 /* AccountServiceEndpoints.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001021 /* AccountServiceEndpoints.swift */; };
 		A14E5C0F2D0A000000002022 /* AccountService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001022 /* AccountService.swift */; };
+		A14E5C0F2D0A000000002030 /* AuthorizationFacade.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001030 /* AuthorizationFacade.swift */; };
+		A14E5C0F2D0A000000002031 /* OAuthErrorMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001031 /* OAuthErrorMapper.swift */; };
+		A14E5C0F2D0A000000002032 /* OAuthTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001032 /* OAuthTransport.swift */; };
+		A14E5C0F2D0A000000002033 /* RedactingEventMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001033 /* RedactingEventMonitor.swift */; };
+		A14E5C0F2D0A000000002040 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = A14E5C0F2D0A000000005000 /* Alamofire */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -47,7 +50,6 @@
 		A14E5C0F2D0A000000001002 /* AppSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSession.swift; sourceTree = "<group>"; };
 		A14E5C0F2D0A000000001003 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		A14E5C0F2D0A000000001004 /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
-		A14E5C0F2D0A000000001005 /* HTTPClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPClient.swift; sourceTree = "<group>"; };
 		A14E5C0F2D0A000000001006 /* APIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIError.swift; sourceTree = "<group>"; };
 		A14E5C0F2D0A000000001007 /* FormURLEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormURLEncoder.swift; sourceTree = "<group>"; };
 		A14E5C0F2D0A000000001008 /* OIDCDiscoveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OIDCDiscoveryService.swift; sourceTree = "<group>"; };
@@ -63,7 +65,6 @@
 		A14E5C0F2D0A000000001012 /* OTPClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPClient.swift; sourceTree = "<group>"; };
 		A14E5C0F2D0A000000001013 /* UserIdentitiesClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserIdentitiesClient.swift; sourceTree = "<group>"; };
 		A14E5C0F2D0A000000001014 /* UserInfoClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserInfoClient.swift; sourceTree = "<group>"; };
-		A14E5C0F2D0A000000001015 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		A14E5C0F2D0A000000001016 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		A14E5C0F2D0A000000001017 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A14E5C0F2D0A000000001018 /* BindPhoneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BindPhoneView.swift; sourceTree = "<group>"; };
@@ -77,6 +78,10 @@
 		A14E5C0F2D0A000000001020 /* AuthorizationServerEndpoints.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthorizationServerEndpoints.swift; sourceTree = "<group>"; };
 		A14E5C0F2D0A000000001021 /* AccountServiceEndpoints.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountServiceEndpoints.swift; sourceTree = "<group>"; };
 		A14E5C0F2D0A000000001022 /* AccountService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountService.swift; sourceTree = "<group>"; };
+		A14E5C0F2D0A000000001030 /* AuthorizationFacade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthorizationFacade.swift; sourceTree = "<group>"; };
+		A14E5C0F2D0A000000001031 /* OAuthErrorMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthErrorMapper.swift; sourceTree = "<group>"; };
+		A14E5C0F2D0A000000001032 /* OAuthTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthTransport.swift; sourceTree = "<group>"; };
+		A14E5C0F2D0A000000001033 /* RedactingEventMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedactingEventMonitor.swift; sourceTree = "<group>"; };
 		A14E5C0F2D0A000000004006 /* AppAttestScaffold.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AppAttestScaffold.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -85,6 +90,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A14E5C0F2D0A000000002040 /* Alamofire in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -139,11 +145,29 @@
 		A14E5C0F2D0A000000003005 /* Networking */ = {
 			isa = PBXGroup;
 			children = (
-				A14E5C0F2D0A000000001005 /* HTTPClient.swift */,
 				A14E5C0F2D0A000000001006 /* APIError.swift */,
 				A14E5C0F2D0A000000001007 /* FormURLEncoder.swift */,
+				A14E5C0F2D0A000000003030 /* OAuth */,
+				A14E5C0F2D0A000000003031 /* Logging */,
 			);
 			path = Networking;
+			sourceTree = "<group>";
+		};
+		A14E5C0F2D0A000000003030 /* OAuth */ = {
+			isa = PBXGroup;
+			children = (
+				A14E5C0F2D0A000000001031 /* OAuthErrorMapper.swift */,
+				A14E5C0F2D0A000000001032 /* OAuthTransport.swift */,
+			);
+			path = OAuth;
+			sourceTree = "<group>";
+		};
+		A14E5C0F2D0A000000003031 /* Logging */ = {
+			isa = PBXGroup;
+			children = (
+				A14E5C0F2D0A000000001033 /* RedactingEventMonitor.swift */,
+			);
+			path = Logging;
 			sourceTree = "<group>";
 		};
 		A14E5C0F2D0A000000003006 /* Discovery */ = {
@@ -168,7 +192,7 @@
 				A14E5C0F2D0A000000003020 /* Endpoints */,
 				A14E5C0F2D0A000000003009 /* Models */,
 				A14E5C0F2D0A00000000300A /* Clients */,
-				A14E5C0F2D0A000000001015 /* AuthService.swift */,
+				A14E5C0F2D0A000000001030 /* AuthorizationFacade.swift */,
 			);
 			path = Auth;
 			sourceTree = "<group>";
@@ -340,6 +364,9 @@
 			dependencies = (
 			);
 			name = AppAttestScaffold;
+			packageProductDependencies = (
+				A14E5C0F2D0A000000005000 /* Alamofire */,
+			);
 			productName = AppAttestScaffold;
 			productReference = A14E5C0F2D0A000000004006 /* AppAttestScaffold.app */;
 			productType = "com.apple.product-type.application";
@@ -369,6 +396,9 @@
 				"zh-Hans",
 			);
 			mainGroup = A14E5C0F2D0A000000004002;
+			packageReferences = (
+				A14E5C0F2D0A000000005001 /* XCRemoteSwiftPackageReference "Alamofire" */,
+			);
 			productRefGroup = A14E5C0F2D0A000000004004 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -399,7 +429,6 @@
 				A14E5C0F2D0A000000002002 /* AppSession.swift in Sources */,
 				A14E5C0F2D0A000000002003 /* RootView.swift in Sources */,
 				A14E5C0F2D0A000000002004 /* AppConfiguration.swift in Sources */,
-				A14E5C0F2D0A000000002005 /* HTTPClient.swift in Sources */,
 				A14E5C0F2D0A000000002006 /* APIError.swift in Sources */,
 				A14E5C0F2D0A000000002007 /* FormURLEncoder.swift in Sources */,
 				A14E5C0F2D0A000000002008 /* OIDCDiscoveryService.swift in Sources */,
@@ -415,7 +444,6 @@
 				A14E5C0F2D0A000000002012 /* OTPClient.swift in Sources */,
 				A14E5C0F2D0A000000002013 /* UserIdentitiesClient.swift in Sources */,
 				A14E5C0F2D0A000000002014 /* UserInfoClient.swift in Sources */,
-				A14E5C0F2D0A000000002015 /* AuthService.swift in Sources */,
 				A14E5C0F2D0A000000002016 /* HomeView.swift in Sources */,
 				A14E5C0F2D0A000000002017 /* SettingsView.swift in Sources */,
 				A14E5C0F2D0A000000002018 /* BindPhoneView.swift in Sources */,
@@ -426,6 +454,10 @@
 				A14E5C0F2D0A000000002021 /* AccountServiceEndpoints.swift in Sources */,
 				A14E5C0F2D0A000000002022 /* AccountService.swift in Sources */,
 				A14E5C0F2D0A00000000201C /* PhoneNumberField.swift in Sources */,
+				A14E5C0F2D0A000000002030 /* AuthorizationFacade.swift in Sources */,
+				A14E5C0F2D0A000000002031 /* OAuthErrorMapper.swift in Sources */,
+				A14E5C0F2D0A000000002032 /* OAuthTransport.swift in Sources */,
+				A14E5C0F2D0A000000002033 /* RedactingEventMonitor.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -635,6 +667,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A14E5C0F2D0A000000005001 /* XCRemoteSwiftPackageReference "Alamofire" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Alamofire/Alamofire.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.10.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A14E5C0F2D0A000000005000 /* Alamofire */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A14E5C0F2D0A000000005001 /* XCRemoteSwiftPackageReference "Alamofire" */;
+			productName = Alamofire;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A14E5C0F2D0A000000004001 /* Project object */;
 }

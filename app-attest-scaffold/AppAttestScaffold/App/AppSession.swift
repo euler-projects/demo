@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import Alamofire
 
 /// UI 层观测的"已登录态产物"。把授权域的 `AuthSession`（profile + tokens + kid）与账号域
 /// 的 identities 列表合成为同一个聚合，便于 SwiftUI 统一渲染。
@@ -18,14 +19,18 @@ struct AuthResult: Equatable {
     }
 }
 
-/// "用户当前处于鉴权流程的哪个阶段" 的唯一权威状态源，并负责把授权服务（`AuthService`）
-/// 与用户账号服务（`AccountService`）的调用编排为对 UI 友好的单一状态切换。
+/// "用户当前处于鉴权流程的哪个阶段" 的唯一权威状态源，并负责把授权域（`AuthorizationFacade`）
+/// 与账号域（`AccountService`）的调用编排为对 UI 友好的单一状态切换。
 ///
 /// 设计原则：
-/// - `AuthService` / `AccountService` 各自对内聚、对外解耦；token 续期在调用账号服务前
-///   完成（`auth.refreshIfNeeded()`），使 `AccountService` 不感知 App Attest 续期机制。
-/// - 持久化层面，profile + appAttestKey 由 AuthService 维护，identities 由 AccountService
-///   返回；`AppSession` 在登录 / 绑定 / 解绑结束后把二者写回 `AccountStore` 这一聚合根。
+/// - 持有一份 `Alamofire.Session`（业务 Session，不挂任何 `Authenticator`）作为整个 App 的网络
+///   入口；同一个 Session 实例同时被授权域内部的 OAuth 端点 Client 与业务 Client 使用，使所有
+///   流量共享日志器与连接复用。
+/// - `AuthorizationFacade` 通过 `AuthorizationTokenProvider` 协议把 fresh AT 透出给业务 Client；
+///   业务 Client (`UserIdentitiesClient`) 在每个请求前调用 `getAccessToken()` 自闭环保鲜，
+///   `AppSession` 不再暴露"先 refreshIfNeeded 再调账号服务"这类样板。
+/// - `AuthorizationFacade` 续期失败时通过注入的 `RefreshFailureCallback` 通知 `AppSession`，
+///   `AppSession` 按错误类型决策：`.kidRevoked` 强制登出；网络错误仅写入 `lastError` 保留会话。
 /// - 标注为 `@MainActor`，SwiftUI 状态更新必然落在主线程，调用方无需显式 dispatch。
 @MainActor
 final class AppSession: ObservableObject {
@@ -58,15 +63,34 @@ final class AppSession: ObservableObject {
     @Published private(set) var phase: Phase = .bootstrapping
     @Published var lastError: String?
 
-    private let auth: AuthService
+    /// 业务 Client 直接复用的 Alamofire Session。`HomeView` 受保护资源面板等场景也通过它发请求，
+    /// 避免再额外构造一份无日志器的 `URLSession`。
+    let http: Session
+
+    /// 授权域门面。`HomeView` 诊断面板调用 `auth.refreshTokenForce()` / `auth.getAccessToken()`
+    /// 走生产路径；任何业务 Client 同样通过协议视图 `AuthorizationTokenProvider` 取 fresh AT。
+    let auth: AuthorizationFacade
+
     private let account: AccountService
 
-    init(
-        auth: AuthService = AuthService(),
-        account: AccountService = AccountService()
-    ) {
-        self.auth = auth
-        self.account = account
+    init() {
+        let session = Self.makeBusinessSession()
+        self.http = session
+
+        // 续期失败回调需要 代 self 到 `handleRefreshFailure(_:)` —— 但这一行发生
+        // 在 self 存储属性还未初始化完的 init 阶段。用一个 thread-safe holder
+        // 接住 weak self、并在 init 尾部赋值。
+        let holder = WeakSessionHolder()
+        let facade = AuthorizationFacade(http: session) { [holder] error in
+            guard let session = await holder.session else { return }
+            await session.handleRefreshFailure(error)
+        }
+        self.auth = facade
+        self.account = AccountService(
+            identities: UserIdentitiesClient(auth: facade, http: session)
+        )
+
+        holder.session = self
     }
 
     // MARK: - Bootstrap
@@ -80,7 +104,7 @@ final class AppSession: ObservableObject {
             return
         }
         var identities: [Identity] = AccountStore.load()?.identities ?? []
-        if let updated = try? await account.listIdentities(accessToken: session.tokens.accessToken) {
+        if let updated = try? await account.listIdentities() {
             identities = updated
         }
         phase = .signedIn(persist(session: session, identities: identities))
@@ -94,13 +118,13 @@ final class AppSession: ObservableObject {
         do {
             let session = try await auth.anonymousSignIn()
             // 匿名账号通常没有 identities，此处仍尝试拉取一次以保证状态一致。
-            let identities = (try? await account.listIdentities(accessToken: session.tokens.accessToken)) ?? []
+            let identities = (try? await account.listIdentities()) ?? []
             phase = .signedIn(persist(session: session, identities: identities))
             lastError = nil
         } catch let error as APIError {
             switch error {
             case .kidRevoked:
-                // 强制登出路径 —— `AuthService` 已经清掉了本地状态。
+                // 强制登出路径 —— `AuthorizationFacade` 已经清掉了本地状态。
                 phase = .unauthenticated
                 lastError = error.errorDescription
             default:
@@ -121,7 +145,7 @@ final class AppSession: ObservableObject {
             let session = try await auth.signInWithPhoneOTP(
                 recipient: recipient, otpTicket: ticket, otp: otp
             )
-            let identities = (try? await account.listIdentities(accessToken: session.tokens.accessToken)) ?? []
+            let identities = (try? await account.listIdentities()) ?? []
             phase = .signedIn(persist(session: session, identities: identities))
             lastError = nil
         } catch let error as APIError {
@@ -144,18 +168,17 @@ final class AppSession: ObservableObject {
     // MARK: - 绑定 / 解绑（账号服务调用）
 
     /// 绑定手机号。错误直接抛出, 由调用方就地处理。
-    /// 内部流程：先 `auth.refreshIfNeeded()` 拿 fresh AT → 调账号服务 `bindPhone`
-    /// → 重新拉取 identities 列表确保规范状态。
+    /// 不需要显式取 token —— `UserIdentitiesClient` 内部会先调
+    /// `auth.getAccessToken()` 自闭环续期。
     func bindPhone(ticket: String, otp: String) async throws {
         do {
-            let tokens = try await auth.refreshIfNeeded()
-            _ = try await account.bindPhone(
-                accessToken: tokens.accessToken,
-                otpTicket: ticket,
-                otp: otp
-            )
-            let identities = try await account.listIdentities(accessToken: tokens.accessToken)
-            phase = .signedIn(mergeIdentities(tokens: tokens, identities: identities))
+            _ = try await account.bindPhone(otpTicket: ticket, otp: otp)
+            let identities = try await account.listIdentities()
+            // 续期可能在 bindPhone 内部发生 —— 重新读一次 SessionStore 以拿到最新 tokens。
+            let freshTokens = SessionStore.loadTokenBundle() ?? phase.tokens
+            if let freshTokens {
+                phase = .signedIn(mergeIdentities(tokens: freshTokens, identities: identities))
+            }
             lastError = nil
         } catch let error as APIError {
             if case .kidRevoked = error {
@@ -166,13 +189,15 @@ final class AppSession: ObservableObject {
         }
     }
 
-    /// 解绑指定身份。token 续期 + 调账号服务的编排同 `bindPhone`。
+    /// 解绑指定身份。token 续期由 `UserIdentitiesClient` 自闭环。
     func unbind(identityId: String) async {
         do {
-            let tokens = try await auth.refreshIfNeeded()
-            try await account.unbind(accessToken: tokens.accessToken, identityId: identityId)
-            let identities = (try? await account.listIdentities(accessToken: tokens.accessToken)) ?? []
-            phase = .signedIn(mergeIdentities(tokens: tokens, identities: identities))
+            try await account.unbind(identityId: identityId)
+            let identities = (try? await account.listIdentities()) ?? []
+            let freshTokens = SessionStore.loadTokenBundle() ?? phase.tokens
+            if let freshTokens {
+                phase = .signedIn(mergeIdentities(tokens: freshTokens, identities: identities))
+            }
             lastError = nil
         } catch let error as APIError {
             switch error {
@@ -187,18 +212,19 @@ final class AppSession: ObservableObject {
         }
     }
 
-    // MARK: - 诊断
+    // MARK: - 诊断 / 手动续期
 
-    /// 手动走一轮 App Assertion 续期。仅由设置页"诊断"入口调用, 供开发/调试
-    /// 验证服务端 refresh 链路。成功: 更新 phase 的 tokens 部分同时保留 account 不变;
-    /// 失败: 错误信息写入 `lastError` 供 UI 展示, kid 被吊销则回到未登录态。
+    /// 手动走一轮 App Assertion 续期。设置页"诊断"入口调用，复用与业务路径完全相同的
+    /// `AuthorizationFacade.refreshTokenForce()` —— 没有任何"演示专用"分支。
+    /// 成功：更新 phase 的 tokens 部分同时保留 account 不变；
+    /// 失败：错误信息写入 `lastError` 供 UI 展示，kid 被吊销则回到未登录态。
     func manualRefreshTokens() async {
         guard case let .signedIn(current) = phase else {
             lastError = "当前会话不可用, 无法续期"
             return
         }
         do {
-            let fresh = try await auth.forceRefresh()
+            let fresh = try await auth.refreshTokenForce()
             phase = .signedIn(AuthResult(account: current.account, tokens: fresh))
             lastError = nil
         } catch let error as APIError {
@@ -240,6 +266,21 @@ final class AppSession: ObservableObject {
         await signOut()
     }
 
+    // MARK: - 续期失败回调入口
+
+    /// `AuthorizationFacade` 续期失败时通过 `RefreshFailureCallback` 通知。
+    /// 这里仅做 UI 层决策：`.kidRevoked` → 强制登出（facade 内部已 wipe 本地态）；
+    /// 其它错误（网络抖动、临时 5xx）仅写入 `lastError`，会话保持。
+    fileprivate func handleRefreshFailure(_ error: APIError) async {
+        switch error {
+        case .kidRevoked:
+            phase = .unauthenticated
+            lastError = error.errorDescription
+        default:
+            lastError = error.errorDescription
+        }
+    }
+
     // MARK: - 内部：聚合根写回
 
     /// 从 `AuthSession`（授权域）+ identities 列表（账号域）构造完整 `Account`，写入持久化。
@@ -278,4 +319,34 @@ final class AppSession: ObservableObject {
         try? AccountStore.save(updated)
         return AuthResult(account: updated, tokens: tokens)
     }
+
+    // MARK: - 装配
+
+    /// 构造业务 `Alamofire.Session`：默认 URLSessionConfiguration + 脱敏日志 EventMonitor。
+    /// 不挂 `Authenticator` —— 业务 Client 显式调 `auth.getAccessToken()` 取 fresh AT，
+    /// 401 处理由各业务 Client 按自身语义决策。
+    private static func makeBusinessSession() -> Session {
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = 30
+        configuration.timeoutIntervalForResource = 60
+        return Session(
+            configuration: configuration,
+            eventMonitors: [RedactingEventMonitor()]
+        )
+    }
 }
+
+/// `AppSession.init` 阶段为 `AuthorizationFacade.onRefreshFailure` 闭包提供的
+/// thread-safe weak 容器。允许在所有 `self` 存储属性初始化之后再把 `self`
+/// 赋值进去，满足 Swift init 阶段不能 capture self 的限制。
+/// `actor` 保证跨线程访问安全，`weak` 避免与 `AppSession` 成环。
+final class WeakSessionHolder: @unchecked Sendable {
+    private let lock = NSLock()
+    private weak var _session: AppSession?
+
+    var session: AppSession? {
+        get { lock.withLock { _session } }
+        set { lock.withLock { _session = newValue } }
+    }
+}
+
