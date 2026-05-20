@@ -84,7 +84,7 @@ AppAttestScaffold/
 
 ## 运行环境
 
-- Xcode 16+ / iOS 18+
+- Xcode 15+ / iOS 17+
 - 真机调试：必须在 Apple Developer 账号下开启 App Attest capability，并替换工程的 `Team` 与 `Bundle Identifier`
 - 模拟器：App Attest 仅在受支持的真机上可用，模拟器调用会返回 `appAttestNotSupported`
 

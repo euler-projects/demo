@@ -35,12 +35,22 @@ struct OTPCodeField: View {
                 .onChange(of: code) { _, newValue in
                     let filtered = newValue.filter(\.isNumber)
                     let clipped = String(filtered.prefix(length))
-                    if clipped != newValue {
-                        code = clipped
-                    }
+                    // 完成回调先同步触发, 让父级能立即关键盘并跑校验,
+                    // 即使我们随后异步回写 `code` 也不会让用户感觉到延迟。
                     if clipped.count == length {
                         focused = false
                         onComplete?(clipped)
+                    }
+                    // 回写自身 binding 推迟到下一个 main runloop tick:
+                    // 在 `onChange` 内同步覆盖自身 binding, 会与 UITextField
+                    // 的输入事务在同一帧内竞争, 在 iOS 17/18 上偶发"卡顿后蹦出
+                    // 几个没按过的数字" — 缓冲事件晚到一拍所致。
+                    if clipped != newValue {
+                        Task { @MainActor in
+                            if code == newValue {
+                                code = clipped
+                            }
+                        }
                     }
                 }
 

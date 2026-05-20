@@ -77,16 +77,27 @@ struct PhoneNumberField: View {
 
     /// 在用户改动可见文本后, 重新推导 `display`、`e164` 与 `isValid`。
     /// 每次按键都会触发, 复杂度为输入长度的 O(n)。
+    ///
+    /// **回写延后到下一帧** — `e164` 与 `isValid` 是对外副作用, 必须同步导出,
+    /// 让父级按钮立即响应。但对自身 `display` binding 的覆盖必须推迟到下一个
+    /// main runloop tick: 在 `onChange` 内同步重写自身 binding, 会和 UITextField
+    /// 的输入事务在同一帧内交错, 在 iOS 17/18 上偶发表现为"输入卡顿后突然蹦出几个
+    /// 没按过的数字" — 实际上是 IME 缓冲的字符晚到了一拍。
     private func applyDisplayChange(_ newValue: String) {
         // 先剔除所有非数字字符, 再裁剪到当前国家的最大长度,
         // 这样即使粘贴超长字符串也不会短暂出现非法状态。
         let digits = String(newValue.filter(\.isNumber).prefix(country.maxLength))
         let formatted = country.format(digits)
-        if formatted != newValue {
-            display = formatted
-        }
         e164 = digits.isEmpty ? "" : "+\(country.dialCode)\(digits)"
         isValid = country.isValid(digits)
+        guard formatted != newValue else { return }
+        Task { @MainActor in
+            // 二次确认: 异步窗口期内用户可能又输入了新字符,
+            // 避免把已过期的格式化结果盖回去把新字符吞掉。
+            if display == newValue {
+                display = formatted
+            }
+        }
     }
 
     /// 根据已有的 `e164` 值还原可见文本(例如 OTP sheet 重新打开时)。

@@ -153,23 +153,6 @@
 			path = Networking;
 			sourceTree = "<group>";
 		};
-		A14E5C0F2D0A000000003030 /* OAuth */ = {
-			isa = PBXGroup;
-			children = (
-				A14E5C0F2D0A000000001031 /* OAuthErrorMapper.swift */,
-				A14E5C0F2D0A000000001032 /* OAuthTransport.swift */,
-			);
-			path = OAuth;
-			sourceTree = "<group>";
-		};
-		A14E5C0F2D0A000000003031 /* Logging */ = {
-			isa = PBXGroup;
-			children = (
-				A14E5C0F2D0A000000001033 /* RedactingEventMonitor.swift */,
-			);
-			path = Logging;
-			sourceTree = "<group>";
-		};
 		A14E5C0F2D0A000000003006 /* Discovery */ = {
 			isa = PBXGroup;
 			children = (
@@ -330,6 +313,23 @@
 				A14E5C0F2D0A000000001013 /* UserIdentitiesClient.swift */,
 			);
 			path = Clients;
+			sourceTree = "<group>";
+		};
+		A14E5C0F2D0A000000003030 /* OAuth */ = {
+			isa = PBXGroup;
+			children = (
+				A14E5C0F2D0A000000001031 /* OAuthErrorMapper.swift */,
+				A14E5C0F2D0A000000001032 /* OAuthTransport.swift */,
+			);
+			path = OAuth;
+			sourceTree = "<group>";
+		};
+		A14E5C0F2D0A000000003031 /* Logging */ = {
+			isa = PBXGroup;
+			children = (
+				A14E5C0F2D0A000000001033 /* RedactingEventMonitor.swift */,
+			);
+			path = Logging;
 			sourceTree = "<group>";
 		};
 		A14E5C0F2D0A000000004002 = {
@@ -516,7 +516,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -573,7 +573,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
