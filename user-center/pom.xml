@@ -171,31 +171,21 @@
     </dependencyManagement>
 
     <build>
-        <resources>
-            <!-- 覆盖 spring-boot-starter-parent 默认资源配置，排除仅本地使用的 application-local.yml -->
-            <resource>
-                <directory>${basedir}/src/main/resources</directory>
-                <filtering>true</filtering>
-                <includes>
-                    <include>**/application*.yml</include>
-                    <include>**/application*.yaml</include>
-                    <include>**/application*.properties</include>
-                </includes>
-                <excludes>
-                    <exclude>**/application-local.yml</exclude>
-                </excludes>
-            </resource>
-            <resource>
-                <directory>${basedir}/src/main/resources</directory>
-                <excludes>
-                    <exclude>**/application*.yml</exclude>
-                    <exclude>**/application*.yaml</exclude>
-                    <exclude>**/application*.properties</exclude>
-                    <exclude>**/application-local.yml</exclude>
-                </excludes>
-            </resource>
-        </resources>
         <plugins>
+            <!--
+                application-local.yml 仅供本地开发使用：
+                - 资源照常拷贝到 target/classes，保证 IDE 直接运行、mvn spring-boot:run 等场景下 local profile 可用
+                - 仅在最终产出的 jar 中排除，避免随包发布
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>application-local.yml</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
