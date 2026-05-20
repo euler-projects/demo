@@ -106,10 +106,15 @@ struct LoginView: View {
         }
     }
 
-    /// 仅当本次安装从未成功登录过(即没有持久化 kid)时才允许匿名登录。
+    /// 仅当「首次启动标志位未翻转」且「无持久化 kid / 账号」时才允许匿名登录。
     /// 与 App-Attest-Login.md §2.4("仅限首次使用")的语义对齐。
+    ///
+    /// `FirstLaunchFlag.hasLaunchedBefore` 在首次成功启动后即置为 `true`；退出登录时
+    /// 不会重置，因此登出后匿名入口不再出现。只有「抹掉所有数据」才能使其恢复。
     private var allowAnonymous: Bool {
-        SessionStore.loadKid() == nil && AccountStore.load() == nil
+        !FirstLaunchFlag.hasLaunchedBefore
+            && SessionStore.loadKid() == nil
+            && AccountStore.load() == nil
     }
 
     private func anonymousTap() {

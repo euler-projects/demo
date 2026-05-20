@@ -225,6 +225,13 @@ final class AuthService {
         return tokens
     }
 
+    /// 抹掉所有本地数据（包括首次启动标志位），恢复到刚安装的状态。
+    /// 调用后用户可再次匿名试用。
+    func wipeAllData() async {
+        await wipeSession()
+        FirstLaunchFlag.resetForTesting()
+    }
+
     /// 登出清理；`kid` 被吊销时也会调用。
     private func wipeSession() async {
         SessionStore.clearAll()

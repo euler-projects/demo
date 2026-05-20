@@ -222,6 +222,13 @@ final class AppSession: ObservableObject {
         lastError = nil
     }
 
+    /// 抹掉所有本地数据并恢复到刚安装状态；包括重置首次启动标志位，使用户可再次匿名试用。
+    func wipeAllData() async {
+        await auth.wipeAllData()
+        phase = .unauthenticated
+        lastError = nil
+    }
+
     // MARK: - 切换服务配置
 
     /// 应用一组新的服务配置（issuer 与账号服务基地址）。会清空 Discovery / 端点缓存、

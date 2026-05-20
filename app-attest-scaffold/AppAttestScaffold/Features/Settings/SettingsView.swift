@@ -15,6 +15,7 @@ struct SettingsView: View {
     @State private var showBindSheet = false
     @State private var showUnbindConfirm = false
     @State private var showSignOutConfirm = false
+    @State private var showWipeConfirm = false
     @State private var pendingIdentityId: String?
 
     var body: some View {
@@ -23,6 +24,7 @@ struct SettingsView: View {
                 profileSection
                 securitySection
                 signOutSection
+                wipeAllSection
             }
             .navigationTitle("账号与安全")
             .navigationBarTitleDisplayMode(.inline)
@@ -58,6 +60,18 @@ struct SettingsView: View {
                     Task { await session.signOut() }
                 }
                 Button("取消", role: .cancel) {}
+            }
+            .confirmationDialog(
+                "确认抹掉所有数据?",
+                isPresented: $showWipeConfirm,
+                titleVisibility: .visible
+            ) {
+                Button("抹掉所有数据", role: .destructive) {
+                    Task { await session.wipeAllData() }
+                }
+                Button("取消", role: .cancel) {}
+            } message: {
+                Text("将清除所有本地数据并恢复到刚安装的状态，再次打开应用可重新匿名试用。")
             }
         }
     }
@@ -141,7 +155,23 @@ struct SettingsView: View {
                 }
             }
         } footer: {
-            Text("将清除访问令牌、设备密钥与本地账号缓存。")
+            Text("清除访问令牌、设备密钥与本地账号缓存。登出后不可再次匿名试用，仅允许手机号登录。")
+        }
+    }
+
+    private var wipeAllSection: some View {
+        Section {
+            Button(role: .destructive) {
+                showWipeConfirm = true
+            } label: {
+                HStack {
+                    Spacer()
+                    Text("抹掉所有数据")
+                    Spacer()
+                }
+            }
+        } footer: {
+            Text("清除所有本地数据并恢复到刚安装状态，下次打开应用将可重新匿名试用。")
         }
     }
 }
