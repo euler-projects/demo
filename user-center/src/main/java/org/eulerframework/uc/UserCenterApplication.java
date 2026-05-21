@@ -17,7 +17,9 @@
 package org.eulerframework.uc;
 
 import org.eulerframework.common.util.StringUtils;
+import org.eulerframework.security.authentication.appattest.AppAttestAttestationRegistration;
 import org.eulerframework.security.oauth2.core.oidc.EulerOidcScopes;
+import org.eulerframework.security.oauth2.server.authorization.web.EulerOAuth2AttestationBasedClientAuthenticationFilter;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -30,6 +32,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationGrantAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.util.CollectionUtils;
@@ -90,6 +93,24 @@ public class UserCenterApplication {
                             .collect(Collectors.toSet());
                     if (!CollectionUtils.isEmpty(authorities)) {
                         context.getClaims().claim(EulerOidcScopes.AUTHORITIES, authorities);
+                    }
+                }
+            }
+
+            // Inject app_id claim ("<teamId>.<bundleId>", Apple App Identifier
+            // format) when the request was carried by a verified App Attest
+            // device. The verified registration is propagated by the grant
+            // converter via the parent additionalParameters map under
+            // VERIFIED_CLIENT_ATTESTATION_PARAMETER, so any grant type
+            // (currently OTP / app_assertion) is supported uniformly.
+            if (context.getAuthorizationGrant() instanceof OAuth2AuthorizationGrantAuthenticationToken grant) {
+                Object value = grant.getAdditionalParameters().get(
+                        EulerOAuth2AttestationBasedClientAuthenticationFilter.VERIFIED_CLIENT_ATTESTATION_PARAMETER);
+                if (value instanceof AppAttestAttestationRegistration reg) {
+                    String teamId = reg.getTeamId();
+                    String bundleId = reg.getBundleId();
+                    if (StringUtils.hasText(teamId) && StringUtils.hasText(bundleId)) {
+                        context.getClaims().claim("app_id", teamId + "." + bundleId);
                     }
                 }
             }
