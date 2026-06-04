@@ -27,6 +27,7 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.core.Authentication;
@@ -41,7 +42,10 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
+import java.security.MessageDigest;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -76,6 +80,22 @@ public class UserCenterApplication {
     private static final String AUTHORIZED_SCOPE_KEY = OAuth2Authorization.class.getName()
             .concat(".AUTHORIZED_SCOPE");
 
+    /**
+     * Apple App Attest AAGUID for production environment.
+     */
+    private static final byte[] PRODUCTION_AAGUID = {
+            'a', 'p', 'p', 'a', 't', 't', 'e', 's', 't',
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    };
+
+    /**
+     * Apple App Attest AAGUID for development environment.
+     */
+    private static final byte[] DEVELOPMENT_AAGUID = {
+            'a', 'p', 'p', 'a', 't', 't', 'e', 's', 't',
+            'd', 'e', 'v', 'e', 'l', 'o', 'p'
+    };
+
     @Bean
     public OAuth2TokenCustomizer<JwtEncodingContext> auth2TokenCustomizer() {
         return context -> {
@@ -100,13 +120,37 @@ public class UserCenterApplication {
                 }
             }
 
+            // Inject verified app metadata from Apple App Attest attestation into the JWT access token.
+            // When present, the resulting JWT will contain a "vapp" (verified app) claim, e.g.:
+            //
+            //   {
+            //     "vapp": {
+            //       "bid": "com.example.MyApp",
+            //       "env": 0
+            //     }
+            //   }
+            //
+            // Where "bid" is the app's bundle identifier, and "env" indicates the attestation
+            // environment: 0 = production, 1 = development.
             if (context.getAuthorizationGrant() instanceof OAuth2AuthorizationGrantAuthenticationToken grant) {
                 Object value = grant.getAdditionalParameters().get(
                         EulerOAuth2AttestationBasedClientAuthenticationFilter.VERIFIED_CLIENT_ATTESTATION_PARAMETER);
                 if (value instanceof AppAttestAttestationRegistration reg) {
                     String bundleId = reg.getBundleId();
+                    byte[] aaguid = reg.getAaguid();
+                    Map<String, Object> verifiedAppMetadata = new HashMap<>(4);
                     if (StringUtils.hasText(bundleId)) {
-                        context.getClaims().claim(EulerOidcClaimNames.BUNDLE_ID, bundleId);
+                        verifiedAppMetadata.put(EulerOidcClaimNames.VERIFIED_APP_METADATA_BUNDLE_ID, bundleId);
+                    }
+                    if (aaguid != null) {
+                        if (MessageDigest.isEqual(aaguid, PRODUCTION_AAGUID)) {
+                            verifiedAppMetadata.put(EulerOidcClaimNames.VERIFIED_APP_METADATA_ENVIRONMENT, 0);
+                        } else if (MessageDigest.isEqual(aaguid, DEVELOPMENT_AAGUID)) {
+                            verifiedAppMetadata.put(EulerOidcClaimNames.VERIFIED_APP_METADATA_ENVIRONMENT, 1);
+                        }
+                    }
+                    if (!verifiedAppMetadata.isEmpty()) {
+                        context.getClaims().claim(EulerOidcClaimNames.VERIFIED_APP_METADATA, verifiedAppMetadata);
                     }
                 }
             }
