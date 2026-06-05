@@ -179,6 +179,21 @@ public class CompositeUserAuthenticationFactorService implements UserAuthenticat
     }
 
     @Override
+    @Transactional
+    public UserAuthenticationFactor update(String userId, String factorId, MultiValueMap<String, String> params) {
+        Assert.hasText(userId, "userId must not be empty");
+        Assert.hasText(factorId, "factorId must not be empty");
+        Assert.notNull(params, "params must not be null");
+        UserAuthenticationFactorEntity entity = this.factorRepository.findByIdAndUserId(factorId, userId)
+                .orElseThrow(() -> new UserAuthenticationFactorNotFoundException(factorId));
+        UserAuthenticationFactorService backend = this.routes.get(entity.getFactorType());
+        if (backend == null) {
+            throw new UnsupportedFactorTypeException(entity.getFactorType());
+        }
+        return backend.update(userId, factorId, params);
+    }
+
+    @Override
     public void deleteById(String userId, String factorId) {
         Assert.hasText(userId, "userId must not be empty");
         Assert.hasText(factorId, "factorId must not be empty");

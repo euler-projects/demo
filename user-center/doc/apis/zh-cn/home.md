@@ -12,6 +12,7 @@
 ## 登录身份接口
 
 - [绑定登录身份](APIs-%23-User-Identities-Create.md)
+- [更新登录身份 (PUT)](APIs-%23-User-Identities-Update.md)
 - [查询指定登录身份](APIs-%23-User-Identities-Get.md)
 - [列出全部登录身份](APIs-%23-User-Identities-List.md)
 - [删除登录身份](APIs-%23-User-Identities-Delete.md)

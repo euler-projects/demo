@@ -18,6 +18,7 @@ package org.eulerframework.uc.service;
 import org.eulerframework.security.authentication.factor.IdentifierConflictException;
 import org.eulerframework.security.authentication.factor.InvalidAuthenticationFactorRequestException;
 import org.eulerframework.security.authentication.factor.UserAuthenticationFactor;
+import org.eulerframework.security.authentication.factor.UserAuthenticationFactorNotFoundException;
 import org.eulerframework.security.authentication.factor.UserAuthenticationFactorService;
 import org.eulerframework.security.authentication.otp.OtpTicketService;
 import org.eulerframework.security.authentication.otp.OtpVerification;
@@ -173,6 +174,59 @@ public class PhoneUserAuthenticationFactorService implements UserAuthenticationF
         UserAuthenticationFactorPhoneEntity child = new UserAuthenticationFactorPhoneEntity();
         child.setFactorId(parent.getId());
         child.setPhone(originalIdentifier);
+        this.phoneRepository.save(child);
+
+        return toModel(parent, child);
+    }
+
+    @Override
+    @Transactional
+    public UserAuthenticationFactor update(String userId, String factorId, MultiValueMap<String, String> params) {
+        Assert.hasText(userId, "userId must not be empty");
+        Assert.hasText(factorId, "factorId must not be empty");
+        Assert.notNull(params, "params must not be null");
+
+        UserAuthenticationFactorEntity parent = this.factorRepository
+                .findByIdAndUserIdAndFactorType(factorId, userId, FACTOR_TYPE)
+                .orElseThrow(() -> new UserAuthenticationFactorNotFoundException(factorId));
+
+        String otpTicket = params.getFirst(PARAM_OTP_TICKET);
+        String otp = params.getFirst(PARAM_OTP);
+        if (!StringUtils.hasText(otpTicket)) {
+            throw new InvalidAuthenticationFactorRequestException("otp_ticket is required");
+        }
+        if (!StringUtils.hasText(otp)) {
+            throw new InvalidAuthenticationFactorRequestException("otp is required");
+        }
+
+        OtpVerification verification = this.otpTicketService.consume(otpTicket, null, otp, null);
+        if (verification == null) {
+            throw new InvalidAuthenticationFactorRequestException("otp_ticket consumption failed");
+        }
+        String phone = verification.recipient();
+        if (!StringUtils.hasText(phone)) {
+            throw new InvalidAuthenticationFactorRequestException("otp_ticket carries no recipient");
+        }
+
+        String newIdentifier = PhoneIdentifierHasher.hash(phone);
+        // Allow updating to the same phone (no-op on identifier), but reject
+        // if a *different* account already owns the new identifier.
+        if (!newIdentifier.equals(parent.getIdentifier())
+                && this.factorRepository.existsByFactorTypeAndIdentifier(FACTOR_TYPE, newIdentifier)) {
+            throw new IdentifierConflictException("phone already bound");
+        }
+
+        Instant now = Instant.now();
+        parent.setIdentifier(newIdentifier);
+        parent.setLastVerifiedAt(now);
+        this.factorRepository.save(parent);
+
+        UserAuthenticationFactorPhoneEntity child = this.phoneRepository.findById(factorId).orElse(null);
+        if (child == null) {
+            child = new UserAuthenticationFactorPhoneEntity();
+            child.setFactorId(factorId);
+        }
+        child.setPhone(phone);
         this.phoneRepository.save(child);
 
         return toModel(parent, child);
