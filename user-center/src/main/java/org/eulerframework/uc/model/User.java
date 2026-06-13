@@ -1,6 +1,7 @@
 package org.eulerframework.uc.model;
 
 import org.eulerframework.model.AbstractAuditingModel;
+import org.eulerframework.resource.Tag;
 import org.eulerframework.security.core.EulerUser;
 import org.eulerframework.security.core.userdetails.EulerUserDetails;
 import org.eulerframework.uc.util.UserCenterModelUtils;
@@ -16,7 +17,8 @@ public class User extends AbstractAuditingModel implements EulerUser {
     private String email;
     private String phone;
     private String password;
-    private Collection<Authority> authorities;
+    private Collection<Authority> authorities = Collections.emptyList();
+    private Collection<Tag> tags = Collections.emptyList();
     private boolean accountNonExpired;
     private boolean accountNonLocked;
     private boolean credentialsNonExpired;
@@ -75,6 +77,15 @@ public class User extends AbstractAuditingModel implements EulerUser {
     }
 
     @Override
+    public Collection<Tag> getTags() {
+        return tags;
+    }
+
+    public void setTags(Collection<Tag> tags) {
+        this.tags = tags;
+    }
+
+    @Override
     public boolean isAccountNonExpired() {
         return accountNonExpired;
     }
@@ -124,6 +135,11 @@ public class User extends AbstractAuditingModel implements EulerUser {
                 .orElse(Collections.emptyList())
                 .stream()
                 .map(UserCenterModelUtils::toAuthority)
+                .collect(Collectors.toList()));
+        this.setTags(Optional.ofNullable(userDetails.getTags())
+                .orElse(Collections.emptyList())
+                .stream()
+                .map(tag -> new Tag(tag.key(), tag.value())) // copy
                 .collect(Collectors.toList()));
     }
 

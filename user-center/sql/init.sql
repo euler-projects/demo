@@ -49,6 +49,22 @@ create table t_authority
   default collate utf8mb4_bin
     comment 'Authorities';
 
+create table t_user_tag
+(
+    id            bigint auto_increment,
+    user_id       varchar(36)  null,
+    tag_k         varchar(128) not null,
+    tag_v         varchar(255) null,
+    created_date  datetime(3)  not null comment 'Created time',
+    modified_date datetime(3)  not null comment 'Last modified time',
+    primary key (id),
+    unique key uk_user_tag_uid_k(user_id, tag_k),
+    index idx_user_tag_k(tag_k)
+) engine = innodb
+  default character set utf8mb4
+  default collate utf8mb4_bin
+    comment 'User tags';
+
 INSERT INTO t_user (id, username, password, email, phone, is_account_non_expired, is_account_non_locked,
                     is_credentials_non_expired, is_enabled, created_date, modified_date)
 VALUES ('00000000-0000-0000-0000-000000000000', 'root', null, null, null, true, false, false, false, now(), now());

@@ -1,9 +1,11 @@
 package org.eulerframework.uc.util;
 
 import org.eulerframework.data.util.AuditingEntityUtils;
+import org.eulerframework.resource.Tag;
 import org.eulerframework.security.core.EulerGrantedAuthority;
 import org.eulerframework.uc.entity.AuthorityEntity;
 import org.eulerframework.uc.entity.UserEntity;
+import org.eulerframework.uc.entity.UserTagEntity;
 import org.eulerframework.uc.model.Authority;
 import org.eulerframework.uc.model.User;
 import org.springframework.security.core.GrantedAuthority;
@@ -12,7 +14,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class UserCenterModelUtils {
-    public static User toUser(UserEntity entity, Collection<AuthorityEntity> authorityEntities) {
+    public static User toUser(UserEntity entity, Collection<AuthorityEntity> authorityEntities, Collection<UserTagEntity> userTagEntities) {
         if (entity == null) {
             return null;
         }
@@ -34,6 +36,12 @@ public abstract class UserCenterModelUtils {
                 .orElse(Collections.emptyList())
                 .stream()
                 .map(UserCenterModelUtils::toAuthority)
+                .collect(Collectors.toList()));
+
+        model.setTags(Optional.ofNullable(userTagEntities)
+                .orElse(Collections.emptyList())
+                .stream()
+                .map(UserCenterModelUtils::toTag)
                 .collect(Collectors.toList()));
 
         return model;
@@ -87,6 +95,14 @@ public abstract class UserCenterModelUtils {
         model.setName(entity.getName());
         model.setDescription(entity.getDescription());
         return model;
+    }
+
+    public static Tag toTag(UserTagEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+
+        return new Tag(entity.getTagKey(), entity.getTagValue());
     }
 
     public static Authority toAuthority(GrantedAuthority grantedAuthority) {

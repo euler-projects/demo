@@ -63,6 +63,13 @@ public class UserDao {
                 .fetch();
     }
 
+    public List<UserTagEntity> queryUserTagEntitiesByUserId(String userId) {
+        QUserTagEntity userTagEntity = QUserTagEntity.userTagEntity;
+        return this.jpaQueryFactory.selectFrom(userTagEntity)
+                .where(userTagEntity.userId.eq(userId))
+                .fetch();
+    }
+
     public AuthorityEntity queryAuthorityEntity(String authority) {
         QAuthorityEntity authorityEntity = QAuthorityEntity.authorityEntity;
         return this.jpaQueryFactory.selectFrom(authorityEntity)
@@ -97,6 +104,13 @@ public class UserDao {
         QUserAuthorityEntity userAuthorityEntity = QUserAuthorityEntity.userAuthorityEntity;
         this.jpaQueryFactory.delete(userAuthorityEntity)
                 .where(userAuthorityEntity.userId.eq(userId))
+                .execute();
+    }
+
+    public void deleteUserTagsByUserId(String userId) {
+        QUserTagEntity userTagEntity = QUserTagEntity.userTagEntity;
+        this.jpaQueryFactory.delete(userTagEntity)
+                .where(userTagEntity.userId.eq(userId))
                 .execute();
     }
 

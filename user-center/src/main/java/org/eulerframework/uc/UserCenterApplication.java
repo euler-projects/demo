@@ -17,7 +17,9 @@
 package org.eulerframework.uc;
 
 import org.eulerframework.common.util.StringUtils;
+import org.eulerframework.resource.Tag;
 import org.eulerframework.security.authentication.appattest.AppAttestAttestationRegistration;
+import org.eulerframework.security.core.userdetails.EulerUserDetails;
 import org.eulerframework.security.oauth2.core.oidc.EulerOidcClaimNames;
 import org.eulerframework.security.oauth2.core.oidc.EulerOidcScopes;
 import org.eulerframework.security.oauth2.server.authorization.web.EulerOAuth2AttestationBasedClientAuthenticationFilter;
@@ -27,12 +29,12 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
-import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationGrantAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
@@ -43,10 +45,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
 import java.security.MessageDigest;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @SpringBootApplication
@@ -100,10 +99,27 @@ public class UserCenterApplication {
     public OAuth2TokenCustomizer<JwtEncodingContext> auth2TokenCustomizer() {
         return context -> {
             boolean includeAuthorities = false;
-            //boolean includeEulerOidcClaims = false;
+            boolean includeEulerOidcClaims = false;
             if (context.get(AUTHORIZED_SCOPE_KEY) instanceof Collection<?> scopes) {
                 includeAuthorities = scopes.contains(EulerOidcScopes.AUTHORITIES);
-                //includeEulerOidcClaims = scopes.contains(OidcScopes.OPENID);
+                includeEulerOidcClaims = scopes.contains(OidcScopes.OPENID);
+            }
+
+            if (includeEulerOidcClaims) {
+                if (context.get(PRINCIPAL_AUTHENTICATION_KEY) instanceof UsernamePasswordAuthenticationToken token
+                        && token.getPrincipal() instanceof EulerUserDetails eulerUserDetails) {
+                    List<Tag> tags = eulerUserDetails.getTags();
+                    if (tags != null && !tags.isEmpty()) {
+                        List<Map<String, String>> tagClaim = tags.stream()
+                                .map(tag -> tag.value() == null
+                                        ? Map.of(EulerOidcClaimNames.TAGS_KEY, tag.key())
+                                        : Map.of(
+                                                EulerOidcClaimNames.TAGS_KEY, tag.key(),
+                                                EulerOidcClaimNames.TAGS_VALUE, tag.value()))
+                                .toList();
+                        context.getClaims().claim(EulerOidcClaimNames.TAGS, tagClaim);
+                    }
+                }
             }
 
             if (includeAuthorities) {
