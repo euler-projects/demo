@@ -7,7 +7,7 @@
 ### Url
 
 ```http
-GET /admin/appattest/app?offset={offset}&limit={limit}
+GET /admin/api/appattest/apps?offset={offset}&limit={limit}
 ```
 
 ### Authorization

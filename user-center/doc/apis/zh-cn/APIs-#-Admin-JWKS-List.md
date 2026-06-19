@@ -7,7 +7,7 @@
 ### Url
 
 ```http
-GET /admin/oauth2/jwks
+GET /admin/api/oauth2/jwks
 ```
 
 ### Authorization

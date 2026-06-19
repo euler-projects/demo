@@ -7,7 +7,7 @@
 ### Url
 
 ```http
-GET /admin/oauth2/client/{registrationId}
+GET /admin/api/oauth2/clients/{registrationId}
 ```
 
 ### Authorization

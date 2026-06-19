@@ -12,7 +12,7 @@
 ### Url
 
 ```http
-PATCH /admin/oauth2/jwks/{kid}
+PATCH /admin/api/oauth2/jwks/{kid}
 ```
 
 ### Authorization

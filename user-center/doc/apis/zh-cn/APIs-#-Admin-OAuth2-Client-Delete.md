@@ -7,7 +7,7 @@
 ### Url
 
 ```http
-DELETE /admin/oauth2/client/{registrationId}
+DELETE /admin/api/oauth2/clients/{registrationId}
 ```
 
 ### Authorization

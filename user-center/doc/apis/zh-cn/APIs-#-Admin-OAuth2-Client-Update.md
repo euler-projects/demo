@@ -7,7 +7,7 @@
 ### Url
 
 ```http
-PUT /admin/oauth2/client/{registrationId}
+PUT /admin/api/oauth2/clients/{registrationId}
 ```
 
 ### Authorization

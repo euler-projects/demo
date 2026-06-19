@@ -10,20 +10,26 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collection;
 
+/**
+ * Endpoints describing the currently authenticated user.
+ *
+ * <p>Mounted under both {@code /user} and {@code /api/user}; both refer
+ * to the same singular resource (the caller).
+ */
 @RestController
 @RequestMapping({"user", "api/user"})
 public class UserController {
     private UserContext userContext;
 
-    @GetMapping(path = {"", "whoami"})
+    @GetMapping
     public Object whoami() {
         EulerUserDetails userDetails = userContext.getUserDetails();
         userDetails.eraseCredentials();
         return userDetails;
     }
 
-    @GetMapping(path = {"authority", "authorities"})
-    public Collection<? extends GrantedAuthority> getUserAuthority() {
+    @GetMapping("authorities")
+    public Collection<? extends GrantedAuthority> getUserAuthorities() {
         return userContext.getUserDetails().getAuthorities();
     }
 

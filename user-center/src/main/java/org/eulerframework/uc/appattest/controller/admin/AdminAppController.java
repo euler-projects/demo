@@ -46,7 +46,7 @@ import java.util.List;
  * as the OAuth2 client admin API.
  */
 @RestController
-@RequestMapping("admin/api/appattest/app")
+@RequestMapping("admin/api/appattest/apps")
 @PreAuthorize("hasAnyAuthority('root', 'admin')")
 public class AdminAppController {
 

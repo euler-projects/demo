@@ -5,18 +5,32 @@ import org.eulerframework.security.core.EulerUser;
 import org.eulerframework.security.core.userdetails.EulerUserDetails;
 import org.eulerframework.security.util.UserDetailsUtils;
 import org.eulerframework.uc.model.User;
+import org.eulerframework.uc.model.UserPasswordResetRequest;
 import org.eulerframework.uc.service.UserService;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.CredentialsContainer;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsPasswordService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * Admin-facing CRUD endpoints for users.
+ */
 @RestController
-@RequestMapping("admin/api/user")
+@RequestMapping("admin/api/users")
 @PreAuthorize("hasAnyAuthority('root', 'admin')")
 public class AdminUserController {
     private final UserService userService;
@@ -51,7 +65,7 @@ public class AdminUserController {
         return creaetedUser;
     }
 
-    @GetMapping("list")
+    @GetMapping
     public List<EulerUser> listUsers(
             @RequestParam int offset,
             @RequestParam int limit
@@ -62,23 +76,31 @@ public class AdminUserController {
                 .toList();
     }
 
-    @PutMapping
-    public User updateUser(@RequestBody User user) {
+    @PutMapping("/{userId}")
+    public User updateUser(@PathVariable String userId, @RequestBody User user) {
+        user.setUserId(userId);
         this.userService.updateUser(user);
-        User updatedUser = this.userService.loadUserById(user.getUserId());
+        User updatedUser = this.userService.loadUserById(userId);
         updatedUser.eraseCredentials();
         return updatedUser;
     }
 
-    @DeleteMapping
-    public void deleteUser(@RequestParam String userId) {
+    @DeleteMapping("/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteUser(@PathVariable String userId) {
         this.userService.deleteUser(userId);
     }
 
-    @PostMapping("reset-password")
-    public void resetPassword(@RequestParam String userId, @RequestParam String password) {
+    /**
+     * Replaces the user's password.
+     */
+    @PutMapping("/{userId}/password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void resetPassword(@PathVariable String userId,
+                              @RequestBody UserPasswordResetRequest request) {
         User loadedUser = this.userService.loadUserById(userId);
         UserDetails userDetails = UserDetailsUtils.toEulerUserDetails(loadedUser);
-        this.userDetailsPasswordService.updatePassword(userDetails, this.passwordEncoder.encode(password));
+        this.userDetailsPasswordService.updatePassword(userDetails,
+                this.passwordEncoder.encode(request.password()));
     }
 }

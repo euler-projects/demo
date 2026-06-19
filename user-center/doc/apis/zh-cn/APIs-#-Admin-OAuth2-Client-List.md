@@ -7,7 +7,7 @@
 ### Url
 
 ```http
-GET /admin/oauth2/client?offset={offset}&limit={limit}
+GET /admin/api/oauth2/clients?offset={offset}&limit={limit}
 ```
 
 ### Authorization

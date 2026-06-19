@@ -40,7 +40,7 @@
         "authMethod": "Auth method",
         "grantTypes": "Grant types",
         "scopes": "Scopes",
-        "action": "Action"
+        "action": "Actions"
       },
       "stub": "Action '{{action}}' on {{name}} is not wired yet."
     }
@@ -58,7 +58,7 @@
       "phone": "Phone",
       "authorities": "Authorities",
       "status": "Status",
-      "action": "Action"
+      "action": "Actions"
     },
     "status": {
       "disabled": "Account disabled",

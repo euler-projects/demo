@@ -7,7 +7,7 @@
 ### Url
 
 ```http
-DELETE /admin/appattest/app/{registrationId}
+DELETE /admin/api/appattest/apps/{registrationId}
 ```
 
 ### Authorization

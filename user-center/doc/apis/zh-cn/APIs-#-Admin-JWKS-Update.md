@@ -7,7 +7,7 @@
 ### Url
 
 ```http
-PUT /admin/oauth2/jwks/{kid}
+PUT /admin/api/oauth2/jwks/{kid}
 ```
 
 ### Authorization

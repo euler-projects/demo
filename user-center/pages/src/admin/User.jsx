@@ -24,7 +24,7 @@ const getRandomuserParams = (params) => ({
 });
 
 const listUsers = async ({offset, limit}) => {
-    return await fetch(`/admin/api/user/list?offset=${offset}&limit=${limit}`)
+    return await fetch(`/admin/api/users?offset=${offset}&limit=${limit}`)
         .then(res => res.json())
         .then(rows => {
             return rows;
@@ -59,7 +59,7 @@ const createUser = async (user) => {
     })
         .then(res => res.json())
         .then(csrf => {
-            return fetch(`/admin/api/user`, {
+            return fetch(`/admin/api/users`, {
                 method: 'POST',
                 body: JSON.stringify(requestData),
                 headers: {
@@ -84,7 +84,7 @@ const updateUser = async (user) => {
     })
         .then(res => res.json())
         .then(csrf => {
-            return fetch(`/admin/api/user`, {
+            return fetch(`/admin/api/users/${encodeURIComponent(user.userId)}`, {
                 method: 'PUT',
                 body: JSON.stringify(requestData),
                 headers: {
@@ -101,10 +101,8 @@ const updateUser = async (user) => {
 
 const resetPassword = async (user) => {
     let requestData = {
-        userId: user.userId,
         password: user.password
     };
-    const encodedData = new URLSearchParams(requestData).toString();
     return await fetch("/_csrf", {
         headers: {
             "Accept": "application/json"
@@ -112,15 +110,18 @@ const resetPassword = async (user) => {
     })
         .then(res => res.json())
         .then(csrf => {
-            return fetch(`/admin/api/user/reset-password`, {
-                method: 'POST',
-                body: encodedData,
+            return fetch(`/admin/api/users/${encodeURIComponent(user.userId)}/password`, {
+                method: 'PUT',
+                body: JSON.stringify(requestData),
                 headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
+                    "Content-Type": "application/json",
                     [csrf.headerName]: csrf.token
                 },
             })
                 .then(res => {
+                    if (res.status === 204) {
+                        return null;
+                    }
                     const contentLength = res.headers.get("Content-Length");
                     if (contentLength === "0") {
                         return res.text();
@@ -141,13 +142,16 @@ const deleteUser = async (userId) => {
     })
         .then(res => res.json())
         .then(csrf => {
-            return fetch(`/admin/api/user?userId=${userId}`, {
+            return fetch(`/admin/api/users/${encodeURIComponent(userId)}`, {
                 method: 'DELETE',
                 headers: {
                     [csrf.headerName]: csrf.token
                 },
             })
                 .then(res => {
+                    if (res.status === 204) {
+                        return null;
+                    }
                     const contentLength = res.headers.get("Content-Length");
                     if (contentLength === "0") {
                         return res.text();
@@ -360,7 +364,8 @@ const User = () => {
         setFormType(OP_TYPE_RESET_PW)
         setModalTitle(t('user.modal.resetPassword'))
         form.setFieldsValue({
-            userId: user.userId
+            userId: user.userId,
+            username: user.username
         });
         setIsModalOpen(true);
     };
@@ -379,6 +384,7 @@ const User = () => {
     };
     const handleCancel = () => {
         setIsModalOpen(false);
+        form.resetFields();
     };
     const onFinish = (userData) => {
         console.log("form submit:", userData);
@@ -524,7 +530,16 @@ const User = () => {
                         label="userId"
                         hidden={true}
                     >
-                        <Input disabled={disabledUnmodifiableInputs}/>
+                        <Input disabled={disabledUnmodifiableInputs} autoComplete="off"/>
+                    </Form.Item>
+                ) : null}
+                {isResetPw ? (
+                    <Form.Item
+                        name="username"
+                        label="username"
+                        hidden={true}
+                    >
+                        <Input autoComplete="username" readOnly/>
                     </Form.Item>
                 ) : null}
                 {showFullUserInputs ? (<Form.Item
@@ -606,7 +621,7 @@ const User = () => {
                             }),
                         ]}
                     >
-                        <Input.Password/>
+                        <Input.Password autoComplete="new-password"/>
                     </Form.Item>
                 ) : null}
                 {showFullUserInputs ? (

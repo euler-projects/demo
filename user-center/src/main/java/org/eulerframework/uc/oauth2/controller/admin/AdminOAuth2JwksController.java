@@ -39,7 +39,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,12 +56,12 @@ import java.util.List;
 @RequestMapping("admin/api/oauth2/jwks")
 @PreAuthorize("hasAnyAuthority('root', 'admin')")
 @ConditionalOnBean(JwkManageService.class)
-public class AdminOAuth2JwksManagementController {
+public class AdminOAuth2JwksController {
 
     private final JwkManageService jwkManageService;
     private final JwkGenerator jwkGenerator;
 
-    public AdminOAuth2JwksManagementController(
+    public AdminOAuth2JwksController(
             JwkManageService jwkManageService, JwkGenerator jwkGenerator) {
         this.jwkManageService = jwkManageService;
         this.jwkGenerator = jwkGenerator;

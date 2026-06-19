@@ -13,7 +13,7 @@ const SCOPES_COLUMN_WIDTH = 200;
 /**
  * Convert a backend payload that may be either an array or a Set/Map
  * projection into a plain array. The Java domain models behind
- * /admin/api/oauth2/client expose Set<String>, which Jackson serializes
+ * /admin/api/oauth2/clients expose Set<String>, which Jackson serializes
  * as a JSON array, but defensively normalize anyway.
  */
 function toArray(value) {
@@ -27,7 +27,7 @@ function toArray(value) {
 }
 
 const listClients = async ({offset, limit}) => {
-    return await fetch(`/admin/api/oauth2/client?offset=${offset}&limit=${limit}`)
+    return await fetch(`/admin/api/oauth2/clients?offset=${offset}&limit=${limit}`)
         .then((res) => res.json())
         .then((rows) => rows);
 };

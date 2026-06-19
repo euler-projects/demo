@@ -7,7 +7,7 @@
 ### Url
 
 ```http
-POST /admin/oauth2/jwks/refresh
+POST /admin/api/oauth2/jwks/refresh
 ```
 
 ### Authorization

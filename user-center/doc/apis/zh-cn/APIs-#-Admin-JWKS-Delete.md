@@ -9,7 +9,7 @@
 ### Url
 
 ```http
-DELETE /admin/oauth2/jwks/{kid}
+DELETE /admin/api/oauth2/jwks/{kid}
 ```
 
 ### Authorization

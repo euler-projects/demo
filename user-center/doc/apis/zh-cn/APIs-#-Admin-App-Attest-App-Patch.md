@@ -7,7 +7,7 @@
 ### Url
 
 ```http
-PATCH /admin/appattest/app/{registrationId}
+PATCH /admin/api/appattest/apps/{registrationId}
 ```
 
 ### Authorization

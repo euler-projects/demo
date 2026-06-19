@@ -7,7 +7,7 @@
 ### Url
 
 ```http
-GET /admin/appattest/app/{registrationId}
+GET /admin/api/appattest/apps/{registrationId}
 ```
 
 ### Authorization

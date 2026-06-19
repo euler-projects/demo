@@ -7,7 +7,7 @@
 ### Url
 
 ```http
-PATCH /admin/oauth2/client/{registrationId}
+PATCH /admin/api/oauth2/clients/{registrationId}
 ```
 
 ### Authorization

@@ -7,7 +7,7 @@
 ### Url
 
 ```http
-POST /admin/oauth2/client
+POST /admin/api/oauth2/clients
 ```
 
 ### Authorization

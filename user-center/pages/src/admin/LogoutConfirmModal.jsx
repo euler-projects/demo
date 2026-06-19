@@ -88,7 +88,11 @@ const LogoutConfirmModal = ({open, onCancel}) => {
                 danger: true,
                 htmlType: 'submit',
                 form: LOGOUT_FORM_ID,
-                loading: !ready && !loadError,
+                // Delay the spinner so a fast /_csrf round-trip does not
+                // briefly inject a LoadingOutlined icon and reflow the
+                // button width (visible as a wide-to-narrow flicker on
+                // open). Slow networks still get the loading affordance.
+                loading: !ready && !loadError ? {delay: 200} : false,
                 disabled: !ready,
             }}
         >

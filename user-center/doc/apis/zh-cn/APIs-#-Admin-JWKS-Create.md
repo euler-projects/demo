@@ -9,7 +9,7 @@
 ### Url
 
 ```http
-POST /admin/oauth2/jwks
+POST /admin/api/oauth2/jwks
 ```
 
 ### Authorization

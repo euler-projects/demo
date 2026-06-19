@@ -70,14 +70,14 @@ const buildMenuItems = (t) => [
         label: t('nav.iam'),
         children: [
             {
-                key: '/user',
+                key: '/users',
                 icon: <UserOutlined/>,
-                label: <Link to="/user">{t('nav.user')}</Link>,
+                label: <Link to="/users">{t('nav.user')}</Link>,
             },
             {
-                key: '/role',
+                key: '/roles',
                 icon: <SafetyCertificateOutlined/>,
-                label: <Link to="/role">{t('nav.role')}</Link>,
+                label: <Link to="/roles">{t('nav.role')}</Link>,
             },
         ],
     },
@@ -87,14 +87,14 @@ const buildMenuItems = (t) => [
         label: t('nav.oauth2'),
         children: [
             {
-                key: '/oauth2/client',
+                key: '/oauth2/clients',
                 icon: <ApiOutlined/>,
-                label: <Link to="/oauth2/client">{t('nav.oauth2_client')}</Link>,
+                label: <Link to="/oauth2/clients">{t('nav.oauth2_client')}</Link>,
             },
             {
-                key: '/oauth2/jwk',
+                key: '/oauth2/jwks',
                 icon: <KeyOutlined/>,
-                label: <Link to="/oauth2/jwk">{t('nav.oauth2_jwk')}</Link>,
+                label: <Link to="/oauth2/jwks">{t('nav.oauth2_jwk')}</Link>,
             },
         ],
     },

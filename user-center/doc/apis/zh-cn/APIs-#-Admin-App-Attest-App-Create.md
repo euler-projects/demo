@@ -7,7 +7,7 @@
 ### Url
 
 ```http
-POST /admin/appattest/app
+POST /admin/api/appattest/apps
 ```
 
 ### Authorization

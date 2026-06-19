@@ -7,7 +7,7 @@
 ### Url
 
 ```http
-POST /admin/oauth2/jwks/cluster/{nodeId}/refresh
+POST /admin/api/oauth2/jwks/cluster/{nodeId}/refresh
 ```
 
 ### Authorization
