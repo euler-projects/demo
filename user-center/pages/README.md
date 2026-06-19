@@ -1,18 +1,18 @@
 # user-center-pages
 
-Admin frontend for the `user-center` project, built with React 19 + Vite 6 + Ant Design 5. Build artifacts are deployed into the parent Spring Boot project (`demo/user-center`) under `resources/static` and `resources/templates/admin`, where the entry page is rendered by Thymeleaf.
+Admin frontend for the `user-center` project, built with React 19 + Vite 8 + Ant Design 6. Build artifacts are deployed into the parent Spring Boot project (`demo/user-center`) under `resources/static` and `resources/templates/admin`, where the entry page is rendered by Thymeleaf.
 
 ## Tech Stack
 
-- React 19 + React Router 7
-- Vite 6 (build / dev server)
-- Ant Design 5
-- ESLint 9
+- React 19 + React Router 8
+- Vite 8 (build / dev server)
+- Ant Design 6 + @ant-design/icons 6
+- ESLint 10
 
 ## Requirements
 
-- Node.js >= 18 (LTS 20 recommended)
-- npm >= 9
+- Node.js >= 22.22.0 (required by `react-router` 8 and `vite` 8)
+- npm >= 10
 
 ## Install
 
@@ -77,13 +77,24 @@ npm run preview
 ```
 pages/
 ├── src/
-│   ├── admin/          # Admin pages (e.g. User.jsx)
+│   ├── admin/          # Admin pages
+│   │   ├── AdminLayout.jsx  # Top header + left sider shell (light theme)
+│   │   └── User.jsx         # User management page
 │   ├── assets/         # Static assets
-│   ├── index.css       # Global styles
-│   └── main.jsx        # Application entry
+│   ├── index.css       # Global styles (light theme baseline)
+│   └── main.jsx        # Application entry (BrowserRouter + nested routes)
 ├── index.html          # Vite entry template (with Thymeleaf placeholders)
 ├── vite.config.js      # Vite configuration
 ├── eslint.config.js    # ESLint configuration
 ├── build.sh            # Build and deploy script
 └── package.json
 ```
+
+## Routing
+
+All admin pages are mounted under `/admin` and wrapped by `AdminLayout`:
+
+- `/admin` -> redirects to `/admin/user`
+- `/admin/user` -> user management page
+
+The layout provides a fixed top header (collapse toggle, breadcrumb-ish title, user dropdown) and a left navigation sider with a light color scheme (`#ffffff` surfaces on a `#f5f7fa` body).
