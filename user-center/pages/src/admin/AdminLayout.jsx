@@ -1,4 +1,4 @@
-import React, {useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {Layout, Menu, Typography, Avatar, Dropdown, theme as antdTheme, ConfigProvider} from 'antd';
 import {
     UserOutlined,
@@ -18,6 +18,7 @@ import {Link, Outlet, useLocation} from 'react-router';
 import {useTranslation} from 'react-i18next';
 
 import {SUPPORTED_LOCALES, getAntdLocale, setLocale} from '../i18n';
+import LogoutConfirmModal from './LogoutConfirmModal';
 
 const {Header, Sider, Content} = Layout;
 
@@ -135,6 +136,8 @@ const resolveSelection = (pathname, items) => {
 
 const AdminLayout = () => {
     const [collapsed, setCollapsed] = useState(false);
+    const [logoutOpen, setLogoutOpen] = useState(false);
+    const [currentUser, setCurrentUser] = useState(null);
     const location = useLocation();
     const {t, i18n} = useTranslation();
     const menuItems = useMemo(() => buildMenuItems(t), [t, i18n.language]);
@@ -144,12 +147,34 @@ const AdminLayout = () => {
     );
     const {token} = antdTheme.useToken();
 
+    // Fetch the current principal once on mount. The /user endpoint
+    // returns the EulerUserDetails of the authenticated user (with
+    // credentials erased server-side); username is rendered in the
+    // header dropdown.
+    useEffect(() => {
+        let cancelled = false;
+        fetch('/user', {headers: {Accept: 'application/json'}})
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+                if (!cancelled && data) setCurrentUser(data);
+            })
+            .catch(() => {
+                /* keep currentUser null; header falls back to placeholder */
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
     const userMenu = {
         items: [
             {key: 'profile', icon: <UserOutlined/>, label: t('header.profile')},
             {type: 'divider'},
             {key: 'logout', icon: <LogoutOutlined/>, label: t('header.logout')},
         ],
+        onClick: ({key}) => {
+            if (key === 'logout') setLogoutOpen(true);
+        },
     };
 
     const localeMenu = {
@@ -296,7 +321,7 @@ const AdminLayout = () => {
                                     }}
                                 >
                                     <Avatar size="small" icon={<UserOutlined/>}/>
-                                    <Typography.Text>admin</Typography.Text>
+                                    <Typography.Text>{currentUser?.username ?? ''}</Typography.Text>
                                 </div>
                             </Dropdown>
                         </div>
@@ -315,6 +340,10 @@ const AdminLayout = () => {
                     </Content>
                 </Layout>
             </Layout>
+            <LogoutConfirmModal
+                open={logoutOpen}
+                onCancel={() => setLogoutOpen(false)}
+            />
         </ConfigProvider>
     );
 };
