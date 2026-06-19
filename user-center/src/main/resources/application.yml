@@ -29,6 +29,9 @@ spring:
     url: jdbc:mysql://${DATABASE_HOST:localhost}:${DATABASE_PORT:3306}/${DATABASE_NAME:euler_uc}?characterEncoding=utf8
     username: ${DATABASE_USERNAME:root}
     password: ${DATABASE_PASSWORD:}
+  flyway:
+    baseline-on-migrate: true
+    placeholder-replacement: false
   jpa:
     hibernate:
       ddl-auto: none

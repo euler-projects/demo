@@ -1,8 +1,5 @@
-create database if not exists :schema_name
-    default character set utf8mb4
-    default collate utf8mb4_bin;
-
-use :schema_name;
+-- Initial schema for user-center.
+-- Database / schema 由部署侧创建，Flyway 仅负责对象级初始化。
 
 create table t_user
 (
@@ -239,4 +236,3 @@ create table oauth2_jwk
   default character set utf8mb4
   default collate utf8mb4_bin
     comment 'JWK repository';
-
