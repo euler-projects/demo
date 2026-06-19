@@ -3,7 +3,7 @@ import React, {useEffect, useMemo, useState} from 'react';
 import {Table, Button, message} from 'antd';
 import {useTranslation} from 'react-i18next';
 
-import {ACTION_COLUMN_WIDTH, OverflowTags, RowActions} from './_shared/tableLayout';
+import {ACTION_COLUMN_WIDTH, OverflowTags, RowActions, computeActionsColumnWidth} from './_shared/tableLayout';
 
 // Page-local width budgets for tag-style columns.
 const AUTH_METHOD_COLUMN_WIDTH = 200;
@@ -84,6 +84,15 @@ const OAuth2Client = () => {
         messageApi.info(t('oauth2.client.stub', {action: actionLabel, name: subject}));
     };
 
+    const actionColumnWidth = useMemo(
+        () => computeActionsColumnWidth([
+            t('oauth2.client.detail'),
+            t('oauth2.client.rotateSecret'),
+            t('oauth2.client.delete'),
+        ], ACTION_COLUMN_WIDTH),
+        [t]
+    );
+
     const columns = useMemo(() => [
         {
             title: t('oauth2.client.column.clientId'),
@@ -127,7 +136,7 @@ const OAuth2Client = () => {
         {
             title: t('oauth2.client.column.action'),
             key: 'action',
-            width: ACTION_COLUMN_WIDTH,
+            width: actionColumnWidth,
             fixed: 'right',
             render: (_, record) => {
                 const actions = [
@@ -138,13 +147,13 @@ const OAuth2Client = () => {
                 return (
                     <RowActions
                         actions={actions}
-                        columnWidth={ACTION_COLUMN_WIDTH}
+                        columnWidth={actionColumnWidth}
                         moreLabel={t('common.more')}
                     />
                 );
             },
         },
-    ], [t]);
+    ], [t, actionColumnWidth]);
 
     return (
         <div>

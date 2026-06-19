@@ -3,7 +3,7 @@ import React, {useEffect, useMemo, useState} from 'react';
 import {Table, Button, Modal, Form, Input, Select, Checkbox} from 'antd';
 import {useTranslation, Trans} from 'react-i18next';
 
-import {ACTION_COLUMN_WIDTH, OverflowTags, RowActions} from './_shared/tableLayout';
+import {ACTION_COLUMN_WIDTH, OverflowTags, RowActions, computeActionsColumnWidth} from './_shared/tableLayout';
 
 // Page-local width budgets for tag-style columns; row-action column
 // width is shared across admin pages via ACTION_COLUMN_WIDTH.
@@ -237,6 +237,16 @@ const User = () => {
         return disable.length >= enable.length ? disable : enable;
     }, [t]);
 
+    const actionColumnWidth = useMemo(
+        () => computeActionsColumnWidth([
+            t('user.detail'),
+            toggleMeasureLabel,
+            t('user.resetPassword'),
+            t('user.delete'),
+        ], ACTION_COLUMN_WIDTH),
+        [t, toggleMeasureLabel]
+    );
+
     const columns = useMemo(() => [
         {
             title: t('user.column.username'),
@@ -295,7 +305,7 @@ const User = () => {
         {
             title: t('user.column.action'),
             key: 'action',
-            width: ACTION_COLUMN_WIDTH,
+            width: actionColumnWidth,
             fixed: 'right',
             render: (_, record) => {
                 const toggleType = record.enabled ? OP_TYPE_DISABLE : OP_TYPE_ENABLE;
@@ -308,14 +318,14 @@ const User = () => {
                 return (
                     <RowActions
                         actions={actions}
-                        columnWidth={ACTION_COLUMN_WIDTH}
+                        columnWidth={actionColumnWidth}
                         moreLabel={t('common.more')}
                         measureLabels={{toggle: toggleMeasureLabel}}
                     />
                 );
             },
         },
-    ], [t, toggleMeasureLabel]);
+    ], [t, toggleMeasureLabel, actionColumnWidth]);
 
     const prefixSelector = (
         <Form.Item name="prefix" noStyle>

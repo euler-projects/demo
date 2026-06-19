@@ -35,6 +35,27 @@ export function measureLabelWidth(text) {
 }
 
 /**
+ * Compute the row-action column width that exactly fits what will be
+ * rendered, capped at `maxWidth`. Delegates packing to {@link splitActions}
+ * so the column hugs the visible cell whether the full set fits inline
+ * or some actions collapse into the kebab.
+ *
+ * Pass the widest stable label per slot for toggle-style actions to
+ * avoid horizontal jitter when row state changes.
+ */
+export function computeActionsColumnWidth(labels, maxWidth = ACTION_COLUMN_WIDTH) {
+    if (!labels || labels.length === 0) return CELL_PADDING;
+    const blueprint = labels.map((label, i) => ({key: i, label}));
+    const {visible, overflow} = splitActions(blueprint, maxWidth);
+    const visibleWidth = visible.reduce(
+        (sum, a, i) => sum + measureLabelWidth(a.label) + (i > 0 ? ACTION_SPACING : 0),
+        0
+    );
+    const moreWidth = overflow.length > 0 ? ACTION_SPACING + MORE_BUTTON : 0;
+    return Math.min(maxWidth, Math.ceil(visibleWidth + moreWidth + CELL_PADDING));
+}
+
+/**
  * Distribute actions between the visible row and the overflow menu
  * given a fixed column width. Always keeps at least one action visible
  * so a primary affordance is preserved even in narrow layouts.
