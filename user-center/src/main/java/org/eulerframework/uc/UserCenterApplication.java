@@ -131,6 +131,7 @@ public class UserCenterApplication {
         source.registerCorsConfiguration("/oauth2/userinfo", openBearer);
         source.registerCorsConfiguration("/oauth2/challenge", openBearer);
         source.registerCorsConfiguration("/.well-known/**", openBearer);
+        source.registerCorsConfiguration("/otp/**", openBearer);
 
         FilterRegistrationBean<CorsFilter> filterRegistrationBean = new FilterRegistrationBean<>();
         filterRegistrationBean.setFilter(new CorsFilter(source));
