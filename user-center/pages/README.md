@@ -8,6 +8,7 @@ Admin frontend for the `user-center` project, built with React 19 + Vite 8 + Ant
 - Vite 8 (build / dev server)
 - Ant Design 6 + @ant-design/icons 6
 - ESLint 10
+- i18next 26 + react-i18next 17 + @fluent/langneg 0.7
 
 ## Requirements
 
@@ -80,6 +81,10 @@ pages/
 │   ├── admin/          # Admin pages
 │   │   ├── AdminLayout.jsx  # Top header + left sider shell (light theme)
 │   │   └── User.jsx         # User management page
+│   ├── i18n/           # Internationalization runtime
+│   │   ├── index.js         # i18next init, setLocale, getAntdLocale
+│   │   ├── match.js         # SUPPORTED_LOCALES + @fluent/langneg matcher
+│   │   └── locales/         # zh-Hans.json, en.json
 │   ├── assets/         # Static assets
 │   ├── index.css       # Global styles (light theme baseline)
 │   └── main.jsx        # Application entry (BrowserRouter + nested routes)
@@ -98,3 +103,39 @@ All admin pages are mounted under `/admin` and wrapped by `AdminLayout`:
 - `/admin/user` -> user management page
 
 The layout provides a fixed top header (collapse toggle, breadcrumb-ish title, user dropdown) and a left navigation sider with a light color scheme (`#ffffff` surfaces on a `#f5f7fa` body).
+
+## Internationalization
+
+The admin console ships with two locales:
+
+| Tag | Language |
+|---|---|
+| `zh-Hans` | Simplified Chinese |
+| `en` | English |
+
+The active locale is exposed consistently across the application:
+
+- i18next instance language (`i18n.language`)
+- Resource files under [src/i18n/locales/](file:///Users/cfrost/Documents/code/GitHub/euler-projects/demo/user-center/pages/src/i18n/locales)
+- `localStorage` key `admin.locale`
+- `document.documentElement.lang`
+- LocaleSwitcher menu `key` in the top header
+
+Default locale is `en`. On first load the runtime resolves the active locale through `@fluent/langneg`, which carries a CLDR likely-subtags subset and therefore performs script-aware matching out of the box. Examples:
+
+| Browser request | Resolved |
+|---|---|
+| `zh-CN`, `zh-SG`, `zh-Hans-*` | `zh-Hans` |
+| `zh-Hans` | `zh-Hans` |
+| `en-US`, `en-GB`, `en-AU`, `en` | `en` |
+| `zh-TW`, `zh-HK`, `zh-Hant` | `en` (matching strategy will not silently fall through to Simplified Chinese) |
+| anything else | `en` |
+
+The user can override the auto-detected locale via the globe icon in the top header; the choice is persisted in `localStorage` and restored on the next visit.
+
+### Adding a new locale
+
+1. Create `src/i18n/locales/<tag>.json` with the same key tree as the existing files.
+2. Register the tag in `SUPPORTED_LOCALES` inside [src/i18n/match.js](file:///Users/cfrost/Documents/code/GitHub/euler-projects/demo/user-center/pages/src/i18n/match.js).
+3. Import the resource file and add a row to the antd locale mapping in [src/i18n/index.js](file:///Users/cfrost/Documents/code/GitHub/euler-projects/demo/user-center/pages/src/i18n/index.js) (`getAntdLocale`).
+4. Add a `language.<tag>` translation in every locale file so the LocaleSwitcher can display the native name.

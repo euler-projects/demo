@@ -1,6 +1,14 @@
 /* eslint-disable compat/compat */
-import React, {useEffect, useState} from 'react';
-import {Table, Space, Button, Modal, Tag, Form, Input, Select, Checkbox} from 'antd';
+import React, {useEffect, useMemo, useState} from 'react';
+import {Table, Button, Modal, Form, Input, Select, Checkbox} from 'antd';
+import {useTranslation, Trans} from 'react-i18next';
+
+import {ACTION_COLUMN_WIDTH, OverflowTags, RowActions} from './_shared/tableLayout';
+
+// Page-local width budgets for tag-style columns; row-action column
+// width is shared across admin pages via ACTION_COLUMN_WIDTH.
+const AUTHORITIES_COLUMN_WIDTH = 200;
+const STATUS_COLUMN_WIDTH = 180;
 
 const toURLSearchParams = (record) => {
     const params = new URLSearchParams();
@@ -186,6 +194,7 @@ async function mock() {
 }
 
 const User = () => {
+    const {t} = useTranslation();
     const OP_TYPE_CREATE = 'create';
     const OP_TYPE_UPDATE = 'update';
     const OP_TYPE_RESET_PW = 'reset-pw';
@@ -213,101 +222,100 @@ const User = () => {
     };
 
 
-    const columns = [
+    const authorityLabel = (authority) => {
+        const key = `user.role.${authority.authority}`;
+        const translated = t(key);
+        return translated === key ? (authority.name ?? authority.authority) : translated;
+    };
+
+    // The toggle action's visible label changes per row (enable / disable);
+    // pin the layout measurement to the longer of the two so the row does
+    // not jitter as users flip their enabled state.
+    const toggleMeasureLabel = useMemo(() => {
+        const disable = t('user.disable');
+        const enable = t('user.enable');
+        return disable.length >= enable.length ? disable : enable;
+    }, [t]);
+
+    const columns = useMemo(() => [
         {
-            title: 'Username',
+            title: t('user.column.username'),
             dataIndex: 'username',
             sorter: true,
-            width: '20%',
+            width: 160,
         },
         {
-            title: 'Email',
+            title: t('user.column.email'),
             dataIndex: 'email',
+            width: 220,
         },
         {
-            title: 'Phone',
+            title: t('user.column.phone'),
             dataIndex: 'phone',
+            width: 140,
         },
         {
-            title: 'Authorities',
+            title: t('user.column.authorities'),
             dataIndex: 'authorities',
-            width: '15%',
-            render: (authorities) => (<>{authorities.map(authority => {
-                if (authority.authority === 'root' || authority.authority === 'admin') {
-                    return <Tag key={authority.authority} color={'red'}>{authority.name}</Tag>;
-                } else {
-                    return <Tag key={authority.authority}>{authority.name}</Tag>;
-                }
-            })}</>)
-        },
-        {
-            title: 'Status',
-            dataIndex: 'enabled',
-            width: '10%',
-            render: (_, user) => {
-                let tags = [];
-                if (!user.enabled) {
-                    tags.push(
-                        <Tag key={'tag-disabled'}>
-                            账号已禁用
-                        </Tag>
-                    )
-                } else {
-                    if (!user.accountNonExpired) {
-                        tags.push(
-                            <Tag key={'tag-account-expired'} color={'red'}>
-                                账号已过期
-                            </Tag>
-                        )
-                    }
-                    if (!user.accountNonLocked) {
-                        tags.push(
-                            <Tag key={'tag-account-locked'} color={'red'}>
-                                账号已锁定
-                            </Tag>
-                        )
-                    }
-                    if (!user.credentialsNonExpired) {
-                        tags.push(
-                            <Tag key={'tag-credentials-expired'} color={'red'}>
-                                密码已过期
-                            </Tag>
-                        )
-                    }
-                }
-                if (tags.length === 0) {
-                    tags.push(
-                        <Tag key={'tag-normal'} color={'green'}>
-                            正常
-                        </Tag>
-                    );
-                }
-
-                return <>{tags}</>;
+            width: AUTHORITIES_COLUMN_WIDTH,
+            render: (authorities) => {
+                const items = (authorities ?? []).map((authority) => ({
+                    key: authority.authority,
+                    label: authorityLabel(authority),
+                    color: (authority.authority === 'root' || authority.authority === 'admin') ? 'red' : undefined,
+                }));
+                return <OverflowTags items={items} columnWidth={AUTHORITIES_COLUMN_WIDTH}/>;
             },
         },
         {
-            title: 'Action',
-            key: 'action',
-            width: '20%',
-            render: (_, record) => (
-                <Space size="middle">
-                    <a onClick={() => showEditModal(record)}>详情</a>
-                    <a onClick={() => showResetPasswordModal(record)}>重置密码</a>
-                    {disableOrEnable(record)}
-                    <a onClick={() => showConfirmModal(record, OP_TYPE_DELETE)}>删除</a>
-                </Space>
-            ),
+            title: t('user.column.status'),
+            dataIndex: 'enabled',
+            width: STATUS_COLUMN_WIDTH,
+            render: (_, user) => {
+                const items = [];
+                if (!user.enabled) {
+                    items.push({key: 'disabled', label: t('user.status.disabled')});
+                } else {
+                    if (!user.accountNonExpired) {
+                        items.push({key: 'account-expired', label: t('user.status.accountExpired'), color: 'red'});
+                    }
+                    if (!user.accountNonLocked) {
+                        items.push({key: 'account-locked', label: t('user.status.accountLocked'), color: 'red'});
+                    }
+                    if (!user.credentialsNonExpired) {
+                        items.push({key: 'credentials-expired', label: t('user.status.credentialsExpired'), color: 'red'});
+                    }
+                }
+                if (items.length === 0) {
+                    items.push({key: 'normal', label: t('user.status.normal'), color: 'green'});
+                }
+                return <OverflowTags items={items} columnWidth={STATUS_COLUMN_WIDTH}/>;
+            },
         },
-    ];
-
-    const disableOrEnable = (user) => {
-        if (user.enabled) {
-            return <a onClick={() => showConfirmModal(user, OP_TYPE_DISABLE)}>禁用</a>
-        } else {
-            return <a onClick={() => showConfirmModal(user, OP_TYPE_ENABLE)}>启用</a>
-        }
-    }
+        {
+            title: t('user.column.action'),
+            key: 'action',
+            width: ACTION_COLUMN_WIDTH,
+            fixed: 'right',
+            render: (_, record) => {
+                const toggleType = record.enabled ? OP_TYPE_DISABLE : OP_TYPE_ENABLE;
+                const actions = [
+                    {key: 'detail', label: t('user.detail'), onClick: () => showEditModal(record)},
+                    {key: 'toggle', label: record.enabled ? t('user.disable') : t('user.enable'), onClick: () => showConfirmModal(record, toggleType)},
+                    {key: 'reset', label: t('user.resetPassword'), onClick: () => showResetPasswordModal(record)},
+                    {key: 'delete', label: t('user.delete'), danger: true, onClick: () => showConfirmModal(record, OP_TYPE_DELETE)},
+                ];
+                return (
+                    <RowActions
+                        actions={actions}
+                        columnWidth={ACTION_COLUMN_WIDTH}
+                        moreLabel={t('common.more')}
+                        measureLabels={{toggle: toggleMeasureLabel}}
+                    />
+                );
+            },
+        },
+    ], [t, toggleMeasureLabel]);
 
     const prefixSelector = (
         <Form.Item name="prefix" noStyle>
@@ -323,14 +331,14 @@ const User = () => {
 
     const showCreateModal = () => {
         setFormType(OP_TYPE_CREATE)
-        setModalTitle('创建新用户')
+        setModalTitle(t('user.modal.create'))
         form.resetFields();
         setIsModalOpen(true);
     };
     const showEditModal = (user) => {
         console.log("load data for edit:", user);
         setFormType(OP_TYPE_UPDATE)
-        setModalTitle('用户详情')
+        setModalTitle(t('user.modal.detail'))
         form.setFieldsValue({
             ...user,
             authorities: user.authorities.map(a => a.authority),
@@ -340,7 +348,7 @@ const User = () => {
     const showResetPasswordModal = (user) => {
         console.log("load data for reset password:", user);
         setFormType(OP_TYPE_RESET_PW)
-        setModalTitle('重置密码')
+        setModalTitle(t('user.modal.resetPassword'))
         form.setFieldsValue({
             userId: user.userId
         });
@@ -411,7 +419,7 @@ const User = () => {
 
     const [form] = Form.useForm();
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [modalTitle, setModalTitle] = useState("新增用户");
+    const [modalTitle, setModalTitle] = useState('');
     const [formType, setFormType] = useState(OP_TYPE_CREATE);
     const [data, setData] = useState();
     const [loading, setLoading] = useState(false);
@@ -492,18 +500,18 @@ const User = () => {
                 }}
             >
                 {isEnableUser ? (
-                    <>确认启用用户 <code>{form.getFieldValue('username')}</code> ?</>
+                    <Trans i18nKey="user.confirm.enable" values={{username: form.getFieldValue('username')}} components={{code: <code/>}}/>
                 ) : null}
                 {isDisableUser ? (
-                    <>确认禁用用户 <code>{form.getFieldValue('username')}</code> ?</>
+                    <Trans i18nKey="user.confirm.disable" values={{username: form.getFieldValue('username')}} components={{code: <code/>}}/>
                 ) : null}
                 {isDeleteUser ? (
-                    <>确认删除用户 <code>{form.getFieldValue('username')}</code> ?</>
+                    <Trans i18nKey="user.confirm.delete" values={{username: form.getFieldValue('username')}} components={{code: <code/>}}/>
                 ) : null}
                 {addHiddenUserIdInput ? (
                     <Form.Item
                         name="userId"
-                        label="用户ID"
+                        label="userId"
                         hidden={true}
                     >
                         <Input disabled={disabledUnmodifiableInputs}/>
@@ -511,10 +519,11 @@ const User = () => {
                 ) : null}
                 {showFullUserInputs ? (<Form.Item
                         name="username"
-                        label="用户名"
+                        label={t('user.form.username')}
                         rules={[
                             {
                                 required: isCreate,
+                                message: t('user.form.required.username'),
                             },
                         ]}
                     >
@@ -523,7 +532,7 @@ const User = () => {
                 ) : null}
                 {showFullUserInputs ? (<Form.Item
                         name="email"
-                        label="邮箱"
+                        label={t('user.form.email')}
                         rules={[
                             {
                                 required: false,
@@ -535,11 +544,11 @@ const User = () => {
                 ) : null}
                 {showFullUserInputs ? (<Form.Item
                         name="phone"
-                        label="手机号"
+                        label={t('user.form.phone')}
                         rules={[
                             {
                                 required: false,
-                                message: 'Please input your phone number!',
+                                message: t('user.form.required.phone'),
                             },
                         ]}
                     >
@@ -554,11 +563,11 @@ const User = () => {
                 {showPasswordInputs ? (
                     <Form.Item
                         name="password"
-                        label="密码"
+                        label={t('user.form.password')}
                         rules={[
                             {
                                 required: true,
-                                message: 'Please input your password!',
+                                message: t('user.form.required.password'),
                             },
                         ]}
                         hasFeedback
@@ -569,20 +578,20 @@ const User = () => {
                 {showPasswordInputs ? (
                     <Form.Item
                         name="confirm"
-                        label="确认密码"
+                        label={t('user.form.confirm')}
                         dependencies={['password']}
                         hasFeedback
                         rules={[
                             {
                                 required: true,
-                                message: 'Please confirm your password!',
+                                message: t('user.form.required.confirm'),
                             },
                             ({getFieldValue}) => ({
                                 validator(_, value) {
                                     if (!value || getFieldValue('password') === value) {
                                         return Promise.resolve();
                                     }
-                                    return Promise.reject(new Error('The new password that you entered do not match!'));
+                                    return Promise.reject(new Error(t('user.form.passwordMismatch')));
                                 },
                             }),
                         ]}
@@ -593,11 +602,11 @@ const User = () => {
                 {showFullUserInputs ? (
                     <Form.Item
                         name="authorities"
-                        label="权限"
+                        label={t('user.form.authorities')}
                         rules={[
                             {
                                 required: true,
-                                message: '请至少选择一个权限项',
+                                message: t('user.form.required.authorities'),
                             },
                         ]}
                         initialValue={['user']}
@@ -608,9 +617,8 @@ const User = () => {
                             style={{
                                 width: '100%',
                             }}
-                            placeholder="请选择用户权限"
-                            //onChange={handleChange}
-                            options={[{label: "普通用户", value: "user"}, {label: "管理员", value: "admin"}]}
+                            placeholder={t('user.form.authoritiesPlaceholder')}
+                            options={[{label: t('user.role.user'), value: "user"}, {label: t('user.role.admin'), value: "admin"}]}
                         />
                     </Form.Item>
                 ) : null}
@@ -665,7 +673,7 @@ const User = () => {
     return (
         <div>
             <div style={{marginBottom: '10px'}}>
-                <Button type="primary" onClick={showCreateModal}>新增用户</Button>
+                <Button type="primary" onClick={showCreateModal}>{t('user.create')}</Button>
             </div>
             <Table
                 columns={columns}
@@ -674,8 +682,9 @@ const User = () => {
                 pagination={tableParams.pagination}
                 loading={loading}
                 onChange={handleTableChange}
+                scroll={{x: 'max-content'}}
             />
-            <Modal title={modalTitle} open={isModalOpen} onOk={handleOk} onCancel={handleCancel}>
+            <Modal title={modalTitle} open={isModalOpen} onOk={handleOk} onCancel={handleCancel} okText={t('common.ok')} cancelText={t('common.cancel')}>
                 <UserForm operationType={formType}/>
             </Modal>
         </div>

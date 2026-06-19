@@ -11,54 +11,94 @@ import {
     LogoutOutlined,
     MenuFoldOutlined,
     MenuUnfoldOutlined,
+    GlobalOutlined,
 } from '@ant-design/icons';
 import {Link, Outlet, useLocation} from 'react-router';
+import {useTranslation} from 'react-i18next';
+
+import {SUPPORTED_LOCALES, getAntdLocale, setLocale} from '../i18n';
 
 const {Header, Sider, Content} = Layout;
 
-const menuItems = [
+const FALLBACK_SITE_NAME = 'User Center';
+
+/**
+ * Resolve the site name injected by the backend Thymeleaf template
+ * via <meta name="site-name" th:content="${euler.ctx.__SITE_NAME}"/>.
+ * Falls back to the literal default during pure frontend dev runs.
+ */
+const getSiteName = () => {
+    if (typeof document === 'undefined') return FALLBACK_SITE_NAME;
+    const meta = document.querySelector('meta[name="site-name"]');
+    const value = meta?.getAttribute('content')?.trim();
+    return value && value.length > 0 ? value : FALLBACK_SITE_NAME;
+};
+
+const SITE_NAME = getSiteName();
+
+/**
+ * Abstract console mark: a 2x2 stack of rounded tiles with
+ * alternating opacity, evoking a dashboard / cluster surface.
+ */
+const ConsoleMark = ({size = 16}) => (
+    <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+    >
+        <rect x="2" y="2" width="9" height="9" rx="2" fill="currentColor" opacity="0.95"/>
+        <rect x="13" y="2" width="9" height="9" rx="2" fill="currentColor" opacity="0.55"/>
+        <rect x="2" y="13" width="9" height="9" rx="2" fill="currentColor" opacity="0.55"/>
+        <rect x="13" y="13" width="9" height="9" rx="2" fill="currentColor" opacity="0.95"/>
+    </svg>
+);
+
+const buildMenuItems = (t) => [
     {
         key: '/admin/dashboard',
         icon: <DashboardOutlined/>,
-        label: <Link to="/admin/dashboard">仪表盘</Link>,
+        label: <Link to="/admin/dashboard">{t('nav.dashboard')}</Link>,
     },
     {
         key: 'identity',
         icon: <TeamOutlined/>,
-        label: '身份与访问',
+        label: t('nav.iam'),
         children: [
             {
                 key: '/admin/user',
                 icon: <UserOutlined/>,
-                label: <Link to="/admin/user">用户管理</Link>,
+                label: <Link to="/admin/user">{t('nav.user')}</Link>,
             },
             {
                 key: '/admin/role',
                 icon: <SafetyCertificateOutlined/>,
-                label: <Link to="/admin/role">角色与权限</Link>,
+                label: <Link to="/admin/role">{t('nav.role')}</Link>,
             },
         ],
     },
     {
         key: 'oauth2',
         icon: <AppstoreOutlined/>,
-        label: 'OAuth2',
+        label: t('nav.oauth2'),
         children: [
             {
                 key: '/admin/oauth2/client',
-                label: <Link to="/admin/oauth2/client">客户端</Link>,
+                label: <Link to="/admin/oauth2/client">{t('nav.oauth2_client')}</Link>,
             },
             {
                 key: '/admin/oauth2/jwk',
                 icon: <KeyOutlined/>,
-                label: <Link to="/admin/oauth2/jwk">JWK 密钥</Link>,
+                label: <Link to="/admin/oauth2/jwk">{t('nav.oauth2_jwk')}</Link>,
             },
         ],
     },
     {
         key: '/admin/settings',
         icon: <SettingOutlined/>,
-        label: <Link to="/admin/settings">系统设置</Link>,
+        label: <Link to="/admin/settings">{t('nav.settings')}</Link>,
     },
 ];
 
@@ -66,10 +106,10 @@ const menuItems = [
  * Resolve currently selected menu key and its parent submenu key
  * based on the current location pathname.
  */
-const resolveSelection = (pathname) => {
-    const flatten = (items, parentKey) => {
+const resolveSelection = (pathname, items) => {
+    const flatten = (list, parentKey) => {
         const acc = [];
-        for (const item of items) {
+        for (const item of list) {
             if (item.children) {
                 acc.push(...flatten(item.children, item.key));
             } else {
@@ -78,7 +118,7 @@ const resolveSelection = (pathname) => {
         }
         return acc;
     };
-    const leaves = flatten(menuItems, null);
+    const leaves = flatten(items, null);
     const matched = leaves
         .filter((it) => pathname === it.key || pathname.startsWith(it.key + '/'))
         .sort((a, b) => b.key.length - a.key.length)[0];
@@ -94,22 +134,34 @@ const resolveSelection = (pathname) => {
 const AdminLayout = () => {
     const [collapsed, setCollapsed] = useState(false);
     const location = useLocation();
+    const {t, i18n} = useTranslation();
+    const menuItems = useMemo(() => buildMenuItems(t), [t, i18n.language]);
     const {selectedKeys, openKeys} = useMemo(
-        () => resolveSelection(location.pathname),
-        [location.pathname]
+        () => resolveSelection(location.pathname, menuItems),
+        [location.pathname, menuItems]
     );
     const {token} = antdTheme.useToken();
 
     const userMenu = {
         items: [
-            {key: 'profile', icon: <UserOutlined/>, label: '个人中心'},
+            {key: 'profile', icon: <UserOutlined/>, label: t('header.profile')},
             {type: 'divider'},
-            {key: 'logout', icon: <LogoutOutlined/>, label: '退出登录'},
+            {key: 'logout', icon: <LogoutOutlined/>, label: t('header.logout')},
         ],
+    };
+
+    const localeMenu = {
+        items: SUPPORTED_LOCALES.map((tag) => ({
+            key: tag,
+            label: t(`language.${tag}`),
+        })),
+        selectedKeys: [i18n.language],
+        onClick: ({key}) => setLocale(key),
     };
 
     return (
         <ConfigProvider
+            locale={getAntdLocale(i18n.language)}
             theme={{
                 algorithm: antdTheme.defaultAlgorithm,
                 token: {
@@ -166,15 +218,13 @@ const AdminLayout = () => {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                fontWeight: 700,
-                                fontSize: 14,
                             }}
                         >
-                            UC
+                            <ConsoleMark size={16}/>
                         </div>
                         {!collapsed && (
                             <Typography.Text strong style={{fontSize: 16, whiteSpace: 'nowrap'}}>
-                                User Center
+                                {SITE_NAME}
                             </Typography.Text>
                         )}
                     </div>
@@ -211,23 +261,43 @@ const AdminLayout = () => {
                                 {collapsed ? <MenuUnfoldOutlined/> : <MenuFoldOutlined/>}
                             </span>
                             <Typography.Text type="secondary" style={{fontSize: 13}}>
-                                Admin Console
+                                {t('header.console')}
                             </Typography.Text>
                         </div>
-                        <Dropdown menu={userMenu} placement="bottomRight" trigger={['click']}>
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 8,
-                                    cursor: 'pointer',
-                                    padding: '0 8px',
-                                }}
-                            >
-                                <Avatar size="small" icon={<UserOutlined/>}/>
-                                <Typography.Text>admin</Typography.Text>
-                            </div>
-                        </Dropdown>
+                        <div style={{display: 'flex', alignItems: 'center', gap: 4}}>
+                            <Dropdown menu={localeMenu} placement="bottomRight" trigger={['click']}>
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 6,
+                                        cursor: 'pointer',
+                                        padding: '0 10px',
+                                        color: token.colorTextSecondary,
+                                    }}
+                                    title={t('header.language')}
+                                >
+                                    <GlobalOutlined style={{fontSize: 16}}/>
+                                    <Typography.Text style={{fontSize: 13}}>
+                                        {t(`language.${i18n.language}`)}
+                                    </Typography.Text>
+                                </div>
+                            </Dropdown>
+                            <Dropdown menu={userMenu} placement="bottomRight" trigger={['click']}>
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 8,
+                                        cursor: 'pointer',
+                                        padding: '0 8px',
+                                    }}
+                                >
+                                    <Avatar size="small" icon={<UserOutlined/>}/>
+                                    <Typography.Text>admin</Typography.Text>
+                                </div>
+                            </Dropdown>
+                        </div>
                     </Header>
                     <Content
                         style={{

@@ -1,0 +1,100 @@
+{
+  "nav": {
+    "dashboard": "仪表盘",
+    "iam": "身份与访问",
+    "user": "用户管理",
+    "role": "角色与权限",
+    "oauth2": "OAuth2",
+    "oauth2_client": "客户端",
+    "oauth2_jwk": "JWK 密钥",
+    "settings": "系统设置"
+  },
+  "header": {
+    "console": "管理控制台",
+    "profile": "个人中心",
+    "logout": "退出登录",
+    "language": "语言"
+  },
+  "language": {
+    "zh-Hans": "中文",
+    "en": "English"
+  },
+  "common": {
+    "ok": "确定",
+    "cancel": "取消",
+    "yes": "是",
+    "no": "否",
+    "more": "更多"
+  },
+  "oauth2": {
+    "client": {
+      "create": "新增客户端",
+      "detail": "详情",
+      "rotateSecret": "重置密钥",
+      "delete": "删除",
+      "column": {
+        "clientId": "客户端 ID",
+        "clientName": "名称",
+        "authMethod": "认证方式",
+        "grantTypes": "授权类型",
+        "scopes": "Scopes",
+        "action": "操作"
+      },
+      "stub": "操作「{{action}}」（{{name}}）尚未对接"
+    }
+  },
+  "user": {
+    "create": "新增用户",
+    "detail": "详情",
+    "resetPassword": "重置密码",
+    "enable": "启用",
+    "disable": "禁用",
+    "delete": "删除",
+    "column": {
+      "username": "用户名",
+      "email": "邮箱",
+      "phone": "手机号",
+      "authorities": "权限",
+      "status": "状态",
+      "action": "操作"
+    },
+    "status": {
+      "disabled": "账号已禁用",
+      "accountExpired": "账号已过期",
+      "accountLocked": "账号已锁定",
+      "credentialsExpired": "密码已过期",
+      "normal": "正常"
+    },
+    "role": {
+      "user": "普通用户",
+      "admin": "管理员"
+    },
+    "modal": {
+      "create": "创建新用户",
+      "detail": "用户详情",
+      "resetPassword": "重置密码"
+    },
+    "form": {
+      "username": "用户名",
+      "email": "邮箱",
+      "phone": "手机号",
+      "password": "密码",
+      "confirm": "确认密码",
+      "authorities": "权限",
+      "authoritiesPlaceholder": "请选择用户权限",
+      "required": {
+        "username": "请输入用户名",
+        "password": "请输入密码",
+        "confirm": "请确认密码",
+        "phone": "请输入手机号",
+        "authorities": "请至少选择一个权限项"
+      },
+      "passwordMismatch": "两次输入的密码不一致"
+    },
+    "confirm": {
+      "enable": "确认启用用户 <code>{{username}}</code>?",
+      "disable": "确认禁用用户 <code>{{username}}</code>?",
+      "delete": "确认删除用户 <code>{{username}}</code>?"
+    }
+  }
+}

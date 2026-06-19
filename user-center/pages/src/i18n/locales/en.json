@@ -1,0 +1,100 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "iam": "Identity & Access",
+    "user": "Users",
+    "role": "Roles & Permissions",
+    "oauth2": "OAuth2",
+    "oauth2_client": "Clients",
+    "oauth2_jwk": "JWK Keys",
+    "settings": "Settings"
+  },
+  "header": {
+    "console": "Admin Console",
+    "profile": "Profile",
+    "logout": "Sign out",
+    "language": "Language"
+  },
+  "language": {
+    "zh-Hans": "中文",
+    "en": "English"
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "yes": "Yes",
+    "no": "No",
+    "more": "More"
+  },
+  "oauth2": {
+    "client": {
+      "create": "Create client",
+      "detail": "Details",
+      "rotateSecret": "Rotate secret",
+      "delete": "Delete",
+      "column": {
+        "clientId": "Client ID",
+        "clientName": "Name",
+        "authMethod": "Auth method",
+        "grantTypes": "Grant types",
+        "scopes": "Scopes",
+        "action": "Action"
+      },
+      "stub": "Action '{{action}}' on {{name}} is not wired yet."
+    }
+  },
+  "user": {
+    "create": "Create user",
+    "detail": "Details",
+    "resetPassword": "Reset password",
+    "enable": "Enable",
+    "disable": "Disable",
+    "delete": "Delete",
+    "column": {
+      "username": "Username",
+      "email": "Email",
+      "phone": "Phone",
+      "authorities": "Authorities",
+      "status": "Status",
+      "action": "Action"
+    },
+    "status": {
+      "disabled": "Account disabled",
+      "accountExpired": "Account expired",
+      "accountLocked": "Account locked",
+      "credentialsExpired": "Password expired",
+      "normal": "Active"
+    },
+    "role": {
+      "user": "User",
+      "admin": "Administrator"
+    },
+    "modal": {
+      "create": "Create user",
+      "detail": "User details",
+      "resetPassword": "Reset password"
+    },
+    "form": {
+      "username": "Username",
+      "email": "Email",
+      "phone": "Phone number",
+      "password": "Password",
+      "confirm": "Confirm password",
+      "authorities": "Authorities",
+      "authoritiesPlaceholder": "Select user authorities",
+      "required": {
+        "username": "Username is required",
+        "password": "Password is required",
+        "confirm": "Please confirm your password",
+        "phone": "Please input your phone number",
+        "authorities": "Select at least one authority"
+      },
+      "passwordMismatch": "The two passwords do not match"
+    },
+    "confirm": {
+      "enable": "Enable user <code>{{username}}</code>?",
+      "disable": "Disable user <code>{{username}}</code>?",
+      "delete": "Delete user <code>{{username}}</code>?"
+    }
+  }
+}
