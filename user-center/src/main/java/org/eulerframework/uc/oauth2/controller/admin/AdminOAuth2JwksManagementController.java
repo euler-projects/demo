@@ -54,7 +54,7 @@ import java.util.List;
  * All endpoints require either the {@code root} or {@code admin} authority.
  */
 @RestController
-@RequestMapping(path = {"admin/oauth2/jwks", "api/admin/oauth2/jwks"})
+@RequestMapping("api/admin/oauth2/jwks")
 @PreAuthorize("hasAnyAuthority('root', 'admin')")
 @ConditionalOnBean(JwkManageService.class)
 public class AdminOAuth2JwksManagementController {

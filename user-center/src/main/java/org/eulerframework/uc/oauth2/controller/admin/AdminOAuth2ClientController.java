@@ -71,7 +71,7 @@ import java.util.List;
  * same generator/rotation pipeline.
  */
 @RestController
-@RequestMapping(path = {"admin/oauth2/client", "api/admin/oauth2/client"})
+@RequestMapping("api/admin/oauth2/client")
 @PreAuthorize("hasAnyAuthority('root', 'admin')")
 public class AdminOAuth2ClientController {
 

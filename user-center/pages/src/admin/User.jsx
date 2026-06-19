@@ -16,7 +16,7 @@ const getRandomuserParams = (params) => ({
 });
 
 const listUsers = async ({offset, limit}) => {
-    return await fetch(`/admin/user/list?offset=${offset}&limit=${limit}`)
+    return await fetch(`/api/admin/user/list?offset=${offset}&limit=${limit}`)
         .then(res => res.json())
         .then(rows => {
             return rows;
@@ -51,7 +51,7 @@ const createUser = async (user) => {
     })
         .then(res => res.json())
         .then(csrf => {
-            return fetch(`/admin/user`, {
+            return fetch(`/api/admin/user`, {
                 method: 'POST',
                 body: JSON.stringify(requestData),
                 headers: {
@@ -76,7 +76,7 @@ const updateUser = async (user) => {
     })
         .then(res => res.json())
         .then(csrf => {
-            return fetch(`/admin/user`, {
+            return fetch(`/api/admin/user`, {
                 method: 'PUT',
                 body: JSON.stringify(requestData),
                 headers: {
@@ -104,7 +104,7 @@ const resetPassword = async (user) => {
     })
         .then(res => res.json())
         .then(csrf => {
-            return fetch(`/admin/user/reset-password`, {
+            return fetch(`/api/admin/user/reset-password`, {
                 method: 'POST',
                 body: encodedData,
                 headers: {
@@ -133,7 +133,7 @@ const deleteUser = async (userId) => {
     })
         .then(res => res.json())
         .then(csrf => {
-            return fetch(`/admin/user?userId=${userId}`, {
+            return fetch(`/api/admin/user?userId=${userId}`, {
                 method: 'DELETE',
                 headers: {
                     [csrf.headerName]: csrf.token
