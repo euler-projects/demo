@@ -97,10 +97,17 @@ pages/
 
 ## Routing
 
-All admin pages are mounted under `/admin` and wrapped by `AdminLayout`:
+All admin pages are mounted under `/admin/console` (the React Router
+`basename`) and wrapped by `AdminLayout`:
 
-- `/admin` -> redirects to `/admin/user`
-- `/admin/user` -> user management page
+- `/admin/console` -> redirects to `/admin/console/user`
+- `/admin/console/user` -> user management page
+- `/admin/console/oauth2/client` -> OAuth2 client management page
+
+XHR calls from these pages target `/admin/api/**` on the same origin and
+rely on session + CSRF token; cross-origin access is intentionally not
+permitted. Public Bearer-only APIs live under `/api/**` and follow a
+completely separate authentication and CORS policy.
 
 The layout provides a fixed top header (collapse toggle, breadcrumb-ish title, user dropdown) and a left navigation sider with a light color scheme (`#ffffff` surfaces on a `#f5f7fa` body).
 

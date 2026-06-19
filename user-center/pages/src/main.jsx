@@ -9,9 +9,9 @@ import OAuth2Client from './admin/OAuth2Client.jsx'
 
 createRoot(document.getElementById('root')).render(
     <StrictMode>
-        <BrowserRouter>
+        <BrowserRouter basename="/admin/console">
             <Routes>
-                <Route path="/admin" element={<AdminLayout/>}>
+                <Route path="/" element={<AdminLayout/>}>
                     <Route index element={<Navigate to="user" replace/>}/>
                     <Route path="user" element={<User/>}/>
                     <Route path="oauth2/client" element={<OAuth2Client/>}/>

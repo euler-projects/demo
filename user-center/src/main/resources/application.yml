@@ -1,3 +1,22 @@
+server:
+  # Honour X-Forwarded-* headers from the upstream reverse proxy so that
+  # request.isSecure() / scheme reflect the actual TLS-terminated client
+  # connection. Required for HSTS, Secure cookies, and any OAuth2 redirect
+  # construction to behave correctly behind the proxy.
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        # SameSite=Lax keeps the SESSION cookie attached on top-level
+        # navigations (e.g. OAuth2 client -> /oauth2/authorize redirects)
+        # while blocking it on cross-site sub-resource requests. Strict
+        # would break OAuth2 cross-site redirects and is not adopted.
+        same-site: lax
+        # Production is HTTPS-only; the local profile overrides this to
+        # false so that http://localhost can still authenticate.
+        secure: true
+        http-only: true
+
 spring:
   application:
     name: user-center

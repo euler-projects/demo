@@ -57,17 +57,81 @@ public class UserCenterApplication {
         SpringApplication.run(UserCenterApplication.class, args);
     }
 
+    /**
+     * CORS policy aligned with the project's four-quadrant security routing:
+     *
+     * <ol>
+     *   <li>{@code /admin/api/**} &amp; {@code /admin/console/**} &mdash;
+     *       admin console XHR and SPA shell. <em>Not registered</em> here so
+     *       the browser's same-origin policy fully applies; cross-origin
+     *       requests are blocked outright. The admin console is expected to
+     *       be served from the same origin as the backend.</li>
+     *   <li>{@code /api/**} &mdash; public Bearer-only resource APIs. Open to
+     *       any origin but credentials are <em>never</em> echoed back, so
+     *       browsers cross-origin calls cannot piggyback on a victim's
+     *       session cookies; only callers that can produce a valid Bearer
+     *       token will succeed.</li>
+     *   <li>{@code /oauth2/token}, {@code /oauth2/revoke},
+     *       {@code /oauth2/introspect}, {@code /oauth2/jwks},
+     *       {@code /oauth2/device_authorization}, {@code /oauth2/userinfo},
+     *       {@code /oauth2/challenge} and {@code /.well-known/**} &mdash;
+     *       OAuth2 / OIDC protocol endpoints invoked by SPAs, mobile and
+     *       service-to-service clients. Open to any origin, credentials
+     *       disabled (these endpoints authenticate via Authorization header
+     *       or request body, never via ambient cookies).</li>
+     *   <li>{@code /oauth2/authorize}, {@code /login}, {@code /logout} and
+     *       other browser-redirect endpoints &mdash; <em>not registered</em>
+     *       because top-level navigations are not subject to CORS in the
+     *       first place; adding them would only widen the attack surface.</li>
+     * </ol>
+     *
+     * <p>The {@code /_csrf} endpoint is intentionally <em>not registered</em>
+     * either: it is only useful from the same-origin admin console, and
+     * keeping it out of the CORS source ensures the browser's same-origin
+     * policy prevents any third-party page from reading the CSRF token.</p>
+     */
     @Bean
     public FilterRegistrationBean<CorsFilter> corsFilterFilterRegistrationBean() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowCredentials(true);
-        config.addAllowedOriginPattern("*");
-        config.addAllowedHeader("*");
-        config.addAllowedMethod("*");
-        source.registerCorsConfiguration("/oauth2/**", config);
-        source.registerCorsConfiguration("/api/**", config);
-        config.setMaxAge(3600L);
+
+        // Public Bearer-only APIs and OAuth2/OIDC protocol endpoints share the
+        // same "open but credential-less" policy. Headers are deliberately
+        // wildcarded so individual endpoints may accept arbitrary custom
+        // request/response headers (tracing, idempotency keys, pagination
+        // counters, etc.) without amending the central CORS bean.
+        //
+        // Two caveats worth keeping in mind:
+        //  * "Authorization" is a CORS-defined forbidden header name and is
+        //    NOT covered by the "*" wildcard, so it must be listed
+        //    explicitly. Safe because AllowCredentials is false.
+        //  * "Access-Control-Expose-Headers: *" is supported by all evergreen
+        //    browsers when credentials are disabled (Fetch standard, 2020+).
+        //    Safari <= 14 ignores it; if any caller still relies on those
+        //    legacy versions, switch to an explicit allowlist.
+        CorsConfiguration openBearer = new CorsConfiguration();
+        openBearer.addAllowedOriginPattern("*");
+        openBearer.setAllowedMethods(List.of("*"));
+        openBearer.setAllowedHeaders(List.of("Authorization", "*"));
+        openBearer.setExposedHeaders(List.of("*"));
+        openBearer.setAllowCredentials(false);
+        openBearer.setMaxAge(3600L);
+
+        // Public resource APIs (Bearer-only).
+        source.registerCorsConfiguration("/api/**", openBearer);
+
+        // OAuth2 / OIDC protocol endpoints invoked as XHR. /oauth2/authorize,
+        // /login and /logout are deliberately omitted because they are
+        // accessed via top-level navigation, which is not subject to CORS.
+        source.registerCorsConfiguration("/oauth2/token", openBearer);
+        source.registerCorsConfiguration("/oauth2/revoke", openBearer);
+        source.registerCorsConfiguration("/oauth2/introspect", openBearer);
+        source.registerCorsConfiguration("/oauth2/jwks", openBearer);
+        source.registerCorsConfiguration("/oauth2/device_authorization", openBearer);
+        source.registerCorsConfiguration("/oauth2/device_verification", openBearer);
+        source.registerCorsConfiguration("/oauth2/userinfo", openBearer);
+        source.registerCorsConfiguration("/oauth2/challenge", openBearer);
+        source.registerCorsConfiguration("/.well-known/**", openBearer);
+
         FilterRegistrationBean<CorsFilter> filterRegistrationBean = new FilterRegistrationBean<>();
         filterRegistrationBean.setFilter(new CorsFilter(source));
         filterRegistrationBean.setOrder(Ordered.HIGHEST_PRECEDENCE);

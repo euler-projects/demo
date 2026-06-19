@@ -15,7 +15,7 @@ public class AdminPageController extends PageSupportWebController {
     }
 
     @PreAuthorize("hasAnyAuthority('root', 'admin')")
-    @GetMapping(value = {"admin", "admin/*"}, produces = MediaType.TEXT_HTML_VALUE)
+    @GetMapping(value = {"admin/console", "admin/console/**"}, produces = MediaType.TEXT_HTML_VALUE)
     public ModelAndView adminPage() {
         return this.display("admin/index", false);
     }

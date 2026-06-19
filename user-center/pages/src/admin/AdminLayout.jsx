@@ -5,6 +5,7 @@ import {
     TeamOutlined,
     SafetyCertificateOutlined,
     KeyOutlined,
+    ApiOutlined,
     AppstoreOutlined,
     SettingOutlined,
     DashboardOutlined,
@@ -58,9 +59,9 @@ const ConsoleMark = ({size = 16}) => (
 
 const buildMenuItems = (t) => [
     {
-        key: '/admin/dashboard',
+        key: '/dashboard',
         icon: <DashboardOutlined/>,
-        label: <Link to="/admin/dashboard">{t('nav.dashboard')}</Link>,
+        label: <Link to="/dashboard">{t('nav.dashboard')}</Link>,
     },
     {
         key: 'identity',
@@ -68,14 +69,14 @@ const buildMenuItems = (t) => [
         label: t('nav.iam'),
         children: [
             {
-                key: '/admin/user',
+                key: '/user',
                 icon: <UserOutlined/>,
-                label: <Link to="/admin/user">{t('nav.user')}</Link>,
+                label: <Link to="/user">{t('nav.user')}</Link>,
             },
             {
-                key: '/admin/role',
+                key: '/role',
                 icon: <SafetyCertificateOutlined/>,
-                label: <Link to="/admin/role">{t('nav.role')}</Link>,
+                label: <Link to="/role">{t('nav.role')}</Link>,
             },
         ],
     },
@@ -85,20 +86,21 @@ const buildMenuItems = (t) => [
         label: t('nav.oauth2'),
         children: [
             {
-                key: '/admin/oauth2/client',
-                label: <Link to="/admin/oauth2/client">{t('nav.oauth2_client')}</Link>,
+                key: '/oauth2/client',
+                icon: <ApiOutlined/>,
+                label: <Link to="/oauth2/client">{t('nav.oauth2_client')}</Link>,
             },
             {
-                key: '/admin/oauth2/jwk',
+                key: '/oauth2/jwk',
                 icon: <KeyOutlined/>,
-                label: <Link to="/admin/oauth2/jwk">{t('nav.oauth2_jwk')}</Link>,
+                label: <Link to="/oauth2/jwk">{t('nav.oauth2_jwk')}</Link>,
             },
         ],
     },
     {
-        key: '/admin/settings',
+        key: '/settings',
         icon: <SettingOutlined/>,
-        label: <Link to="/admin/settings">{t('nav.settings')}</Link>,
+        label: <Link to="/settings">{t('nav.settings')}</Link>,
     },
 ];
 

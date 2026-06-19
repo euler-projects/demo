@@ -37,7 +37,7 @@ public class IndexPageController extends PageSupportWebController {
         EulerUserDetails userDetails = userContext.getUserDetails();
         List<String> authorities = userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
         if (authorities.contains("root") || authorities.contains("admin")) {
-            targetList.add(new Target("/admin/user", "用户管理"));
+            targetList.add(new Target("/admin/console", "管理控制台"));
         }
 
         String welcome = ApplicationContextHolder.getApplicationContext().getMessage(
