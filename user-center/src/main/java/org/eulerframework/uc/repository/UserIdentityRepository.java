@@ -15,7 +15,7 @@
  */
 package org.eulerframework.uc.repository;
 
-import org.eulerframework.uc.entity.UserAuthenticationFactorEntity;
+import org.eulerframework.uc.entity.UserIdentityEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -23,19 +23,16 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface UserAuthenticationFactorRepository
-        extends JpaRepository<UserAuthenticationFactorEntity, String> {
+public interface UserIdentityRepository extends JpaRepository<UserIdentityEntity, String> {
 
-    Optional<UserAuthenticationFactorEntity> findByIdAndUserIdAndFactorType(
-            String id, String userId, String factorType);
+    Optional<UserIdentityEntity> findByIdAndUserId(String id, String userId);
 
-    Optional<UserAuthenticationFactorEntity> findByIdAndUserId(String id, String userId);
+    Optional<UserIdentityEntity> findByIdAndUserIdAndIdentityType(
+            String id, String userId, String identityType);
 
-    List<UserAuthenticationFactorEntity> findAllByUserIdAndFactorType(
-            String userId, String factorType);
+    List<UserIdentityEntity> findAllByUserIdAndIdentityType(String userId, String identityType);
 
-    boolean existsByFactorTypeAndIdentifier(String factorType, String identifier);
+    boolean existsByIdentityTypeAndSubject(String identityType, String subject);
 
-    Optional<UserAuthenticationFactorEntity> findByFactorTypeAndIdentifier(
-            String factorType, String identifier);
+    Optional<UserIdentityEntity> findByIdentityTypeAndSubject(String identityType, String subject);
 }
