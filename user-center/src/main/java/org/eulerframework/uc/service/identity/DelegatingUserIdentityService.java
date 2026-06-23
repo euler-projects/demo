@@ -42,7 +42,7 @@ import java.util.Optional;
  *   <li>{@link #createUserIdentity(String, MultiValueMap)} reads
  *       {@link #IDENTITY_TYPE_PARAMETER} from the form parameters.</li>
  *   <li>{@link #createUserIdentity(String, UserIdentity)} reads
- *       {@link UserIdentity#identityType()} from the prototype.</li>
+ *       {@link UserIdentity#getIdentityType()} from the prototype.</li>
  *   <li>{@link #findUserIdentityByRawSubject(String, String)} dispatches
  *       on the {@code identityType} argument.</li>
  *   <li>{@link #getUserIdentity(String, String)} and
@@ -51,7 +51,7 @@ import java.util.Optional;
  *       {@link Optional#empty()} and deletes are silent for ids not
  *       owned by the backend, so at most one backend acts.</li>
  *   <li>{@link #listUserIdentities(String)} aggregates across all
- *       backends and orders by {@link UserIdentity#boundAt()}
+ *       backends and orders by {@link UserIdentity#getBoundAt()}
  *       descending.</li>
  *   <li>{@link #updateUserIdentity(String, String, MultiValueMap)}
  *       resolves the owning backend via {@code getUserIdentity} and
@@ -114,17 +114,16 @@ public class DelegatingUserIdentityService implements UserIdentityService {
     public UserIdentity createUserIdentity(String userId, UserIdentity prototype) {
         Assert.hasText(userId, "userId must not be empty");
         Assert.notNull(prototype, "prototype must not be null");
-        // identityType is enforced non-empty by the UserIdentity canonical
-        // constructor itself; route directly on it.
-        return resolveBackend(prototype.identityType()).createUserIdentity(userId, prototype);
+        Assert.hasText(prototype.getIdentityType(), "identityType must not be empty");
+        return resolveBackend(prototype.getIdentityType()).createUserIdentity(userId, prototype);
     }
 
     @Override
     public Optional<UserIdentity> getUserIdentity(String userId, String identityId) {
         Assert.hasText(userId, "userId must not be empty");
         Assert.hasText(identityId, "identityId must not be empty");
-        // Fan out: identityId is a globally unique UUID, so at most one
-        // backend will ever return non-empty.
+        // identityId is a globally unique UUID; at most one backend
+        // returns non-empty.
         for (UserIdentityService backend : this.backends.values()) {
             Optional<UserIdentity> identity = backend.getUserIdentity(userId, identityId);
             if (identity.isPresent()) {
@@ -139,10 +138,8 @@ public class DelegatingUserIdentityService implements UserIdentityService {
         Assert.hasText(userId, "userId must not be empty");
         return this.backends.values().stream()
                 .flatMap(backend -> backend.listUserIdentities(userId).stream())
-                // Stable ordering: most recently bound first. Keeps the
-                // SPI's contract self-contained so the wire layer does
-                // not need its own sort.
-                .sorted(Comparator.comparing(UserIdentity::boundAt).reversed())
+                // Most recently bound first.
+                .sorted(Comparator.comparing(UserIdentity::getBoundAt).reversed())
                 .toList();
     }
 
@@ -154,7 +151,7 @@ public class DelegatingUserIdentityService implements UserIdentityService {
         Assert.notNull(params, "params must not be null");
         UserIdentity existing = getUserIdentity(userId, identityId)
                 .orElseThrow(() -> new UserIdentityNotFoundException(identityId));
-        return resolveBackend(existing.identityType())
+        return resolveBackend(existing.getIdentityType())
                 .updateUserIdentity(userId, identityId, params);
     }
 
@@ -162,9 +159,8 @@ public class DelegatingUserIdentityService implements UserIdentityService {
     public void deleteUserIdentity(String userId, String identityId) {
         Assert.hasText(userId, "userId must not be empty");
         Assert.hasText(identityId, "identityId must not be empty");
-        // Fan-out delete: per-SPI contract each backend silently ignores
-        // ids it does not own, so calling them all is safe and keeps
-        // deletes idempotent without an extra pre-read round-trip.
+        // Per SPI contract each backend silently ignores ids it does
+        // not own; fan-out delete is idempotent.
         for (UserIdentityService backend : this.backends.values()) {
             backend.deleteUserIdentity(userId, identityId);
         }
