@@ -97,6 +97,24 @@
       "enable": "确认启用用户 <code>{{username}}</code>?",
       "disable": "确认禁用用户 <code>{{username}}</code>?",
       "delete": "确认删除用户 <code>{{username}}</code>?"
+    },
+    "detailPage": {
+      "breadcrumb": "用户详情",
+      "basicInfo": "基本信息",
+      "identities": "用户身份",
+      "authorities": "用户权限",
+      "phone": "手机号",
+      "identityId": "身份 ID",
+      "boundAt": "绑定时间",
+      "viewRaw": "查看原值",
+      "hideRaw": "隐藏原值",
+      "rawValue": "原值",
+      "addAuthority": "添加权限",
+      "removeAuthority": "移除",
+      "confirmDelete": "确认删除？",
+      "noIdentities": "暂无身份记录",
+      "authorityName": "权限",
+      "selectAuthority": "选择权限"
     }
   }
 }

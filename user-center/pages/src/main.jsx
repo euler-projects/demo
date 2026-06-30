@@ -5,6 +5,7 @@ import './index.css'
 import './i18n'
 import AdminLayout from './admin/AdminLayout.jsx'
 import User from './admin/User.jsx'
+import UserDetail from './admin/UserDetail.jsx'
 import OAuth2Client from './admin/OAuth2Client.jsx'
 
 createRoot(document.getElementById('root')).render(
@@ -14,6 +15,7 @@ createRoot(document.getElementById('root')).render(
                 <Route path="/" element={<AdminLayout/>}>
                     <Route index element={<Navigate to="users" replace/>}/>
                     <Route path="users" element={<User/>}/>
+                    <Route path="users/:userId" element={<UserDetail/>}/>
                     <Route path="oauth2/clients" element={<OAuth2Client/>}/>
                 </Route>
             </Routes>

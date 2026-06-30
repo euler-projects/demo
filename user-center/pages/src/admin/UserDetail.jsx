@@ -1,0 +1,242 @@
+import React, {useEffect, useState, useCallback} from 'react';
+import {useParams, Link, useLocation} from 'react-router';
+import {Card, Table, Tabs, Button, Modal, Select, Space, Descriptions, Breadcrumb, Popconfirm, message, Tooltip} from 'antd';
+import {EyeOutlined, EyeInvisibleOutlined} from '@ant-design/icons';
+import {useTranslation} from 'react-i18next';
+import {apiGet, apiPut, apiDelete} from './_shared/api';
+
+const UserDetail = () => {
+    const {t} = useTranslation();
+    const {userId} = useParams();
+    const location = useLocation();
+    const fromPage = location.state?.fromPage;
+    const usersLink = fromPage > 1 ? `/users?page=${fromPage}` : '/users';
+    const [user, setUser] = useState(null);
+    const [identities, setIdentities] = useState([]);
+    const [identitiesLoading, setIdentitiesLoading] = useState(false);
+    const [revealedPhones, setRevealedPhones] = useState({});  // identityId -> rawValue
+    const [addAuthorityOpen, setAddAuthorityOpen] = useState(false);
+    const [newAuthority, setNewAuthority] = useState(null);
+
+    // Load user basic info
+    const loadUser = useCallback(() => {
+        apiGet(`/admin/api/users?offset=0&limit=100`).then(users => {
+            const found = (users || []).find(u => u.userId === userId);
+            if (found) setUser(found);
+        });
+    }, [userId]);
+
+    // Load identities
+    const loadIdentities = useCallback(() => {
+        setIdentitiesLoading(true);
+        apiGet(`/admin/api/users/${encodeURIComponent(userId)}/identities`).then(data => {
+            setIdentities(data || []);
+            setIdentitiesLoading(false);
+        }).catch(() => setIdentitiesLoading(false));
+    }, [userId]);
+
+    useEffect(() => {
+        loadUser();
+        loadIdentities();
+    }, [loadUser, loadIdentities]);
+
+    // --- Identity actions ---
+    const handleToggleRaw = async (identityId, fieldName) => {
+        if (revealedPhones[identityId]) {
+            // Hide
+            setRevealedPhones(prev => {
+                const next = {...prev};
+                delete next[identityId];
+                return next;
+            });
+        } else {
+            // Reveal
+            const result = await apiGet(
+                `/admin/api/users/${encodeURIComponent(userId)}/identities/${encodeURIComponent(identityId)}/raw-fields/${fieldName}`
+            );
+            if (result) {
+                setRevealedPhones(prev => ({...prev, [identityId]: result.rawValue}));
+            }
+        }
+    };
+
+    const handleDeleteIdentity = async (identityId) => {
+        await apiDelete(`/admin/api/users/${encodeURIComponent(userId)}/identities/${encodeURIComponent(identityId)}`);
+        message.success('Deleted');
+        loadIdentities();
+    };
+
+    // --- Authority actions ---
+    const handleAddAuthority = async () => {
+        if (!newAuthority || !user) return;
+        const currentAuthorities = (user.authorities || []).map(a => a.authority);
+        if (currentAuthorities.includes(newAuthority)) {
+            setAddAuthorityOpen(false);
+            return;
+        }
+        const updated = [...currentAuthorities, newAuthority];
+        await apiPut(`/admin/api/users/${encodeURIComponent(userId)}`, {
+            ...user,
+            authorities: updated.map(a => ({authority: a})),
+        });
+        setAddAuthorityOpen(false);
+        setNewAuthority(null);
+        loadUser();
+    };
+
+    const handleRemoveAuthority = async (authority) => {
+        if (!user) return;
+        const updated = (user.authorities || [])
+            .map(a => a.authority)
+            .filter(a => a !== authority);
+        await apiPut(`/admin/api/users/${encodeURIComponent(userId)}`, {
+            ...user,
+            authorities: updated.map(a => ({authority: a})),
+        });
+        loadUser();
+    };
+
+    // --- Phone identities table ---
+    const phoneIdentities = identities.filter(i => i.identityType === 'phone');
+
+    const phoneColumns = [
+        {title: t('user.detailPage.identityId'), dataIndex: 'identityId', width: 300},
+        {
+            title: t('user.detailPage.phone'),
+            dataIndex: 'phone',
+            width: 200,
+            render: (masked, record) => {
+                const revealed = revealedPhones[record.identityId];
+                return (
+                    <Space>
+                        <span style={{fontFamily: 'monospace'}}>{revealed || masked}</span>
+                        <Tooltip title={revealed ? t('user.detailPage.hideRaw') : t('user.detailPage.viewRaw')}>
+                            <a onClick={() => handleToggleRaw(record.identityId, 'phone')}>
+                                {revealed ? <EyeInvisibleOutlined/> : <EyeOutlined/>}
+                            </a>
+                        </Tooltip>
+                    </Space>
+                );
+            },
+        },
+        {
+            title: t('user.detailPage.boundAt'),
+            dataIndex: 'boundAt',
+            width: 200,
+            render: (val) => val ? new Date(val).toLocaleString() : '-',
+        },
+        {
+            title: t('user.column.action'),
+            key: 'action',
+            width: 100,
+            render: (_, record) => (
+                <Popconfirm title={t('user.detailPage.confirmDelete')} onConfirm={() => handleDeleteIdentity(record.identityId)}>
+                    <a style={{color: '#ff4d4f'}}>{t('user.delete')}</a>
+                </Popconfirm>
+            ),
+        },
+    ];
+
+    // --- Authorities table ---
+    const authorityColumns = [
+        {
+            title: t('user.detailPage.authorityName'),
+            dataIndex: 'authority',
+            render: (val) => {
+                const key = `user.role.${val}`;
+                const translated = t(key);
+                return translated === key ? val : `${translated} (${val})`;
+            },
+        },
+        {
+            title: t('user.column.action'),
+            key: 'action',
+            width: 120,
+            render: (_, record) => (
+                <Popconfirm title={t('user.detailPage.confirmDelete')} onConfirm={() => handleRemoveAuthority(record.authority)}>
+                    <a style={{color: '#ff4d4f'}}>{t('user.detailPage.removeAuthority')}</a>
+                </Popconfirm>
+            ),
+        },
+    ];
+
+    const identityTabs = [
+        {
+            key: 'phone',
+            label: t('user.detailPage.phone'),
+            children: (
+                <Table
+                    columns={phoneColumns}
+                    dataSource={phoneIdentities}
+                    rowKey="identityId"
+                    loading={identitiesLoading}
+                    pagination={false}
+                    size="small"
+                    locale={{emptyText: t('user.detailPage.noIdentities')}}
+                />
+            ),
+        },
+    ];
+
+    return (
+        <div>
+            <Breadcrumb style={{marginBottom: 16}} items={[
+                {title: <Link to={usersLink}>{t('nav.user')}</Link>},
+                {title: t('user.detailPage.breadcrumb')},
+            ]}/>
+
+            {/* Basic Info */}
+            <Card title={t('user.detailPage.basicInfo')} style={{marginBottom: 16}}>
+                <Descriptions column={2}>
+                    <Descriptions.Item label={t('user.column.username')}>
+                        {user?.username ?? '-'}
+                    </Descriptions.Item>
+                </Descriptions>
+            </Card>
+
+            {/* User Identities */}
+            <Card title={t('user.detailPage.identities')} style={{marginBottom: 16}}>
+                <Tabs items={identityTabs}/>
+            </Card>
+
+            {/* User Authorities */}
+            <Card title={t('user.detailPage.authorities')}>
+                <div style={{marginBottom: 12}}>
+                    <Button type="primary" size="small" onClick={() => setAddAuthorityOpen(true)}>
+                        {t('user.detailPage.addAuthority')}
+                    </Button>
+                </div>
+                <Table
+                    columns={authorityColumns}
+                    dataSource={user?.authorities || []}
+                    rowKey="authority"
+                    pagination={false}
+                    size="small"
+                />
+            </Card>
+
+            {/* Add authority modal */}
+            <Modal
+                title={t('user.detailPage.addAuthority')}
+                open={addAuthorityOpen}
+                onOk={handleAddAuthority}
+                onCancel={() => { setAddAuthorityOpen(false); setNewAuthority(null); }}
+                okText={t('common.ok')}
+                cancelText={t('common.cancel')}
+            >
+                <Select
+                    style={{width: '100%'}}
+                    placeholder={t('user.detailPage.selectAuthority')}
+                    value={newAuthority}
+                    onChange={setNewAuthority}
+                    options={[
+                        {label: t('user.role.user'), value: 'user'},
+                        {label: t('user.role.admin'), value: 'admin'},
+                    ]}
+                />
+            </Modal>
+        </div>
+    );
+};
+
+export default UserDetail;

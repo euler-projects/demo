@@ -97,6 +97,24 @@
       "enable": "Enable user <code>{{username}}</code>?",
       "disable": "Disable user <code>{{username}}</code>?",
       "delete": "Delete user <code>{{username}}</code>?"
+    },
+    "detailPage": {
+      "breadcrumb": "User Detail",
+      "basicInfo": "Basic Information",
+      "identities": "User Identities",
+      "authorities": "User Authorities",
+      "phone": "Phone",
+      "identityId": "Identity ID",
+      "boundAt": "Bound at",
+      "viewRaw": "View original",
+      "hideRaw": "Hide original",
+      "rawValue": "Original value",
+      "addAuthority": "Add authority",
+      "removeAuthority": "Remove",
+      "confirmDelete": "Confirm delete?",
+      "noIdentities": "No identities",
+      "authorityName": "Authority",
+      "selectAuthority": "Select authority"
     }
   }
 }

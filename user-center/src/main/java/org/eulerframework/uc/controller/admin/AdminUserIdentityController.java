@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -39,30 +40,32 @@ public class AdminUserIdentityController {
     }
 
     @PostMapping
-    public UserIdentity createIdentity(@PathVariable String userId,
+    public Map<String, Object> createIdentity(@PathVariable String userId,
                                        @RequestBody Map<String, Object> body) {
         UserIdentity prototype = UserIdentity.withExtensions(body)
                 .build();
 
-        return this.userIdentityService.createUserIdentity(userId, prototype);
+        return flatten(this.userIdentityService.createUserIdentity(userId, prototype));
     }
 
     @GetMapping("/{identityId}")
-    public UserIdentity getIdentity(@PathVariable String userId,
+    public Map<String, Object> getIdentity(@PathVariable String userId,
                                     @PathVariable String identityId) {
-        return this.userIdentityService.getUserIdentity(userId, identityId)
+        UserIdentity identity = this.userIdentityService.getUserIdentity(userId, identityId)
                 .orElseThrow(() -> new UserIdentityNotFoundException(identityId));
+        return flatten(identity);
     }
 
     @GetMapping
-    public List<UserIdentity> listIdentities(
+    public List<Map<String, Object>> listIdentities(
             @PathVariable String userId,
             @RequestParam(required = false) String identityType) {
-        return this.userIdentityService.listUserIdentities(userId, identityType);
+        return this.userIdentityService.listUserIdentities(userId, identityType)
+                .stream().map(AdminUserIdentityController::flatten).toList();
     }
 
     @PutMapping("/{identityId}")
-    public UserIdentity updateIdentity(@PathVariable String userId,
+    public Map<String, Object> updateIdentity(@PathVariable String userId,
                                       @PathVariable String identityId,
                                       @RequestBody Map<String, Object> body) {
         // identityType is resolved by the service from the existing record
@@ -70,7 +73,7 @@ public class AdminUserIdentityController {
                 .identityType("__update__") // placeholder; service resolves actual type from DB
                 .build();
 
-        return this.userIdentityService.updateUserIdentity(userId, identityId, prototype);
+        return flatten(this.userIdentityService.updateUserIdentity(userId, identityId, prototype));
     }
 
     @DeleteMapping("/{identityId}")
@@ -87,5 +90,20 @@ public class AdminUserIdentityController {
         String rawValue = this.userIdentityService.getRawFieldValue(userId, identityId, fieldName)
                 .orElseThrow(() -> new UserIdentityNotFoundException(identityId));
         return Map.of("fieldName", fieldName, "rawValue", rawValue);
+    }
+
+    /**
+     * Flatten a {@link UserIdentity} into a plain map where extension
+     * fields sit at the same level as envelope fields.
+     */
+    private static Map<String, Object> flatten(UserIdentity identity) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("identityId", identity.getIdentityId());
+        map.put("userId", identity.getUserId());
+        map.put("identityType", identity.getIdentityType());
+        map.put("subject", identity.getSubject());
+        map.put("boundAt", identity.getBoundAt());
+        map.putAll(identity.getExtensions());
+        return map;
     }
 }

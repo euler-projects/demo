@@ -1,230 +1,34 @@
 /* eslint-disable compat/compat */
-import React, {useEffect, useMemo, useState} from 'react';
-import {Table, Button, Modal, Form, Input, Select, Checkbox} from 'antd';
+import React, {useEffect, useMemo, useState, useCallback} from 'react';
+import {Table, Button, Modal, Form, Input, Select, Checkbox, Spin} from 'antd';
 import {useTranslation, Trans} from 'react-i18next';
+import {Link, useSearchParams} from 'react-router';
 
 import {ACTION_COLUMN_WIDTH, OverflowTags, RowActions, computeActionsColumnWidth} from './_shared/tableLayout';
+import {apiPost, apiPut, apiDelete, apiGet} from './_shared/api';
 
-// Page-local width budgets for tag-style columns; row-action column
-// width is shared across admin pages via ACTION_COLUMN_WIDTH.
 const AUTHORITIES_COLUMN_WIDTH = 200;
 const STATUS_COLUMN_WIDTH = 180;
 
-const toURLSearchParams = (record) => {
-    const params = new URLSearchParams();
-    for (const [key, value] of Object.entries(record)) {
-        params.append(key, value);
-    }
-    return params;
-};
-const getRandomuserParams = (params) => ({
-    results: params.pagination?.pageSize,
-    page: params.pagination?.current,
-    ...params,
-});
-
 const listUsers = async ({offset, limit}) => {
-    return await fetch(`/admin/api/users?offset=${offset}&limit=${limit}`)
-        .then(res => res.json())
-        .then(rows => {
-            return rows;
-        });
-    //return await mock();
+    const res = await fetch(`/admin/api/users?offset=${offset}&limit=${limit}`);
+    return res.json();
 };
-
-const toUserRequestObject = (user) => {
-    return {
-        userId: user.userId,
-        username: user.username,
-        password: user.password,
-        email: user.email,
-        phone: user.phone,
-        authorities: user.authorities?.map(a => {
-            return {authority: a};
-        }),
-        accountNonExpired: user.accountNonExpired ?? false,
-        accountNonLocked: user.accountNonLocked ?? false,
-        credentialsNonExpired: user.credentialsNonExpired ?? false,
-        enabled: user.enabled ?? false,
-    };
-}
-
-const createUser = async (user) => {
-    console.log("Create user:", user);
-    const requestData = toUserRequestObject(user);
-    return await fetch("/_csrf", {
-        headers: {
-            "Accept": "application/json"
-        }
-    })
-        .then(res => res.json())
-        .then(csrf => {
-            return fetch(`/admin/api/users`, {
-                method: 'POST',
-                body: JSON.stringify(requestData),
-                headers: {
-                    "Content-Type": "application/json",
-                    [csrf.headerName]: csrf.token
-                },
-            })
-                .then(res => res.json())
-                .then(resp => {
-                    return resp;
-                });
-        })
-}
-
-const updateUser = async (user) => {
-    console.log("Update user:", user);
-    const requestData = toUserRequestObject(user);
-    return await fetch("/_csrf", {
-        headers: {
-            "Accept": "application/json"
-        }
-    })
-        .then(res => res.json())
-        .then(csrf => {
-            return fetch(`/admin/api/users/${encodeURIComponent(user.userId)}`, {
-                method: 'PUT',
-                body: JSON.stringify(requestData),
-                headers: {
-                    "Content-Type": "application/json",
-                    [csrf.headerName]: csrf.token
-                },
-            })
-                .then(res => res.json())
-                .then(resp => {
-                    return resp;
-                });
-        })
-}
-
-const resetPassword = async (user) => {
-    let requestData = {
-        password: user.password
-    };
-    return await fetch("/_csrf", {
-        headers: {
-            "Accept": "application/json"
-        }
-    })
-        .then(res => res.json())
-        .then(csrf => {
-            return fetch(`/admin/api/users/${encodeURIComponent(user.userId)}/password`, {
-                method: 'PUT',
-                body: JSON.stringify(requestData),
-                headers: {
-                    "Content-Type": "application/json",
-                    [csrf.headerName]: csrf.token
-                },
-            })
-                .then(res => {
-                    if (res.status === 204) {
-                        return null;
-                    }
-                    const contentLength = res.headers.get("Content-Length");
-                    if (contentLength === "0") {
-                        return res.text();
-                    }
-                    return res.json();
-                })
-                .then(resp => {
-                    return resp;
-                });
-        })
-}
-
-const deleteUser = async (userId) => {
-    return await fetch("/_csrf", {
-        headers: {
-            "Accept": "application/json"
-        }
-    })
-        .then(res => res.json())
-        .then(csrf => {
-            return fetch(`/admin/api/users/${encodeURIComponent(userId)}`, {
-                method: 'DELETE',
-                headers: {
-                    [csrf.headerName]: csrf.token
-                },
-            })
-                .then(res => {
-                    if (res.status === 204) {
-                        return null;
-                    }
-                    const contentLength = res.headers.get("Content-Length");
-                    if (contentLength === "0") {
-                        return res.text();
-                    }
-                    return res.json();
-                })
-                .then(resp => {
-                    return resp;
-                });
-        })
-}
-
-async function mock() {
-    return [
-        {
-            userId: "213",
-            username: "test",
-            authorities: [
-                {
-                    "authority": "user",
-                    "name": "普通用户",
-                    "description": "普通用户"
-                }
-            ]
-        },
-        {
-            userId: "214",
-            username: "test2",
-            enabled: true,
-            authorities: [
-                {
-                    "authority": "user",
-                    "name": "普通用户",
-                    "description": "普通用户"
-                },
-
-                {
-                    "authority": "root",
-                    "name": "管理员",
-                    "description": "管理员"
-                }
-            ]
-        }];
-}
 
 const User = () => {
     const {t} = useTranslation();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const initialPage = parseInt(searchParams.get('page') || '1', 10);
     const OP_TYPE_CREATE = 'create';
-    const OP_TYPE_UPDATE = 'update';
     const OP_TYPE_RESET_PW = 'reset-pw';
     const OP_TYPE_ENABLE = 'enable';
     const OP_TYPE_DISABLE = 'disable';
     const OP_TYPE_DELETE = 'delete';
 
     const formItemLayout = {
-        labelCol: {
-            xs: {
-                span: 24,
-            },
-            sm: {
-                span: 6,
-            },
-        },
-        wrapperCol: {
-            xs: {
-                span: 24,
-            },
-            sm: {
-                span: 18,
-            },
-        },
+        labelCol: {xs: {span: 24}, sm: {span: 6}},
+        wrapperCol: {xs: {span: 24}, sm: {span: 18}},
     };
-
 
     const authorityLabel = (authority) => {
         const key = `user.role.${authority.authority}`;
@@ -232,9 +36,6 @@ const User = () => {
         return translated === key ? (authority.name ?? authority.authority) : translated;
     };
 
-    // The toggle action's visible label changes per row (enable / disable);
-    // pin the layout measurement to the longer of the two so the row does
-    // not jitter as users flip their enabled state.
     const toggleMeasureLabel = useMemo(() => {
         const disable = t('user.disable');
         const enable = t('user.enable');
@@ -251,22 +52,61 @@ const User = () => {
         [t, toggleMeasureLabel]
     );
 
+    // --- Async phone loading ---
+    const [phoneMap, setPhoneMap] = useState({});
+
+    const loadPhonesForUsers = useCallback((users) => {
+        if (!users || users.length === 0) return;
+        const updates = {};
+        users.forEach(u => {
+            if (!phoneMap[u.userId]) {
+                updates[u.userId] = {loading: true, phones: []};
+            }
+        });
+        if (Object.keys(updates).length > 0) {
+            setPhoneMap(prev => ({...prev, ...updates}));
+        }
+        users.forEach(u => {
+            apiGet(`/admin/api/users/${encodeURIComponent(u.userId)}/identities?identityType=phone`)
+                .then(identities => {
+                    const phones = (identities || []).map(i => i.phone).filter(Boolean);
+                    setPhoneMap(prev => ({
+                        ...prev,
+                        [u.userId]: {loading: false, phones},
+                    }));
+                })
+                .catch(() => {
+                    setPhoneMap(prev => ({
+                        ...prev,
+                        [u.userId]: {loading: false, phones: []},
+                    }));
+                });
+        });
+    }, []);
+
+    const renderPhone = (_, record) => {
+        const entry = phoneMap[record.userId];
+        if (!entry || entry.loading) {
+            return <Spin size="small"/>;
+        }
+        if (entry.phones.length === 0) return '-';
+        if (entry.phones.length === 1) return entry.phones[0];
+        return <span>{entry.phones[0]} <span style={{color: '#999'}}>+{entry.phones.length - 1}</span></span>;
+    };
+
     const columns = useMemo(() => [
         {
             title: t('user.column.username'),
             dataIndex: 'username',
             sorter: true,
             width: 160,
-        },
-        {
-            title: t('user.column.email'),
-            dataIndex: 'email',
-            width: 220,
+            render: (text, record) => <Link to={record.userId} state={{fromPage: tableParams.pagination.current}}>{text}</Link>,
         },
         {
             title: t('user.column.phone'),
-            dataIndex: 'phone',
-            width: 140,
+            key: 'phone',
+            width: 160,
+            render: renderPhone,
         },
         {
             title: t('user.column.authorities'),
@@ -290,19 +130,11 @@ const User = () => {
                 if (!user.enabled) {
                     items.push({key: 'disabled', label: t('user.status.disabled')});
                 } else {
-                    if (!user.accountNonExpired) {
-                        items.push({key: 'account-expired', label: t('user.status.accountExpired'), color: 'red'});
-                    }
-                    if (!user.accountNonLocked) {
-                        items.push({key: 'account-locked', label: t('user.status.accountLocked'), color: 'red'});
-                    }
-                    if (!user.credentialsNonExpired) {
-                        items.push({key: 'credentials-expired', label: t('user.status.credentialsExpired'), color: 'red'});
-                    }
+                    if (!user.accountNonExpired) items.push({key: 'account-expired', label: t('user.status.accountExpired'), color: 'red'});
+                    if (!user.accountNonLocked) items.push({key: 'account-locked', label: t('user.status.accountLocked'), color: 'red'});
+                    if (!user.credentialsNonExpired) items.push({key: 'credentials-expired', label: t('user.status.credentialsExpired'), color: 'red'});
                 }
-                if (items.length === 0) {
-                    items.push({key: 'normal', label: t('user.status.normal'), color: 'green'});
-                }
+                if (items.length === 0) items.push({key: 'normal', label: t('user.status.normal'), color: 'green'});
                 return <OverflowTags items={items} columnWidth={STATUS_COLUMN_WIDTH}/>;
             },
         },
@@ -314,7 +146,7 @@ const User = () => {
             render: (_, record) => {
                 const toggleType = record.enabled ? OP_TYPE_DISABLE : OP_TYPE_ENABLE;
                 const actions = [
-                    {key: 'detail', label: t('user.detail'), onClick: () => showEditModal(record)},
+                    {key: 'detail', label: t('user.detail'), onClick: () => {}},
                     {key: 'toggle', label: record.enabled ? t('user.disable') : t('user.enable'), onClick: () => showConfirmModal(record, toggleType)},
                     {key: 'reset', label: t('user.resetPassword'), onClick: () => showResetPasswordModal(record)},
                     {key: 'delete', label: t('user.delete'), danger: true, onClick: () => showConfirmModal(record, OP_TYPE_DELETE)},
@@ -329,107 +161,68 @@ const User = () => {
                 );
             },
         },
-    ], [t, toggleMeasureLabel, actionColumnWidth]);
+    ], [t, toggleMeasureLabel, actionColumnWidth, phoneMap]);
 
     const prefixSelector = (
         <Form.Item name="prefix" noStyle>
-            <Select
-                style={{
-                    width: 70,
-                }}
-            >
+            <Select style={{width: 70}}>
                 <Select.Option value="86">+86</Select.Option>
             </Select>
         </Form.Item>
     );
 
     const showCreateModal = () => {
-        setFormType(OP_TYPE_CREATE)
-        setModalTitle(t('user.modal.create'))
+        setFormType(OP_TYPE_CREATE);
+        setModalTitle(t('user.modal.create'));
         form.resetFields();
         setIsModalOpen(true);
     };
-    const showEditModal = (user) => {
-        console.log("load data for edit:", user);
-        setFormType(OP_TYPE_UPDATE)
-        setModalTitle(t('user.modal.detail'))
-        form.setFieldsValue({
-            ...user,
-            authorities: user.authorities.map(a => a.authority),
-        });
-        setIsModalOpen(true);
-    };
     const showResetPasswordModal = (user) => {
-        console.log("load data for reset password:", user);
-        setFormType(OP_TYPE_RESET_PW)
-        setModalTitle(t('user.modal.resetPassword'))
-        form.setFieldsValue({
-            userId: user.userId,
-            username: user.username
-        });
+        setFormType(OP_TYPE_RESET_PW);
+        setModalTitle(t('user.modal.resetPassword'));
+        form.setFieldsValue({userId: user.userId, username: user.username});
         setIsModalOpen(true);
     };
     const showConfirmModal = (user, operateType) => {
-        console.log("load data for confirm:", user);
-        setFormType(operateType)
-        setModalTitle(null)
-        form.setFieldsValue({
-            ...user,
-            authorities: null, //暂时不需要这个字段 user.authorities.map(a => a.authority),
-        });
+        setFormType(operateType);
+        setModalTitle(null);
+        form.setFieldsValue({...user, authorities: null});
         setIsModalOpen(true);
     };
-    const handleOk = () => {
-        form.submit();
-    };
+    const handleOk = () => form.submit();
     const handleCancel = () => {
         setIsModalOpen(false);
         form.resetFields();
     };
+
+    const toUserRequestObject = (user) => ({
+        userId: user.userId,
+        username: user.username,
+        password: user.password,
+        email: user.email,
+        phone: user.phone,
+        authorities: user.authorities?.map(a => ({authority: a})),
+        accountNonExpired: user.accountNonExpired ?? false,
+        accountNonLocked: user.accountNonLocked ?? false,
+        credentialsNonExpired: user.credentialsNonExpired ?? false,
+        enabled: user.enabled ?? false,
+    });
+
     const onFinish = (userData) => {
-        console.log("form submit:", userData);
         if (formType === OP_TYPE_CREATE) {
-            createUser(userData)
-                .then(resp => {
-                    console.log("create user resp:", resp);
-                    setIsModalOpen(false);
-                    form.resetFields();
-                    fetchData();
-                })
-        } else if (formType === OP_TYPE_UPDATE) {
-            updateUser(userData)
-                .then(resp => {
-                    console.log("update user resp:", resp);
-                    setIsModalOpen(false);
-                    form.resetFields();
-                    fetchData();
-                })
+            apiPost('/admin/api/users', toUserRequestObject(userData))
+                .then(() => { setIsModalOpen(false); form.resetFields(); fetchData(); });
         } else if (formType === OP_TYPE_RESET_PW) {
-            resetPassword(userData)
-                .then(resp => {
-                    console.log("reset password resp:", resp);
-                    setIsModalOpen(false);
-                    form.resetFields();
-                    fetchData();
-                })
+            apiPut(`/admin/api/users/${encodeURIComponent(userData.userId)}/password`, {password: userData.password})
+                .then(() => { setIsModalOpen(false); form.resetFields(); });
         } else if (formType === OP_TYPE_ENABLE || formType === OP_TYPE_DISABLE) {
-            updateUser({
+            apiPut(`/admin/api/users/${encodeURIComponent(userData.userId)}`, toUserRequestObject({
                 ...userData,
-                enabled: formType === OP_TYPE_ENABLE
-            }).then(resp => {
-                console.log("update user status resp:", resp);
-                setIsModalOpen(false);
-                form.resetFields();
-                fetchData();
-            })
+                enabled: formType === OP_TYPE_ENABLE,
+            })).then(() => { setIsModalOpen(false); form.resetFields(); fetchData(); });
         } else if (formType === OP_TYPE_DELETE) {
-            deleteUser(userData.userId)
-                .then(resp => {
-                    console.log("delete user resp:", resp);
-                    setIsModalOpen(false);
-                    form.resetFields();
-                    fetchData();
-                })
+            apiDelete(`/admin/api/users/${encodeURIComponent(userData.userId)}`)
+                .then(() => { setIsModalOpen(false); form.resetFields(); fetchData(); });
         }
     };
 
@@ -440,257 +233,97 @@ const User = () => {
     const [data, setData] = useState();
     const [loading, setLoading] = useState(false);
     const [tableParams, setTableParams] = useState({
-        pagination: {
-            current: 1,
-            pageSize: 10,
-            total: 0
-        },
+        pagination: {current: initialPage, pageSize: 10, total: 0},
     });
-    const params = toURLSearchParams(getRandomuserParams(tableParams));
+
     const fetchData = () => {
         setLoading(true);
         const page = tableParams.pagination.current;
         const size = tableParams.pagination.pageSize;
         const offset = (page - 1) * size;
         const limit = size * 3;
-        listUsers({offset: offset, limit: limit})
-            .then(rows => {
-                const total = rows.length < limit ?
-                    offset + rows.length :
-                    Math.max(tableParams.pagination.total, offset + rows.length);
-                setData(rows.slice(0, size));
-                setLoading(false);
-                setTableParams({
-                    ...tableParams,
-                    pagination: {
-                        ...tableParams.pagination,
-                        total: total,
-                        // 200 is mock data, you should read it from server
-                        // total: data.totalCount,
-                    },
-                });
-            })
+        listUsers({offset, limit}).then(rows => {
+            const total = rows.length < limit
+                ? offset + rows.length
+                : Math.max(tableParams.pagination.total, offset + rows.length);
+            const pageData = rows.slice(0, size);
+            setData(pageData);
+            setLoading(false);
+            setTableParams(prev => ({
+                ...prev,
+                pagination: {...prev.pagination, total},
+            }));
+            loadPhonesForUsers(pageData);
+        });
     };
+
     useEffect(fetchData, [
         tableParams.pagination?.current,
         tableParams.pagination?.pageSize,
-        tableParams?.sortOrder,
-        tableParams?.sortField,
-        JSON.stringify(tableParams.filters),
     ]);
-    const handleTableChange = (pagination, filters, sorter) => {
-        setTableParams({
-            pagination,
-            filters,
-            sortOrder: Array.isArray(sorter) ? undefined : sorter.order,
-            sortField: Array.isArray(sorter) ? undefined : sorter.field,
-        });
 
-        // `dataSource` is useless since `pageSize` changed
-        if (pagination.pageSize !== tableParams.pagination?.pageSize) {
-            setData([]);
-        }
+    const handleTableChange = (pagination, filters, sorter) => {
+        setSearchParams({page: String(pagination.current)}, {replace: true});
+        setTableParams({pagination, filters, sortOrder: Array.isArray(sorter) ? undefined : sorter.order, sortField: Array.isArray(sorter) ? undefined : sorter.field});
+        if (pagination.pageSize !== tableParams.pagination?.pageSize) setData([]);
     };
 
     const UserForm = ({operationType}) => {
         const isCreate = operationType === OP_TYPE_CREATE;
-        const isUpdate = operationType === OP_TYPE_UPDATE;
         const isResetPw = operationType === OP_TYPE_RESET_PW;
         const isEnableUser = operationType === OP_TYPE_ENABLE;
         const isDisableUser = operationType === OP_TYPE_DISABLE;
         const isDeleteUser = operationType === OP_TYPE_DELETE;
-
         const addHiddenUserIdInput = !isCreate;
-        const addHiddenStatusInputs = isCreate || isUpdate || isEnableUser || isDisableUser;
-        const showFullUserInputs = isCreate || isUpdate;
-        const disabledUnmodifiableInputs = !isCreate;
+        const showFullUserInputs = isCreate;
         const showPasswordInputs = isCreate || isResetPw;
 
         return (
-            <Form
-                {...formItemLayout}
-                form={form}
-                onFinish={onFinish}
-                initialValues={{
-                    prefix: '86',
-                }}
-            >
-                {isEnableUser ? (
-                    <Trans i18nKey="user.confirm.enable" values={{username: form.getFieldValue('username')}} components={{code: <code/>}}/>
-                ) : null}
-                {isDisableUser ? (
-                    <Trans i18nKey="user.confirm.disable" values={{username: form.getFieldValue('username')}} components={{code: <code/>}}/>
-                ) : null}
-                {isDeleteUser ? (
-                    <Trans i18nKey="user.confirm.delete" values={{username: form.getFieldValue('username')}} components={{code: <code/>}}/>
-                ) : null}
-                {addHiddenUserIdInput ? (
-                    <Form.Item
-                        name="userId"
-                        label="userId"
-                        hidden={true}
-                    >
-                        <Input disabled={disabledUnmodifiableInputs} autoComplete="off"/>
-                    </Form.Item>
-                ) : null}
-                {isResetPw ? (
-                    <Form.Item
-                        name="username"
-                        label="username"
-                        hidden={true}
-                    >
-                        <Input autoComplete="username" readOnly/>
-                    </Form.Item>
-                ) : null}
-                {showFullUserInputs ? (<Form.Item
-                        name="username"
-                        label={t('user.form.username')}
-                        rules={[
-                            {
-                                required: isCreate,
-                                message: t('user.form.required.username'),
-                            },
-                        ]}
-                    >
-                        <Input disabled={disabledUnmodifiableInputs}/>
-                    </Form.Item>
-                ) : null}
-                {showFullUserInputs ? (<Form.Item
-                        name="email"
-                        label={t('user.form.email')}
-                        rules={[
-                            {
-                                required: false,
-                            },
-                        ]}
-                    >
+            <Form {...formItemLayout} form={form} onFinish={onFinish} initialValues={{prefix: '86'}}>
+                {isEnableUser && <Trans i18nKey="user.confirm.enable" values={{username: form.getFieldValue('username')}} components={{code: <code/>}}/>}
+                {isDisableUser && <Trans i18nKey="user.confirm.disable" values={{username: form.getFieldValue('username')}} components={{code: <code/>}}/>}
+                {isDeleteUser && <Trans i18nKey="user.confirm.delete" values={{username: form.getFieldValue('username')}} components={{code: <code/>}}/>}
+                {addHiddenUserIdInput && <Form.Item name="userId" label="userId" hidden><Input disabled autoComplete="off"/></Form.Item>}
+                {isResetPw && <Form.Item name="username" label="username" hidden><Input autoComplete="username" readOnly/></Form.Item>}
+                {showFullUserInputs && (
+                    <Form.Item name="username" label={t('user.form.username')} rules={[{required: true, message: t('user.form.required.username')}]}>
                         <Input/>
                     </Form.Item>
-                ) : null}
-                {showFullUserInputs ? (<Form.Item
-                        name="phone"
-                        label={t('user.form.phone')}
-                        rules={[
-                            {
-                                required: false,
-                                message: t('user.form.required.phone'),
-                            },
-                        ]}
-                    >
-                        <Input
-                            addonBefore={prefixSelector}
-                            style={{
-                                width: '100%',
-                            }}
-                        />
+                )}
+                {showFullUserInputs && (
+                    <Form.Item name="phone" label={t('user.form.phone')}>
+                        <Input addonBefore={prefixSelector} style={{width: '100%'}}/>
                     </Form.Item>
-                ) : null}
-                {showPasswordInputs ? (
-                    <Form.Item
-                        name="password"
-                        label={t('user.form.password')}
-                        rules={[
-                            {
-                                required: true,
-                                message: t('user.form.required.password'),
-                            },
-                        ]}
-                        hasFeedback
-                    >
+                )}
+                {showPasswordInputs && (
+                    <Form.Item name="password" label={t('user.form.password')} rules={[{required: true, message: t('user.form.required.password')}]} hasFeedback>
                         <Input.Password autoComplete="new-password"/>
                     </Form.Item>
-                ) : null}
-                {showPasswordInputs ? (
-                    <Form.Item
-                        name="confirm"
-                        label={t('user.form.confirm')}
-                        dependencies={['password']}
-                        hasFeedback
+                )}
+                {showPasswordInputs && (
+                    <Form.Item name="confirm" label={t('user.form.confirm')} dependencies={['password']} hasFeedback
                         rules={[
-                            {
-                                required: true,
-                                message: t('user.form.required.confirm'),
-                            },
+                            {required: true, message: t('user.form.required.confirm')},
                             ({getFieldValue}) => ({
                                 validator(_, value) {
-                                    if (!value || getFieldValue('password') === value) {
-                                        return Promise.resolve();
-                                    }
+                                    if (!value || getFieldValue('password') === value) return Promise.resolve();
                                     return Promise.reject(new Error(t('user.form.passwordMismatch')));
                                 },
                             }),
-                        ]}
-                    >
+                        ]}>
                         <Input.Password autoComplete="new-password"/>
                     </Form.Item>
-                ) : null}
-                {showFullUserInputs ? (
-                    <Form.Item
-                        name="authorities"
-                        label={t('user.form.authorities')}
-                        rules={[
-                            {
-                                required: true,
-                                message: t('user.form.required.authorities'),
-                            },
-                        ]}
-                        initialValue={['user']}
-                    >
-                        <Select
-                            mode="multiple"
-                            allowClear
-                            style={{
-                                width: '100%',
-                            }}
-                            placeholder={t('user.form.authoritiesPlaceholder')}
-                            options={[{label: t('user.role.user'), value: "user"}, {label: t('user.role.admin'), value: "admin"}]}
-                        />
+                )}
+                {showFullUserInputs && (
+                    <Form.Item name="authorities" label={t('user.form.authorities')} rules={[{required: true, message: t('user.form.required.authorities')}]} initialValue={['user']}>
+                        <Select mode="multiple" allowClear style={{width: '100%'}} placeholder={t('user.form.authoritiesPlaceholder')}
+                            options={[{label: t('user.role.user'), value: 'user'}, {label: t('user.role.admin'), value: 'admin'}]}/>
                     </Form.Item>
-                ) : null}
-                {addHiddenStatusInputs ? (
-                    <Form.Item
-                        name="enabled"
-                        label="账号已启用"
-                        valuePropName="checked"
-                        initialValue={true}
-                        hidden={true}
-                    >
-                        <Checkbox/>
-                    </Form.Item>
-                ) : null}
-                {addHiddenStatusInputs ? (
-                    <Form.Item
-                        name="credentialsNonExpired"
-                        label="密码未过期"
-                        valuePropName="checked"
-                        initialValue={true}
-                        hidden={true}
-                    >
-                        <Checkbox/>
-                    </Form.Item>
-                ) : null}
-                {addHiddenStatusInputs ? (
-                    <Form.Item
-                        name="accountNonExpired"
-                        label="账号未过期"
-                        valuePropName="checked"
-                        initialValue={true}
-                        hidden={true}
-                    >
-                        <Checkbox/>
-                    </Form.Item>
-                ) : null}
-                {addHiddenStatusInputs ? (
-                    <Form.Item
-                        name="accountNonLocked"
-                        label="账号未锁定"
-                        valuePropName="checked"
-                        initialValue={true}
-                        hidden={true}
-                    >
-                        <Checkbox/>
-                    </Form.Item>
-                ) : null}
+                )}
+                {(isCreate || isEnableUser || isDisableUser) && <Form.Item name="enabled" valuePropName="checked" initialValue={true} hidden><Checkbox/></Form.Item>}
+                {(isCreate || isEnableUser || isDisableUser) && <Form.Item name="credentialsNonExpired" valuePropName="checked" initialValue={true} hidden><Checkbox/></Form.Item>}
+                {(isCreate || isEnableUser || isDisableUser) && <Form.Item name="accountNonExpired" valuePropName="checked" initialValue={true} hidden><Checkbox/></Form.Item>}
+                {(isCreate || isEnableUser || isDisableUser) && <Form.Item name="accountNonLocked" valuePropName="checked" initialValue={true} hidden><Checkbox/></Form.Item>}
             </Form>
         );
     };
