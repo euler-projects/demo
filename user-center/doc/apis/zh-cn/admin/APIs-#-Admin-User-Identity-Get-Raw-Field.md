@@ -1,6 +1,6 @@
 # 查询登录身份脱敏字段原文
 
-按 `identity_id` 查询指定登录身份中某个脱敏字段的原始明文值. 用于管理端在需要时获取敏感信息原文 (如完整手机号、完整邮箱地址等). 通用约定见 [home.md](home.md#通用约定), 脱敏规则见 [User Identity - 脱敏与原文查询](Model-%23-User-Identity.md#3-脱敏与原文查询).
+按 `identityId` 查询指定登录身份中某个脱敏字段的原始明文值. 用于管理端在需要时获取敏感信息原文 (如完整手机号、完整邮箱地址等). 通用约定见 [home.md](home.md#通用约定), 脱敏规则见 [User Identity - 脱敏与原文查询](Model-%23-User-Identity.md#3-脱敏与原文查询).
 
 ## Request
 
@@ -30,8 +30,8 @@ GET /admin/api/users/{userId}/identities/{identityId}/raw-fields/{fieldName}
 
 ```json
 {
-    "field_name": "phone",
-    "raw_value": "+8613800138000"
+    "fieldName": "phone",
+    "rawValue": "+8613800138000"
 }
 ```
 
@@ -45,8 +45,8 @@ GET /admin/api/users/a1b2c3d4-e5f6-7890-abcd-ef1234567890/identities/550e8400-e2
 
 ```json
 {
-    "field_name": "phone",
-    "raw_value": "+8613800138000"
+    "fieldName": "phone",
+    "rawValue": "+8613800138000"
 }
 ```
 
@@ -58,8 +58,8 @@ GET /admin/api/users/a1b2c3d4-e5f6-7890-abcd-ef1234567890/identities/6ba7b810-9d
 
 ```json
 {
-    "field_name": "email",
-    "raw_value": "user@example.com"
+    "fieldName": "email",
+    "rawValue": "user@example.com"
 }
 ```
 

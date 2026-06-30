@@ -1,6 +1,6 @@
 # 查询登录身份
 
-按 `identity_id` 查询单条登录身份的完整信息. 通用约定见 [home.md](home.md#通用约定), 登录身份完整结构定义见 [User Identity](Model-%23-User-Identity.md).
+按 `identityId` 查询单条登录身份的完整信息. 通用约定见 [home.md](home.md#通用约定), 登录身份完整结构定义见 [User Identity](Model-%23-User-Identity.md).
 
 ## Request
 
@@ -29,11 +29,11 @@ GET /admin/api/users/{userId}/identities/{identityId}
 
 ```json
 {
-    "identity_id": "550e8400-e29b-41d4-a716-446655440000",
-    "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    "identity_type": "phone",
+    "identityId": "550e8400-e29b-41d4-a716-446655440000",
+    "userId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "identityType": "phone",
     "subject": "9c1b8e2a3f6d7e4b5a8c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a",
-    "bound_at": 1778899139687,
+    "boundAt": 1778899139687,
     "phone": "+8613*******00"
 }
 ```

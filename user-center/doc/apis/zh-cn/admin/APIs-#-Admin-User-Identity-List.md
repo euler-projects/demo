@@ -7,7 +7,7 @@
 ### Url
 
 ```http
-GET /admin/api/users/{userId}/identities?offset={offset}&limit={limit}
+GET /admin/api/users/{userId}/identities
 ```
 
 ### Authorities
@@ -24,8 +24,6 @@ GET /admin/api/users/{userId}/identities?offset={offset}&limit={limit}
 
 |参数名|类型|说明|是否必填|默认值|
 |---|---|---|---|---|
-|offset|int|起始偏移 (从 0 开始)|是|无|
-|limit|int|本次最多返回条数|是|无|
 |identityType|string|按身份类型筛选, 如 `phone` / `email` / `wechat`|否|无|
 
 ## Response
@@ -37,19 +35,19 @@ GET /admin/api/users/{userId}/identities?offset={offset}&limit={limit}
 ```json
 [
     {
-        "identity_id": "550e8400-e29b-41d4-a716-446655440000",
-        "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-        "identity_type": "phone",
+        "identityId": "550e8400-e29b-41d4-a716-446655440000",
+        "userId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "identityType": "phone",
         "subject": "9c1b8e2a3f6d7e4b5a8c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a",
-        "bound_at": 1778899139687,
+        "boundAt": 1778899139687,
         "phone": "+8613*******00"
     },
     {
-        "identity_id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
-        "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-        "identity_type": "email",
+        "identityId": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+        "userId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "identityType": "email",
         "subject": "3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b",
-        "bound_at": 1778899139687,
+        "boundAt": 1778899139687,
         "email": "u**r@e*****e.com"
     }
 ]

@@ -24,7 +24,7 @@
 - [模型定义](Model-%23-User-Identity.md)
 - [创建登录身份](APIs-%23-Admin-User-Identity-Create.md)
 - [查询登录身份](APIs-%23-Admin-User-Identity-Get.md)
-- [部分更新登录身份 (PATCH)](APIs-%23-Admin-User-Identity-Patch.md)
+- [更新登录身份 (PUT)](APIs-%23-Admin-User-Identity-Update.md)
 - [删除登录身份](APIs-%23-Admin-User-Identity-Delete.md)
 - [列出登录身份](APIs-%23-Admin-User-Identity-List.md)
 - [查询脱敏字段原文](APIs-%23-Admin-User-Identity-Get-Raw-Field.md)

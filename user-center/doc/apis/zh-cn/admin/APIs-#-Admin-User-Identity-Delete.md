@@ -1,6 +1,6 @@
 # 删除登录身份
 
-按 `identity_id` 删除一条登录身份记录. 通用约定见 [home.md](home.md#通用约定).
+按 `identityId` 删除一条登录身份记录. 通用约定见 [home.md](home.md#通用约定).
 
 ## Request
 

@@ -152,6 +152,13 @@ public class PhoneUserIdentityService extends AbstractUserIdentityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<UserIdentity> listUserIdentities(String userId, String identityType) {
+        Assert.isTrue(IDENTITY_TYPE.equals(identityType), "Unsupported identity type: " + identityType);
+        return this.listUserIdentities(userId);
+    }
+
+    @Override
     @Transactional
     public UserIdentity updateUserIdentity(String userId, String identityId,
                                            MultiValueMap<String, String> params) {
@@ -164,28 +171,26 @@ public class PhoneUserIdentityService extends AbstractUserIdentityService {
                 .orElseThrow(() -> new UserIdentityNotFoundException(identityId));
 
         String phone = consumeOtp(params);
-        String newSubject = PhoneIdentifierHasher.hash(phone);
+        return doUpdate(identity, phone);
+    }
 
-        // Same-phone rebind leaves subject unchanged; rebinding to a
-        // value already owned by another account is a conflict.
-        boolean changingSubject = !newSubject.equals(identity.getSubject());
-        if (changingSubject
-                && this.identityRepository.existsByIdentityTypeAndSubject(IDENTITY_TYPE, newSubject)) {
-            throw new IdentityOccupiedException(IDENTITY_TYPE);
+    @Override
+    @Transactional
+    public UserIdentity updateUserIdentity(String userId, String identityId, UserIdentity prototype) {
+        Assert.hasText(userId, "userId must not be empty");
+        Assert.hasText(identityId, "identityId must not be empty");
+        Assert.notNull(prototype, "prototype must not be null");
+
+        UserIdentityEntity identity = this.identityRepository
+                .findByIdAndUserIdAndIdentityType(identityId, userId, IDENTITY_TYPE)
+                .orElseThrow(() -> new UserIdentityNotFoundException(identityId));
+
+        String rawPhone = prototype.getProperty(EXTENSION_PHONE);
+        if (!StringUtils.hasText(rawPhone)) {
+            throw new InvalidUserIdentityException(
+                    "prototype extension '" + EXTENSION_PHONE + "' is required");
         }
-
-        identity.setSubject(newSubject);
-        this.identityRepository.save(identity);
-
-        UserIdentityPhoneEntity child = this.identityPhoneRepository.findById(identityId).orElse(null);
-        if (child == null) {
-            child = new UserIdentityPhoneEntity();
-            child.setIdentityId(identityId);
-        }
-        child.setPhone(phone);
-        this.identityPhoneRepository.save(child);
-
-        return toModel(identity, phone);
+        return doUpdate(identity, rawPhone);
     }
 
     @Override
@@ -219,7 +224,51 @@ public class PhoneUserIdentityService extends AbstractUserIdentityService {
                 .map(identity -> toModel(identity, rawSubject));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<String> getRawFieldValue(String userId, String identityId, String fieldName) {
+        if (!EXTENSION_PHONE.equals(fieldName)) {
+            return Optional.empty();
+        }
+        return this.identityRepository
+                .findByIdAndUserIdAndIdentityType(identityId, userId, IDENTITY_TYPE)
+                .flatMap(identity -> this.identityPhoneRepository.findById(identity.getId()))
+                .map(UserIdentityPhoneEntity::getPhone);
+    }
+
     // ---- helpers ----
+
+    /**
+     * Shared update path for both {@code updateUserIdentity} and
+     * {@code patchUserIdentity}. Derives the new subject from the
+     * verified raw phone, enforces cross-account uniqueness, persists
+     * the parent and child rows, and returns the persisted model.
+     */
+    private UserIdentity doUpdate(UserIdentityEntity identity, String rawPhone) {
+        String newSubject = PhoneIdentifierHasher.hash(rawPhone);
+
+        // Same-phone rebind leaves subject unchanged; rebinding to a
+        // value already owned by another account is a conflict.
+        boolean changingSubject = !newSubject.equals(identity.getSubject());
+        if (changingSubject
+                && this.identityRepository.existsByIdentityTypeAndSubject(IDENTITY_TYPE, newSubject)) {
+            throw new IdentityOccupiedException(IDENTITY_TYPE);
+        }
+
+        identity.setSubject(newSubject);
+        this.identityRepository.save(identity);
+
+        String identityId = identity.getId();
+        UserIdentityPhoneEntity child = this.identityPhoneRepository.findById(identityId).orElse(null);
+        if (child == null) {
+            child = new UserIdentityPhoneEntity();
+            child.setIdentityId(identityId);
+        }
+        child.setPhone(rawPhone);
+        this.identityPhoneRepository.save(child);
+
+        return toModel(identity, rawPhone);
+    }
 
     /**
      * Shared write path for both {@code createUserIdentity} overloads.

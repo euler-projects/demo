@@ -135,7 +135,19 @@ public class DelegatingUserIdentityService implements UserIdentityService {
 
     @Override
     public List<UserIdentity> listUserIdentities(String userId) {
+        return listUserIdentities(userId, null);
+    }
+
+    @Override
+    public List<UserIdentity> listUserIdentities(String userId, String identityType) {
         Assert.hasText(userId, "userId must not be empty");
+        if (StringUtils.hasText(identityType)) {
+            UserIdentityService backend = this.backends.get(identityType);
+            if (backend == null) {
+                return List.of();
+            }
+            return backend.listUserIdentities(userId);
+        }
         return this.backends.values().stream()
                 .flatMap(backend -> backend.listUserIdentities(userId).stream())
                 // Most recently bound first.
@@ -153,6 +165,17 @@ public class DelegatingUserIdentityService implements UserIdentityService {
                 .orElseThrow(() -> new UserIdentityNotFoundException(identityId));
         return resolveBackend(existing.getIdentityType())
                 .updateUserIdentity(userId, identityId, params);
+    }
+
+    @Override
+    public UserIdentity updateUserIdentity(String userId, String identityId, UserIdentity prototype) {
+        Assert.hasText(userId, "userId must not be empty");
+        Assert.hasText(identityId, "identityId must not be empty");
+        Assert.notNull(prototype, "prototype must not be null");
+        UserIdentity existing = getUserIdentity(userId, identityId)
+                .orElseThrow(() -> new UserIdentityNotFoundException(identityId));
+        return resolveBackend(existing.getIdentityType())
+                .updateUserIdentity(userId, identityId, prototype);
     }
 
     @Override
@@ -176,6 +199,20 @@ public class DelegatingUserIdentityService implements UserIdentityService {
             return Optional.empty();
         }
         return backend.findUserIdentityByRawSubject(identityType, rawSubject);
+    }
+
+    @Override
+    public Optional<String> getRawFieldValue(String userId, String identityId, String fieldName) {
+        Assert.hasText(userId, "userId must not be empty");
+        Assert.hasText(identityId, "identityId must not be empty");
+        Assert.hasText(fieldName, "fieldName must not be empty");
+        for (UserIdentityService backend : this.backends.values()) {
+            Optional<String> raw = backend.getRawFieldValue(userId, identityId, fieldName);
+            if (raw.isPresent()) {
+                return raw;
+            }
+        }
+        return Optional.empty();
     }
 
     private UserIdentityService resolveBackend(String identityType) {
