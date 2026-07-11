@@ -6,7 +6,7 @@
     "role": "角色与权限",
     "oauth2": "OAuth2",
     "oauth2_client": "客户端",
-    "oauth2_jwk": "JWK 密钥",
+    "oauth2_jwk": "JWKs",
     "settings": "系统设置"
   },
   "header": {
@@ -27,6 +27,9 @@
     "yes": "是",
     "no": "否",
     "more": "更多"
+  },
+  "breadcrumb": {
+    "expand": "展开 {{group}} 菜单"
   },
   "oauth2": {
     "client": {

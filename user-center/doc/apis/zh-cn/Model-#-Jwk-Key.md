@@ -24,7 +24,7 @@ Admin JWK 管理接口返回的密钥视图模型. 本模型是 JWK 条目的安
 | issuedAt   | timestamp(3)   | Yes      | 密钥签发时间戳 (毫秒), 对应 manifest 中的 `iat` 字段                               |
 | signing    | boolean        | Yes      | 当前是否被选为签名密钥; 同一时刻只有一个密钥 `signing=true`                        |
 
-> 本模型为**纯只读**, 不存在请求体场景. 通过 [列出密钥](APIs-%23-Admin-JWKS-Get.md) 接口返回, 也作为 [创建密钥](APIs-%23-Admin-JWKS-Create.md) 的成功响应体. 创建密钥的请求体见 [JWK 密钥创建请求](Model-%23-Jwk-Key-Create-Request.md).
+> 本模型为**纯只读**, 不存在请求体场景. 通过 [列出密钥](APIs-%23-Admin-JWKS-Get.md) 接口返回, 也作为 [创建密钥](APIs-%23-Admin-JWKS-Create.md) 的成功响应体. 创建密钥的请求体见 [JWK 创建请求](Model-%23-Jwk-Key-Create-Request.md).
 
 ---
 

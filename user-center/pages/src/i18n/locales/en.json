@@ -6,7 +6,7 @@
     "role": "Roles & Permissions",
     "oauth2": "OAuth2",
     "oauth2_client": "Clients",
-    "oauth2_jwk": "JWK Keys",
+    "oauth2_jwk": "JWKs",
     "settings": "Settings"
   },
   "header": {
@@ -27,6 +27,9 @@
     "yes": "Yes",
     "no": "No",
     "more": "More"
+  },
+  "breadcrumb": {
+    "expand": "Expand {{group}} menu"
   },
   "oauth2": {
     "client": {

@@ -5,7 +5,7 @@
 - [OAuth2 Client](Model-%23-OAuth2-Client.md)
 - [App Attest App](Model-%23-App-Attest-App.md)
 - [JWK Key](Model-%23-Jwk-Key.md)
-- [JWK 密钥创建请求](Model-%23-Jwk-Key-Create-Request.md)
+- [JWK 创建请求](Model-%23-Jwk-Key-Create-Request.md)
 - [JWK Cluster Status](Model-%23-Jwk-Cluster-Status.md)
 - [User Identity](Model-%23-User-Identity.md)
 

@@ -1,125 +1,142 @@
-:root {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, Avenir,
-        Helvetica, Arial, sans-serif;
-    line-height: 1.5;
-    font-weight: 400;
+@import "tailwindcss";
 
-    color-scheme: light;
-    color: #1f2329;
-    background-color: #f5f7fa;
+@custom-variant dark (&:is(.dark *));
 
-    font-synthesis: none;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+@theme inline {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+:root {
+    --radius: 0.625rem;
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0);
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+}
+
+/*
+ * Tailwind v4 flipped the default `border-color` from `gray-200` to
+ * `currentColor`, so any bare `border-r` (e.g. the one shadcn's
+ * Sidebar container puts on its right edge) would inherit the near-
+ * black text color and paint a dark seam between the sidebar and the
+ * inset. Restore the shadcn convention of defaulting borders to the
+ * theme's `--border` token.
+ */
+@layer base {
+    *,
+    ::before,
+    ::after {
+        border-color: var(--border);
+    }
+}
+
+/*
+ * Fix icon clipping on size="lg" SidebarMenuButtons when the sidebar
+ * is collapsed to the icon rail (brand tile in SidebarHeader, avatar
+ * tile in NavUser). Root cause lives in shadcn's `sidebarMenuButtonVariants`:
+ *
+ *   base:     group-data-[collapsible=icon]:p-2!   (all sizes)
+ *   size=lg:  group-data-[collapsible=icon]:p-0!
+ *
+ * Both rules carry `!important` and share the same specificity, so the
+ * CSS cascade defers to source order. Tailwind v4 emits utilities in
+ * value-ascending order (`p-0` before `p-2`), which flips the intent
+ * and leaves the lg tile at 32×32 with 8px padding; its size-8 child
+ * (Avatar / brand tile) then gets sliced off by `overflow-hidden`.
+ *
+ * Rather than patch the upstream component and diverge from the
+ * shadcn CLI output, override here. Two subtleties:
+ *
+ *   1. The rule MUST live inside `@layer utilities` — CSS Cascade
+ *      Level 5 flips layer priority for `!important` declarations, so
+ *      an unlayered `!important` rule actually loses to Tailwind's
+ *      layered ones. Adding to the same layer lets normal source-order
+ *      cascade take over and our later declaration wins.
+ *   2. The selector matches by `[data-size="lg"]` alone, not
+ *      `[data-slot="sidebar-menu-button"]`. When NavUser composes
+ *      `<DropdownMenuTrigger render={<SidebarMenuButton size="lg"/>}>`,
+ *      Base UI's `useRender` keeps `data-slot="dropdown-menu-trigger"`
+ *      on the DOM element (the trigger owns the slot) while still
+ *      forwarding `data-size` from the render target — so the slot
+ *      check would miss NavUser and NavLocale.
+ */
+@layer utilities {
+    [data-slot="sidebar"][data-collapsible="icon"] [data-size="lg"] {
+        padding: 0 !important;
+    }
+}
+
+/*
+ * Page shell defaults. Kept minimal so antd's cssinjs surface renders
+ * flush against the shadcn Sidebar. Tailwind's preflight already sets
+ * `box-sizing: border-box` and zeroes body margin; the rules below
+ * only add height guarantees.
+ */
 html,
 body,
 #root {
-    margin: 0;
-    padding: 0;
-    width: 100%;
     min-height: 100vh;
-    background-color: #f5f7fa;
 }
 
 body {
     min-width: 320px;
-}
-:root {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, Avenir,
         Helvetica, Arial, sans-serif;
-    line-height: 1.5;
-    font-weight: 400;
-
     color-scheme: light;
-    color: #1f2329;
-    background-color: #f5f7fa;
-
-    font-synthesis: none;
-    text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-}
-
-html,
-body,
-#root {
-    margin: 0;
-    padding: 0;
-    min-height: 100vh;
-    background-color: #f5f7fa;
-}
-
-body {
-    min-width: 320px;
-}
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
 }

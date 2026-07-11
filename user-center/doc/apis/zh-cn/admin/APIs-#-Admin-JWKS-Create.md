@@ -28,7 +28,7 @@ application/json
 
 ### 请求体字段
 
-请求体为 [JWK 密钥创建请求](Model-%23-Jwk-Key-Create-Request.md) 模型. 字段说明:
+请求体为 [JWK 创建请求](Model-%23-Jwk-Key-Create-Request.md) 模型. 字段说明:
 
 | PROPERTY  | TYPE   | REQUIRED | DESCRIPTION                                                                                |
 |-----------|--------|----------|--------------------------------------------------------------------------------------------|
