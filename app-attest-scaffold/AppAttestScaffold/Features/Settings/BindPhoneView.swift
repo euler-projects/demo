@@ -21,6 +21,8 @@ struct PhoneOTPSheet: View {
         case signIn
         /// 匿名账号 → 实名账号的绑定(`POST /user/identities`)。
         case bindPhone
+        /// 换绑手机号：先解绑旧 identity 再绑定新手机号。
+        case rebindPhone(identityId: String)
     }
 
     /// 两步流程的当前阶段。
@@ -104,10 +106,12 @@ struct PhoneOTPSheet: View {
 
     private var navigationTitle: String {
         switch (mode, step) {
-        case (.signIn, .phone):    return "手机号登录"
-        case (.signIn, .code):     return "输入验证码"
-        case (.bindPhone, .phone): return "绑定手机号"
-        case (.bindPhone, .code):  return "输入验证码"
+        case (.signIn, .phone):             return "手机号登录"
+        case (.signIn, .code):              return "输入验证码"
+        case (.bindPhone, .phone):          return "绑定手机号"
+        case (.bindPhone, .code):           return "输入验证码"
+        case (.rebindPhone, .phone):        return "换绑手机号"
+        case (.rebindPhone, .code):         return "输入验证码"
         }
     }
 
@@ -116,7 +120,7 @@ struct PhoneOTPSheet: View {
     private var phoneStep: some View {
         VStack(alignment: .leading, spacing: 24) {
             VStack(alignment: .leading, spacing: 8) {
-                Text(mode == .signIn ? "请输入手机号" : "请输入要绑定的手机号")
+                Text(phoneStepTitle)
                     .font(.title2.weight(.semibold))
                 Text("我们将发送 6 位验证码到该号码。")
                     .font(.callout)
@@ -139,16 +143,18 @@ struct PhoneOTPSheet: View {
                 HStack {
                     Spacer()
                     if isSending {
-                        ProgressView()
+                        ProgressView().controlSize(.small)
                     } else {
                         Text("发送验证码").fontWeight(.semibold)
                     }
                     Spacer()
                 }
+                .frame(height: 24)
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
             .disabled(!canSendOTP)
+            // .animation(nil, value: isSending)
 
             Spacer()
         }
@@ -213,6 +219,14 @@ struct PhoneOTPSheet: View {
 
     // MARK: - 派生状态
 
+    private var phoneStepTitle: String {
+        switch mode {
+        case .signIn:       return "请输入手机号"
+        case .bindPhone:    return "请输入要绑定的手机号"
+        case .rebindPhone:  return "请输入新的手机号"
+        }
+    }
+
     private var canSendOTP: Bool {
         !isSending && countdown == 0 && isPhoneValid
     }
@@ -269,6 +283,12 @@ struct PhoneOTPSheet: View {
                     )
                 case .bindPhone:
                     try await session.bindPhone(ticket: ticket.otpTicket, otp: otpCode)
+                case .rebindPhone(let identityId):
+                    try await session.rebindPhone(
+                        identityId: identityId,
+                        ticket: ticket.otpTicket,
+                        otp: otpCode
+                    )
                 }
                 // 成功 — 关闭 sheet。
                 dismiss()

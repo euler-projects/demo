@@ -3,9 +3,10 @@ import Alamofire
 
 /// 用户账号服务上 `/user/identities` 端点的客户端封装。
 ///
-/// 三种使用方式：
+/// 四种使用方式：
 /// - `GET`    → 枚举当前账号上已绑定的登录身份，用于设置页渲染。
 /// - `POST`   → 在当前账号上新增手机号登录身份（匿名升级为真实账号）。
+/// - `PUT`    → 更新（换绑）已有登录身份（如更换手机号），原子操作，`identity_id` 不变。
 /// - `DELETE` → 解绑某个已绑定的登录身份（仅在还会保留至少一个登录身份时可用，
 ///   或部署方允许解绑最后一个登录身份时也可用）。
 ///
@@ -46,7 +47,7 @@ final class UserIdentitiesClient {
     func list() async throws -> [Identity] {
         let at = try await auth.getAccessToken()
         let endpoints = endpointsResolver()
-        let envelope = try await http.request(
+        return try await http.request(
             endpoints.identitiesEndpoint,
             method: .get,
             headers: HTTPHeaders([
@@ -55,9 +56,8 @@ final class UserIdentitiesClient {
             ])
         )
         .validate()
-        .serializingDecodable(IdentitiesEnvelope.self)
+        .serializingDecodable([Identity].self)
         .value
-        return envelope.identities
     }
 
     // MARK: - 绑定手机号
@@ -79,6 +79,39 @@ final class UserIdentitiesClient {
         ]
         var request = URLRequest(url: endpoints.identitiesEndpoint)
         request.httpMethod = "POST"
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("Bearer \(at)", forHTTPHeaderField: "Authorization")
+        request.httpBody = FormURLEncoder.encode(pairs).data(using: .utf8)
+        do {
+            return try await http.request(request)
+                .validate()
+                .serializingDecodable(Identity.self)
+                .value
+        } catch {
+            throw mapBindPhoneError(error)
+        }
+    }
+
+    // MARK: - 换绑
+
+    /// `PUT /user/identities/{identity_id}` —— 更新（换绑）已有登录身份。
+    /// 仅可在同类型身份内重新绑定（如将已绑定的手机号更换为另一手机号），`identity_id` 保持不变。
+    /// 请求体中不需要传 `identity_type`，服务端根据已有记录自动识别。
+    func updatePhone(
+        identityId: String,
+        otpTicket: String,
+        otp: String
+    ) async throws -> Identity {
+        let at = try await auth.getAccessToken()
+        let endpoints = endpointsResolver()
+        let url = endpoints.identitiesEndpoint.appendingPathComponent(identityId)
+        let pairs: [(String, String)] = [
+            ("otp_ticket", otpTicket),
+            ("otp", otp)
+        ]
+        var request = URLRequest(url: url)
+        request.httpMethod = "PUT"
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("Bearer \(at)", forHTTPHeaderField: "Authorization")
@@ -115,11 +148,11 @@ final class UserIdentitiesClient {
         .value
     }
 
-    // MARK: - 错误映射（仅 bindPhone 需要的局部映射）
+    // MARK: - 错误映射（bindPhone / updatePhone 需要的局部映射）
 
-    /// 把 Alamofire 错误转为 `APIError`：仅识别 `bindPhone` 关心的 409 冲突；其它情况
-    /// 退化为通用 `.http` / `.network`。**注意**：这是 *业务* 错误映射，不是全局映射 ——
-    /// 不同业务端点关心的非 2xx 语义不同，应各自实现，避免在网络层叠加全局判断。
+    /// 把 Alamofire 错误转为 `APIError`：仅识别 bindPhone/updatePhone 关心的 409 冲突；
+    /// 其它情况退化为通用 `.http` / `.network`。**注意**：这是 *业务* 错误映射，不是全局映射
+    /// —— 不同业务端点关心的非 2xx 语义不同，应各自实现，避免在网络层叠加全局判断。
     private func mapBindPhoneError(_ error: Error) -> APIError {
         if let apiError = error as? APIError {
             return apiError
@@ -153,29 +186,3 @@ final class UserIdentitiesClient {
     }
 }
 
-/// 部分部署会把列表响应包装成 `{ "identities": [...] }`，另一些部署直接返回裸 JSON 数组。
-/// 这里的自定义解码器对两种形式都兼容。
-private struct IdentitiesEnvelope: Decodable {
-    let identities: [Identity]
-
-    init(from decoder: Decoder) throws {
-        // 先尝试包装形式。
-        if let container = try? decoder.container(keyedBy: AnyCodingKey.self),
-           let key = AnyCodingKey(stringValue: "identities"),
-           container.contains(key),
-           let nested = try? container.decode([Identity].self, forKey: key) {
-            self.identities = nested
-            return
-        }
-        // 否则回退到裸数组。
-        let single = try decoder.singleValueContainer()
-        self.identities = try single.decode([Identity].self)
-    }
-
-    private struct AnyCodingKey: CodingKey {
-        var stringValue: String
-        init?(stringValue: String) { self.stringValue = stringValue }
-        var intValue: Int? { nil }
-        init?(intValue: Int) { return nil }
-    }
-}

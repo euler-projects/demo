@@ -49,4 +49,21 @@ final class AccountService {
     func unbind(identityId: String) async throws {
         try await identities.unbind(identityId: identityId)
     }
+
+    // MARK: - 换绑
+
+    /// 原子换绑手机号：通过 `PUT /user/identities/{identity_id}` 在同一 identity 下更新绑定。
+    /// `identity_id` 保持不变，`subject` 会随新手机号变化。
+    @discardableResult
+    func rebindPhone(
+        identityId: String,
+        otpTicket: String,
+        otp: String
+    ) async throws -> Identity {
+        try await identities.updatePhone(
+            identityId: identityId,
+            otpTicket: otpTicket,
+            otp: otp
+        )
+    }
 }

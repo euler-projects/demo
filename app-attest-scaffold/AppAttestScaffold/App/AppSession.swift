@@ -212,6 +212,30 @@ final class AppSession: ObservableObject {
         }
     }
 
+    /// 原子换绑手机号：先解绑旧 identity，再绑定新手机号。
+    /// 错误直接抛出, 由调用方 (PhoneOTPSheet) 就地处理。
+    func rebindPhone(identityId: String, ticket: String, otp: String) async throws {
+        do {
+            _ = try await account.rebindPhone(
+                identityId: identityId,
+                otpTicket: ticket,
+                otp: otp
+            )
+            let identities = try await account.listIdentities()
+            let freshTokens = SessionStore.loadTokenBundle() ?? phase.tokens
+            if let freshTokens {
+                phase = .signedIn(mergeIdentities(tokens: freshTokens, identities: identities))
+            }
+            lastError = nil
+        } catch let error as APIError {
+            if case .kidRevoked = error {
+                phase = .unauthenticated
+                lastError = error.errorDescription
+            }
+            throw error
+        }
+    }
+
     // MARK: - 诊断 / 手动续期
 
     /// 手动走一轮 App Assertion 续期。设置页"诊断"入口调用，复用与业务路径完全相同的

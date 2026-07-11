@@ -7,12 +7,12 @@ import Foundation
 /// 后续迭代加入支持时不必触动持久化层。
 struct Identity: Codable, Equatable, Identifiable {
 
-    /// 服务端分配的 UUID。在重新绑定后保持稳定 —— 用于 `DELETE /user/identities/{id}`。
+    /// 服务端分配的 UUID。在重新绑定后保持稳定 —— 用于 `PUT/DELETE /user/identities/{id}`。
     var identityId: String
     var identityType: IdentityType
-    /// 已脱敏的标识符（按规范，是原始 phone/email/openid 的 SHA-256）。
-    /// 客户端按不透明字符串处理。
-    var identifier: String
+    /// 登录身份的确定性唯一标识。由服务端根据 `identityType` 与绑定凭据自动生成，
+    /// 在 `(identityType, subject)` 维度全局唯一；换绑后 `subject` 会随之变化。
+    var subject: String
     /// 首次绑定时间，单位毫秒（自 epoch）。
     var boundAt: Int64
 
@@ -27,7 +27,7 @@ struct Identity: Codable, Equatable, Identifiable {
     enum CodingKeys: String, CodingKey {
         case identityId = "identity_id"
         case identityType = "identity_type"
-        case identifier
+        case subject
         case boundAt = "bound_at"
         case phone
         case email

@@ -42,6 +42,7 @@
 		A14E5C0F2D0A000000002031 /* OAuthErrorMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001031 /* OAuthErrorMapper.swift */; };
 		A14E5C0F2D0A000000002032 /* OAuthTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001032 /* OAuthTransport.swift */; };
 		A14E5C0F2D0A000000002033 /* RedactingEventMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001033 /* RedactingEventMonitor.swift */; };
+		A14E5C0F2D0A000000002050 /* DeveloperToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001050 /* DeveloperToolsView.swift */; };
 		A14E5C0F2D0A000000002040 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = A14E5C0F2D0A000000005000 /* Alamofire */; };
 /* End PBXBuildFile section */
 
@@ -82,6 +83,7 @@
 		A14E5C0F2D0A000000001031 /* OAuthErrorMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthErrorMapper.swift; sourceTree = "<group>"; };
 		A14E5C0F2D0A000000001032 /* OAuthTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthTransport.swift; sourceTree = "<group>"; };
 		A14E5C0F2D0A000000001033 /* RedactingEventMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedactingEventMonitor.swift; sourceTree = "<group>"; };
+		A14E5C0F2D0A000000001050 /* DeveloperToolsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeveloperToolsView.swift; sourceTree = "<group>"; };
 		A14E5C0F2D0A000000004006 /* AppAttestScaffold.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AppAttestScaffold.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -204,6 +206,7 @@
 				A14E5C0F2D0A00000000300C /* Home */,
 				A14E5C0F2D0A00000000300D /* Settings */,
 				A14E5C0F2D0A00000000300E /* Login */,
+				A14E5C0F2D0A000000003050 /* DevTools */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -231,6 +234,14 @@
 				A14E5C0F2D0A000000001019 /* LoginView.swift */,
 			);
 			path = Login;
+			sourceTree = "<group>";
+		};
+		A14E5C0F2D0A000000003050 /* DevTools */ = {
+			isa = PBXGroup;
+			children = (
+				A14E5C0F2D0A000000001050 /* DeveloperToolsView.swift */,
+			);
+			path = DevTools;
 			sourceTree = "<group>";
 		};
 		A14E5C0F2D0A00000000300F /* Components */ = {
@@ -458,6 +469,7 @@
 				A14E5C0F2D0A000000002031 /* OAuthErrorMapper.swift in Sources */,
 				A14E5C0F2D0A000000002032 /* OAuthTransport.swift in Sources */,
 				A14E5C0F2D0A000000002033 /* RedactingEventMonitor.swift in Sources */,
+				A14E5C0F2D0A000000002050 /* DeveloperToolsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

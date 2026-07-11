@@ -13,6 +13,8 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var showBindSheet = false
+    @State private var showRebindSheet = false
+    @State private var showPhoneActions = false
     @State private var showUnbindConfirm = false
     @State private var showSignOutConfirm = false
     @State private var showWipeConfirm = false
@@ -36,6 +38,28 @@ struct SettingsView: View {
             .sheet(isPresented: $showBindSheet) {
                 PhoneOTPSheet(mode: .bindPhone)
                     .environmentObject(session)
+            }
+            .sheet(isPresented: $showRebindSheet) {
+                if let phone = session.phase.account?.phoneIdentity {
+                    PhoneOTPSheet(mode: .rebindPhone(identityId: phone.identityId))
+                        .environmentObject(session)
+                }
+            }
+            .confirmationDialog(
+                "手机号管理",
+                isPresented: $showPhoneActions,
+                titleVisibility: .visible
+            ) {
+                Button("更换手机号") {
+                    showRebindSheet = true
+                }
+                Button("解除绑定", role: .destructive) {
+                    if let phone = session.phase.account?.phoneIdentity {
+                        pendingIdentityId = phone.identityId
+                        showUnbindConfirm = true
+                    }
+                }
+                Button("取消", role: .cancel) {}
             }
             .confirmationDialog(
                 "确认解除绑定?",
@@ -111,13 +135,21 @@ struct SettingsView: View {
     private var securitySection: some View {
         Section {
             if let phone = session.phase.account?.phoneIdentity {
-                LabeledContent("手机号", value: phone.phone ?? phone.identifier)
-                Button(role: .destructive) {
-                    pendingIdentityId = phone.identityId
-                    showUnbindConfirm = true
+                Button {
+                    showPhoneActions = true
                 } label: {
-                    Text("解除绑定")
+                    HStack {
+                        Text("手机号")
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        Text(phone.phone ?? "已绑定")
+                            .foregroundStyle(.secondary)
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
                 }
+                .buttonStyle(.plain)
             } else {
                 Button {
                     showBindSheet = true
@@ -136,7 +168,7 @@ struct SettingsView: View {
             Text("登录与安全")
         } footer: {
             if session.phase.account?.phoneIdentity != nil {
-                Text("当前实现暂不支持直接换号。如需更换, 请先解除再重新绑定。")
+                Text("点击手机号可更换或解除绑定。")
             } else {
                 Text("仅手机绑定可用; email、wechat 在脚手架范围之外。")
             }
