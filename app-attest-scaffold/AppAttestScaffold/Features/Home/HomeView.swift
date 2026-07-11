@@ -79,22 +79,25 @@ struct HomeView: View {
         }
     }
 
-    /// Developer Tools 入口。诊断信息、服务配置、受保护资源调试、数据管理等功能集中在 DeveloperToolsView。
+    /// Developer Tools 入口。仅当 id_token 中包含 developer tag 时显示。
+    @ViewBuilder
     private var devToolsSection: some View {
-        Section {
-            NavigationLink {
-                DeveloperToolsView()
-                    .environmentObject(session)
-            } label: {
-                HStack {
-                    Image(systemName: "wrench.and.screwdriver")
-                        .foregroundStyle(.tint)
-                    Text("Developer Tools")
-                    Spacer()
+        if session.phase.isDeveloper {
+            Section {
+                NavigationLink {
+                    DeveloperToolsView()
+                        .environmentObject(session)
+                } label: {
+                    HStack {
+                        Image(systemName: "wrench.and.screwdriver")
+                            .foregroundStyle(.tint)
+                        Text("Developer Tools")
+                        Spacer()
+                    }
                 }
+            } footer: {
+                Text("诊断信息、受保护资源调试、令牌管理与数据抹除。")
             }
-        } footer: {
-            Text("诊断信息、受保护资源调试、令牌管理与数据抹除。")
         }
     }
 }

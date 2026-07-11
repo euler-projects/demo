@@ -16,10 +16,8 @@
 		A14E5C0F2D0A000000002008 /* OIDCDiscoveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001008 /* OIDCDiscoveryService.swift */; };
 		A14E5C0F2D0A000000002009 /* AppAttestService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001009 /* AppAttestService.swift */; };
 		A14E5C0F2D0A00000000200A /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A00000000100A /* KeychainStore.swift */; };
-		A14E5C0F2D0A00000000200B /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A00000000100B /* SessionStore.swift */; };
-		A14E5C0F2D0A00000000200C /* AccountStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A00000000100C /* AccountStore.swift */; };
-		A14E5C0F2D0A00000000200D /* FirstLaunchFlag.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A00000000100D /* FirstLaunchFlag.swift */; };
 		A14E5C0F2D0A00000000200E /* Account.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A00000000100E /* Account.swift */; };
+		A14E5C0F2D0A000000002052 /* AppDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001052 /* AppDataStore.swift */; };
 		A14E5C0F2D0A00000000200F /* Identity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A00000000100F /* Identity.swift */; };
 		A14E5C0F2D0A000000002010 /* TokenBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001010 /* TokenBundle.swift */; };
 		A14E5C0F2D0A000000002011 /* OAuthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001011 /* OAuthClient.swift */; };
@@ -43,6 +41,7 @@
 		A14E5C0F2D0A000000002032 /* OAuthTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001032 /* OAuthTransport.swift */; };
 		A14E5C0F2D0A000000002033 /* RedactingEventMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001033 /* RedactingEventMonitor.swift */; };
 		A14E5C0F2D0A000000002050 /* DeveloperToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001050 /* DeveloperToolsView.swift */; };
+		A14E5C0F2D0A000000002051 /* IssuerEditorSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14E5C0F2D0A000000001051 /* IssuerEditorSheet.swift */; };
 		A14E5C0F2D0A000000002040 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = A14E5C0F2D0A000000005000 /* Alamofire */; };
 /* End PBXBuildFile section */
 
@@ -56,9 +55,7 @@
 		A14E5C0F2D0A000000001008 /* OIDCDiscoveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OIDCDiscoveryService.swift; sourceTree = "<group>"; };
 		A14E5C0F2D0A000000001009 /* AppAttestService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAttestService.swift; sourceTree = "<group>"; };
 		A14E5C0F2D0A00000000100A /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
-		A14E5C0F2D0A00000000100B /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
-		A14E5C0F2D0A00000000100C /* AccountStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountStore.swift; sourceTree = "<group>"; };
-		A14E5C0F2D0A00000000100D /* FirstLaunchFlag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstLaunchFlag.swift; sourceTree = "<group>"; };
+		A14E5C0F2D0A000000001052 /* AppDataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDataStore.swift; sourceTree = "<group>"; };
 		A14E5C0F2D0A00000000100E /* Account.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Account.swift; sourceTree = "<group>"; };
 		A14E5C0F2D0A00000000100F /* Identity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Identity.swift; sourceTree = "<group>"; };
 		A14E5C0F2D0A000000001010 /* TokenBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenBundle.swift; sourceTree = "<group>"; };
@@ -84,6 +81,7 @@
 		A14E5C0F2D0A000000001032 /* OAuthTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthTransport.swift; sourceTree = "<group>"; };
 		A14E5C0F2D0A000000001033 /* RedactingEventMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedactingEventMonitor.swift; sourceTree = "<group>"; };
 		A14E5C0F2D0A000000001050 /* DeveloperToolsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeveloperToolsView.swift; sourceTree = "<group>"; };
+		A14E5C0F2D0A000000001051 /* IssuerEditorSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IssuerEditorSheet.swift; sourceTree = "<group>"; };
 		A14E5C0F2D0A000000004006 /* AppAttestScaffold.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AppAttestScaffold.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -240,6 +238,7 @@
 			isa = PBXGroup;
 			children = (
 				A14E5C0F2D0A000000001050 /* DeveloperToolsView.swift */,
+				A14E5C0F2D0A000000001051 /* IssuerEditorSheet.swift */,
 			);
 			path = DevTools;
 			sourceTree = "<group>";
@@ -275,9 +274,7 @@
 			isa = PBXGroup;
 			children = (
 				A14E5C0F2D0A00000000100A /* KeychainStore.swift */,
-				A14E5C0F2D0A00000000100B /* SessionStore.swift */,
-				A14E5C0F2D0A00000000100C /* AccountStore.swift */,
-				A14E5C0F2D0A00000000100D /* FirstLaunchFlag.swift */,
+				A14E5C0F2D0A000000001052 /* AppDataStore.swift */,
 			);
 			path = Storage;
 			sourceTree = "<group>";
@@ -445,9 +442,7 @@
 				A14E5C0F2D0A000000002008 /* OIDCDiscoveryService.swift in Sources */,
 				A14E5C0F2D0A000000002009 /* AppAttestService.swift in Sources */,
 				A14E5C0F2D0A00000000200A /* KeychainStore.swift in Sources */,
-				A14E5C0F2D0A00000000200B /* SessionStore.swift in Sources */,
-				A14E5C0F2D0A00000000200C /* AccountStore.swift in Sources */,
-				A14E5C0F2D0A00000000200D /* FirstLaunchFlag.swift in Sources */,
+				A14E5C0F2D0A000000002052 /* AppDataStore.swift in Sources */,
 				A14E5C0F2D0A00000000200E /* Account.swift in Sources */,
 				A14E5C0F2D0A00000000200F /* Identity.swift in Sources */,
 				A14E5C0F2D0A000000002010 /* TokenBundle.swift in Sources */,
@@ -470,6 +465,7 @@
 				A14E5C0F2D0A000000002032 /* OAuthTransport.swift in Sources */,
 				A14E5C0F2D0A000000002033 /* RedactingEventMonitor.swift in Sources */,
 				A14E5C0F2D0A000000002050 /* DeveloperToolsView.swift in Sources */,
+				A14E5C0F2D0A000000002051 /* IssuerEditorSheet.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

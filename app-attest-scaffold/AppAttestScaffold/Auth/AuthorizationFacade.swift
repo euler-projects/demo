@@ -74,10 +74,10 @@ final class AuthorizationFacade: AuthorizationTokenProvider {
     ///            否则返回 `AuthSession`，必要时已完成一次 token 刷新。
     func resumeFromStorage() async -> AuthSession? {
         guard
-            let kid = SessionStore.loadKid(),
+            let kid = AppDataStore.get(String.self, for: AppDataStore.Keys.kid),
             !kid.isEmpty
         else { return nil }
-        guard let cachedAccount = AccountStore.load() else { return nil }
+        guard let cachedAccount = AppDataStore.get(Account.self, for: AppDataStore.Keys.account) else { return nil }
         guard let key = cachedAccount.appAttestKey else { return nil }
 
         let tokens: TokenBundle
@@ -89,7 +89,7 @@ final class AuthorizationFacade: AuthorizationTokenProvider {
         } catch {
             // 冷启动遇到网络抖动 —— 回退到任何已缓存的 AT。
             // 下一次携带 AT 的调用会自行重试 / 登出。
-            guard let cached = SessionStore.loadTokenBundle() else {
+            guard let cached = AppDataStore.get(TokenBundle.self, for: AppDataStore.Keys.tokenBundle) else {
                 return nil
             }
             tokens = cached
@@ -119,8 +119,8 @@ final class AuthorizationFacade: AuthorizationTokenProvider {
             challenge: challenge
         )
 
-        try SessionStore.saveKid(kid)
-        try SessionStore.saveTokenBundle(tokens)
+        try AppDataStore.set(kid, for: AppDataStore.Keys.kid, lifecycle: .session, secret: true)
+        try AppDataStore.set(tokens, for: AppDataStore.Keys.tokenBundle, lifecycle: .session, secret: true)
 
         let profile = (try? await userInfo.fetch(accessToken: tokens.accessToken))
             ?? Account.Profile(username: "anonymous", nickname: nil, avatarUrl: nil)
@@ -154,8 +154,8 @@ final class AuthorizationFacade: AuthorizationTokenProvider {
             challenge: challenge
         )
 
-        try SessionStore.saveKid(kid)
-        try SessionStore.saveTokenBundle(tokens)
+        try AppDataStore.set(kid, for: AppDataStore.Keys.kid, lifecycle: .session, secret: true)
+        try AppDataStore.set(tokens, for: AppDataStore.Keys.tokenBundle, lifecycle: .session, secret: true)
 
         let profile = (try? await userInfo.fetch(accessToken: tokens.accessToken))
             ?? Account.Profile(username: recipient, nickname: nil, avatarUrl: nil)
@@ -232,19 +232,18 @@ final class AuthorizationFacade: AuthorizationTokenProvider {
         await wipeSession()
     }
 
-    /// 抹掉所有本地数据（包括首次启动标志位），恢复到刚安装的状态。
+    /// 抹掉所有本地数据（包括首次启动标志位与服务配置），恢复到刚安装的状态。
     /// 调用后用户可再次匿名试用。
     func wipeAllData() async {
-        await wipeSession()
-        FirstLaunchFlag.resetForTesting()
+        AppDataStore.clearAll()
+        await coordinator.invalidateCache()
     }
 
     // MARK: - 内部实现
 
     /// 登出清理；`kid` 被吊销时也会调用。
     private func wipeSession() async {
-        SessionStore.clearAll()
-        AccountStore.clear()
+        AppDataStore.clearSession()
         await coordinator.invalidateCache()
     }
 }
@@ -270,7 +269,7 @@ private actor TokenCoordinator {
     /// `getAccessToken` 路径：命中缓存（且未被 invalidate、未临期）则直返，否则走单飞续期。
     func obtain() async throws -> TokenBundle {
         if !cacheInvalidated,
-           let cached = SessionStore.loadTokenBundle(),
+           let cached = AppDataStore.get(TokenBundle.self, for: AppDataStore.Keys.tokenBundle),
            !cached.willExpireSoon {
             return cached
         }
@@ -307,7 +306,7 @@ private actor TokenCoordinator {
         oauth: OAuthClient,
         attest: AppAttestService
     ) async throws -> TokenBundle {
-        guard let kid = SessionStore.loadKid() else {
+        guard let kid = AppDataStore.get(String.self, for: AppDataStore.Keys.kid) else {
             throw APIError.noRegisteredKey
         }
         let challenge = try await oauth.fetchChallenge()
@@ -317,7 +316,7 @@ private actor TokenCoordinator {
             assertionBase64: assertion,
             challenge: challenge
         )
-        try SessionStore.saveTokenBundle(tokens)
+        try AppDataStore.set(tokens, for: AppDataStore.Keys.tokenBundle, lifecycle: .session, secret: true)
         return tokens
     }
 }

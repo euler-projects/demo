@@ -10,7 +10,7 @@ import CryptoKit
 /// - `attestKey()` 消耗刚生成的 key，返回 Attestation Object。
 /// - `generateAssertion()` 用于已 attest 的 key，承载常规登录态续签。
 ///
-/// 脚手架不在此处持久化 `keyId`；持久化由 `AccountStore` 在服务端接受 attestation
+/// 脚手架不在此处持久化 `keyId`；持久化由 `AppDataStore` 在服务端接受 attestation
 /// 之后负责。
 final class AppAttestService {
 

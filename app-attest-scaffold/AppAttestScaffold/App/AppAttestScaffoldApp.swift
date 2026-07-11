@@ -14,7 +14,7 @@ struct AppAttestScaffoldApp: App {
     init() {
         // 顺序至关重要：必须先清理 Keychain 残留，再构建 session，避免 session 在 `bootstrap()`
         // 中读取到过期的 token。
-        FirstLaunchFlag.bootstrapIfNeeded()
+        AppDataStore.bootstrapIfNeeded()
         _session = StateObject(wrappedValue: AppSession())
     }
 

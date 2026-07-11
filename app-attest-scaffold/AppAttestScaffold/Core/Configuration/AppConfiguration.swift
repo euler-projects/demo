@@ -37,26 +37,21 @@ enum AppConfiguration {
 
     // MARK: - 持久化的 issuer
 
-    private static let issuerDefaultsKey = "com.eulerframework.scaffold.issuer"
-    private static let accountServiceBaseDefaultsKey = "com.eulerframework.scaffold.accountServiceBaseURL"
-
-    /// 授权服务器的 issuer URL。持久化在 UserDefaults 中；按脚手架规范在登出后保留
-    /// （详见 App-Attest-Login.md §5.1）。
+    /// 授权服务器的 issuer URL。持久化在 AppDataStore 中；抹掉所有数据后回退到 defaultIssuer。
     static var issuer: String {
-        get { UserDefaults.standard.string(forKey: issuerDefaultsKey) ?? defaultIssuer }
+        get { AppDataStore.get(String.self, for: AppDataStore.Keys.issuer, default: defaultIssuer) }
         set {
             let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
-            UserDefaults.standard.set(trimmed, forKey: issuerDefaultsKey)
+            try? AppDataStore.set(trimmed, for: AppDataStore.Keys.issuer, lifecycle: .persistent, secret: false)
         }
     }
 
-    /// 用户账号服务 (Account Service) 的基地址。`/user/identities` 等账号身份管理
-    /// 接口将基于该基地址寻址。持久化在 UserDefaults 中；登出后保留。
+    /// 用户账号服务 (Account Service) 的基地址。持久化在 AppDataStore 中；抹掉所有数据后回退到 defaultAccountServiceBaseURL。
     static var accountServiceBaseURL: String {
-        get { UserDefaults.standard.string(forKey: accountServiceBaseDefaultsKey) ?? defaultAccountServiceBaseURL }
+        get { AppDataStore.get(String.self, for: AppDataStore.Keys.accountServiceBase, default: defaultAccountServiceBaseURL) }
         set {
             let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
-            UserDefaults.standard.set(trimmed, forKey: accountServiceBaseDefaultsKey)
+            try? AppDataStore.set(trimmed, for: AppDataStore.Keys.accountServiceBase, lifecycle: .persistent, secret: false)
         }
     }
 

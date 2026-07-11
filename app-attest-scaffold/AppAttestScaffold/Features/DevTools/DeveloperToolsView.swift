@@ -624,7 +624,7 @@ struct ProtectedResourceSheet: View {
     private var tokenCountdownSection: some View {
         Section {
             TimelineView(.periodic(from: .now, by: 1)) { context in
-                let bundle = SessionStore.loadTokenBundle() ?? session.phase.tokens
+                let bundle = AppDataStore.get(TokenBundle.self, for: AppDataStore.Keys.tokenBundle) ?? session.phase.tokens
                 if let bundle {
                     let remaining = max(0, Int(bundle.expiresAt.timeIntervalSince(context.date)))
                     HStack {

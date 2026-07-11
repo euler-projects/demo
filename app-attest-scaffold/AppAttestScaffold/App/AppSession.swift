@@ -17,6 +17,40 @@ struct AuthResult: Equatable {
         self.tokens = tokens
         self.isAnonymous = account.phoneIdentity == nil
     }
+
+    /// 检查 id_token claims 中是否包含 developer tag。
+    /// tag 格式: `{"tag":[{"k":"","v":""}]}`。
+    /// 取第一个 k=="developer" 的元素，v 为 1/true/"1"/"true"/"y"（字符串忽略大小写）时返回 true。
+    var isDeveloper: Bool {
+        guard let idToken = tokens.idToken else { return false }
+        guard let payload = Self.decodeJWTPayloadDict(idToken) else { return false }
+        guard let tagArray = payload["tag"] as? [[String: Any]] else { return false }
+        guard let entry = tagArray.first(where: { ($0["k"] as? String) == "developer" }) else { return false }
+        guard let value = entry["v"] else { return false }
+        // 数字 1
+        if let intVal = value as? Int, intVal == 1 { return true }
+        // 布尔 true
+        if let boolVal = value as? Bool, boolVal { return true }
+        // 字符串: "1", "true", "y"（忽略大小写）
+        if let strVal = value as? String {
+            let lower = strVal.lowercased()
+            return lower == "1" || lower == "true" || lower == "y"
+        }
+        return false
+    }
+
+    private static func decodeJWTPayloadDict(_ jwt: String) -> [String: Any]? {
+        let parts = jwt.split(separator: ".")
+        guard parts.count >= 2 else { return nil }
+        var base64 = String(parts[1])
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        while base64.count % 4 != 0 { base64.append("=") }
+        guard let data = Data(base64Encoded: base64),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return nil }
+        return json
+    }
 }
 
 /// "用户当前处于鉴权流程的哪个阶段" 的唯一权威状态源，并负责把授权域（`AuthorizationFacade`）
@@ -56,6 +90,11 @@ final class AppSession: ObservableObject {
 
         var isAnonymous: Bool {
             if case let .signedIn(result) = self { return result.isAnonymous }
+            return false
+        }
+
+        var isDeveloper: Bool {
+            if case let .signedIn(result) = self { return result.isDeveloper }
             return false
         }
     }
@@ -103,7 +142,7 @@ final class AppSession: ObservableObject {
             phase = .unauthenticated
             return
         }
-        var identities: [Identity] = AccountStore.load()?.identities ?? []
+        var identities: [Identity] = AppDataStore.get(Account.self, for: AppDataStore.Keys.account)?.identities ?? []
         if let updated = try? await account.listIdentities() {
             identities = updated
         }
@@ -113,7 +152,7 @@ final class AppSession: ObservableObject {
     // MARK: - 登录
 
     /// 匿名登录（App Attestation 用法 1）。仅在首次启动时可用 ——
-    /// 详见 `FirstLaunchFlag` 与 `LoginView` 中的入口控制。
+    /// 详见 `AppDataStore.Keys.hasLaunchedBefore` 与 `LoginView` 中的入口控制。
     func anonymousSignIn() async {
         do {
             let session = try await auth.anonymousSignIn()
@@ -174,8 +213,8 @@ final class AppSession: ObservableObject {
         do {
             _ = try await account.bindPhone(otpTicket: ticket, otp: otp)
             let identities = try await account.listIdentities()
-            // 续期可能在 bindPhone 内部发生 —— 重新读一次 SessionStore 以拿到最新 tokens。
-            let freshTokens = SessionStore.loadTokenBundle() ?? phase.tokens
+            // 续期可能在 bindPhone 内部发生 —— 重新读一次 AppDataStore 以拿到最新 tokens。
+            let freshTokens = AppDataStore.get(TokenBundle.self, for: AppDataStore.Keys.tokenBundle) ?? phase.tokens
             if let freshTokens {
                 phase = .signedIn(mergeIdentities(tokens: freshTokens, identities: identities))
             }
@@ -194,7 +233,7 @@ final class AppSession: ObservableObject {
         do {
             try await account.unbind(identityId: identityId)
             let identities = (try? await account.listIdentities()) ?? []
-            let freshTokens = SessionStore.loadTokenBundle() ?? phase.tokens
+            let freshTokens = AppDataStore.get(TokenBundle.self, for: AppDataStore.Keys.tokenBundle) ?? phase.tokens
             if let freshTokens {
                 phase = .signedIn(mergeIdentities(tokens: freshTokens, identities: identities))
             }
@@ -222,7 +261,7 @@ final class AppSession: ObservableObject {
                 otp: otp
             )
             let identities = try await account.listIdentities()
-            let freshTokens = SessionStore.loadTokenBundle() ?? phase.tokens
+            let freshTokens = AppDataStore.get(TokenBundle.self, for: AppDataStore.Keys.tokenBundle) ?? phase.tokens
             if let freshTokens {
                 phase = .signedIn(mergeIdentities(tokens: freshTokens, identities: identities))
             }
@@ -315,7 +354,7 @@ final class AppSession: ObservableObject {
             appAttestKey: session.appAttestKey,
             identities: identities
         )
-        try? AccountStore.save(merged)
+        try? AppDataStore.set(merged, for: AppDataStore.Keys.account, lifecycle: .session, secret: false, storage: .keychain)
         return AuthResult(account: merged, tokens: session.tokens)
     }
 
@@ -325,13 +364,13 @@ final class AppSession: ObservableObject {
         let baseline: Account
         if let current = phase.account {
             baseline = current
-        } else if let cached = AccountStore.load() {
+        } else if let cached = AppDataStore.get(Account.self, for: AppDataStore.Keys.account) {
             baseline = cached
         } else {
             // 理论上 bindPhone / unbind 之前必然已登录；这里作为最后兜底，保证逻辑闭合。
             baseline = Account(
                 profile: Account.Profile(username: "user", nickname: nil, avatarUrl: nil),
-                appAttestKey: SessionStore.loadKid().map { Account.AppAttestKey(kid: $0, iat: Date()) },
+                appAttestKey: AppDataStore.get(String.self, for: AppDataStore.Keys.kid).map { Account.AppAttestKey(kid: $0, iat: Date()) },
                 identities: []
             )
         }
@@ -340,7 +379,7 @@ final class AppSession: ObservableObject {
             appAttestKey: baseline.appAttestKey,
             identities: identities
         )
-        try? AccountStore.save(updated)
+        try? AppDataStore.set(updated, for: AppDataStore.Keys.account, lifecycle: .session, secret: false, storage: .keychain)
         return AuthResult(account: updated, tokens: tokens)
     }
 

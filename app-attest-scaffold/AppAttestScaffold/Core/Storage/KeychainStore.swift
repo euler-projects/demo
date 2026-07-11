@@ -108,8 +108,8 @@ enum KeychainStore {
         }
     }
 
-    /// 删除当前 service 下的所有条目。供 `FirstLaunchFlag` 与设置页中用户主动触发的
-    /// "清空并重置" 操作使用。
+    /// 删除当前 service 下的所有条目。供 `AppDataStore.bootstrapIfNeeded()` 与 `AppDataStore.clearAll()`
+    /// 等全局清理场景使用。
     static func removeAll() throws {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
