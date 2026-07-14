@@ -9,6 +9,10 @@
 - [JWK Cluster Status](Model-%23-Jwk-Cluster-Status.md)
 - [User Identity](Model-%23-User-Identity.md)
 
+## 用户接口
+
+- [注销当前用户](APIs-%23-User-Delete.md)
+
 ## 登录身份接口
 
 - [绑定登录身份](APIs-%23-User-Identities-Create.md)
