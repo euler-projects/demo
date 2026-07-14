@@ -3,6 +3,7 @@ package org.eulerframework.uc.service;
 import org.eulerframework.data.util.EntityUtils;
 import org.eulerframework.security.core.EulerUser;
 import org.eulerframework.security.core.EulerUserService;
+import org.eulerframework.security.core.identity.UserIdentity;
 import org.eulerframework.security.core.userdetails.EulerUserDetails;
 import org.eulerframework.security.exception.EulerAuthorityNotFountException;
 import org.eulerframework.security.exception.EulerUserNotFountException;
@@ -16,6 +17,7 @@ import org.eulerframework.uc.model.User;
 import org.eulerframework.uc.repository.UserAuthorityRepository;
 import org.eulerframework.uc.repository.UserRepository;
 import org.eulerframework.uc.repository.UserTagRepository;
+import org.eulerframework.uc.service.identity.DelegatingUserIdentityService;
 import org.eulerframework.uc.util.UserCenterModelUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +41,8 @@ public class UserService implements EulerUserService {
     private UserRepository userRepository;
     private UserAuthorityRepository userAuthorityRepository;
     private UserTagRepository userTagRepository;
+
+    private DelegatingUserIdentityService delegatingUserIdentityService;
 
     @Override
     public User loadUserById(String userId) {
@@ -201,6 +205,14 @@ public class UserService implements EulerUserService {
     @Override
     @Transactional
     public void deleteUser(String userId) {
+        List<UserIdentity> userIdentities =
+                this.delegatingUserIdentityService.listUserIdentities(userId);
+        if(!CollectionUtils.isEmpty(userIdentities)) {
+            for (UserIdentity userIdentity : userIdentities) {
+                this.delegatingUserIdentityService.deleteUserIdentity(userId, userIdentity.getIdentityId());
+            }
+        }
+
         this.userDao.deleteUserAuthorityByUserId(userId);
         this.userDao.deleteUserTagsByUserId(userId);
         this.userRepository.deleteById(userId);
@@ -230,6 +242,11 @@ public class UserService implements EulerUserService {
     @Autowired
     public void setUserTagRepository(UserTagRepository userTagRepository) {
         this.userTagRepository = userTagRepository;
+    }
+
+    @Autowired
+    public void setDelegatingUserIdentityService(DelegatingUserIdentityService delegatingUserIdentityService) {
+        this.delegatingUserIdentityService = delegatingUserIdentityService;
     }
 
     private User castEulerUser(EulerUser eulerUser) {
