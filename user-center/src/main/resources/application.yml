@@ -92,6 +92,30 @@ spring:
               access-token-time-to-live: 5m
               refresh-token-time-to-live: 7d
               reuse-refresh-tokens: false
+      # Federated login as an OIDC Relying Party (RP). The `google`
+      # registration is intentionally NOT declared here at the framework
+      # level - Spring Boot's OAuth2ClientProperties validate() rejects
+      # empty client-id, so an unset environment would otherwise fail
+      # startup. Deployments that want Google login must add a
+      # profile-specific block, for example:
+      #
+      # spring:
+      #   security:
+      #     oauth2:
+      #       client:
+      #         registration:
+      #           google:
+      #             client-id: ${GOOGLE_CLIENT_ID}
+      #             client-secret: ${GOOGLE_CLIENT_SECRET}
+      #             client-name: Google
+      #             provider: google
+      #             scope: [openid, profile, email]
+      #
+      # Pair it with a matching entry under
+      # `euler.security.web.login-methods.google` (see below) to have it
+      # surface on the /signin page. The redirect URI defaults to
+      # {issuer}/login/oauth2/code/google, which for production resolves
+      # to https://account.eulerproject.org/login/oauth2/code/google.
 
 euler:
   application:
@@ -125,6 +149,31 @@ euler:
           enabled: true
           signup-page: /create-account
           signup-processing-url: /doSignup
+      # Unified login-method declarations. Each entry becomes a button on
+      # the shared /signin page and is dispatched to the LoginMethodTypeHandler
+      # bean registered for its `type`. Empty in the default profile so no
+      # federated login shows up until a deployment-specific profile
+      # explicitly opts one in.
+      #
+      # Example (activate Google login by adding the following block in a
+      # deployment profile and pairing it with a matching
+      # spring.security.oauth2.client.registration.google.* entry that
+      # carries client-id / client-secret / provider):
+      #
+      # login-methods:
+      #   google:
+      #     type: oauth2
+      #     properties:
+      #       # oauth-client-registration-id defaults to the login-method
+      #       # key; must match the key under
+      #       # spring.security.oauth2.client.registration.<key>.
+      #       oauth-client-registration-id: google
+      #       auto-create-user: true
+      #       default-authorities:
+      #         - user
+      #       # identity-type defaults to the login-method key; stored as
+      #       # t_user_identity.identity_type on first federation.
+      #       identity-type: google
     oauth2:
       authorizationserver:
         authorization-store-type: redis

@@ -46,6 +46,10 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
         </dependency>
         <dependency>
@@ -98,6 +102,12 @@
         <dependency>
             <groupId>org.eulerframework.boot</groupId>
             <artifactId>spring-boot-starter-euler-oauth2-resource-server</artifactId>
+        </dependency>
+
+        <!-- Google / generic OIDC login (browser redirect flow) -->
+        <dependency>
+            <groupId>org.eulerframework</groupId>
+            <artifactId>euler-security-oauth2-client</artifactId>
         </dependency>
 
         <dependency>
