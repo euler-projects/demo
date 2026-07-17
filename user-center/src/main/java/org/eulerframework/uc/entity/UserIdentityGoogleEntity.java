@@ -30,9 +30,9 @@ import org.eulerframework.data.entity.AuditingEntity;
  * profile can be projected without having to re-hit Google on every
  * lookup.
  *
- * <p>The stored fields are refreshed only on first bind; keeping them
- * eventually consistent with Google is not a requirement of the
- * identity SPI and is intentionally out of scope for this table.
+ * <p>Profile fields are refreshed on every successful login so that
+ * the snapshot stays eventually consistent with the upstream Google
+ * profile without requiring a separate sync job.
  */
 @Entity
 @Table(name = "t_user_identity_google")
@@ -45,8 +45,17 @@ public class UserIdentityGoogleEntity extends AuditingEntity {
     @Column(name = "email", length = 255)
     private String email;
 
+    @Column(name = "email_verified")
+    private Boolean emailVerified;
+
     @Column(name = "name", length = 255)
     private String name;
+
+    @Column(name = "given_name", length = 255)
+    private String givenName;
+
+    @Column(name = "family_name", length = 255)
+    private String familyName;
 
     @Column(name = "picture", length = 1024)
     private String picture;
@@ -70,12 +79,36 @@ public class UserIdentityGoogleEntity extends AuditingEntity {
         this.email = email;
     }
 
+    public Boolean getEmailVerified() {
+        return emailVerified;
+    }
+
+    public void setEmailVerified(Boolean emailVerified) {
+        this.emailVerified = emailVerified;
+    }
+
     public String getName() {
         return name;
     }
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getGivenName() {
+        return givenName;
+    }
+
+    public void setGivenName(String givenName) {
+        this.givenName = givenName;
+    }
+
+    public String getFamilyName() {
+        return familyName;
+    }
+
+    public void setFamilyName(String familyName) {
+        this.familyName = familyName;
     }
 
     public String getPicture() {

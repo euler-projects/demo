@@ -15,6 +15,7 @@
  */
 package org.eulerframework.uc.service.identity;
 
+import org.eulerframework.common.util.collections.MapUtils;
 import org.eulerframework.security.core.identity.IdentityOccupiedException;
 import org.eulerframework.security.core.identity.InvalidUserIdentityException;
 import org.eulerframework.security.core.identity.UserIdentity;
@@ -66,7 +67,10 @@ public class GoogleUserIdentityService extends AbstractUserIdentityService {
      */
     public static final String EXTENSION_SUB = "sub";
     public static final String EXTENSION_EMAIL = "email";
+    public static final String EXTENSION_EMAIL_VERIFIED = "emailVerified";
     public static final String EXTENSION_NAME = "name";
+    public static final String EXTENSION_GIVEN_NAME = "givenName";
+    public static final String EXTENSION_FAMILY_NAME = "familyName";
     public static final String EXTENSION_PICTURE = "picture";
     public static final String EXTENSION_LOCALE = "locale";
 
@@ -119,10 +123,7 @@ public class GoogleUserIdentityService extends AbstractUserIdentityService {
 
         UserIdentityGoogleEntity child = new UserIdentityGoogleEntity();
         child.setIdentityId(identity.getId());
-        child.setEmail(prototype.getProperty(EXTENSION_EMAIL));
-        child.setName(prototype.getProperty(EXTENSION_NAME));
-        child.setPicture(prototype.getProperty(EXTENSION_PICTURE));
-        child.setLocale(prototype.getProperty(EXTENSION_LOCALE));
+        populateChild(child, prototype);
         this.identityGoogleRepository.save(child);
 
         return toModel(identity, child);
@@ -206,10 +207,7 @@ public class GoogleUserIdentityService extends AbstractUserIdentityService {
                     fresh.setIdentityId(identityId);
                     return fresh;
                 });
-        child.setEmail(prototype.getProperty(EXTENSION_EMAIL));
-        child.setName(prototype.getProperty(EXTENSION_NAME));
-        child.setPicture(prototype.getProperty(EXTENSION_PICTURE));
-        child.setLocale(prototype.getProperty(EXTENSION_LOCALE));
+        populateChild(child, prototype);
         this.identityGoogleRepository.save(child);
 
         return toModel(identity, child);
@@ -246,7 +244,10 @@ public class GoogleUserIdentityService extends AbstractUserIdentityService {
     @Transactional(readOnly = true)
     public Optional<String> getRawFieldValue(String userId, String identityId, String fieldName) {
         if (!EXTENSION_EMAIL.equals(fieldName)
+                && !EXTENSION_EMAIL_VERIFIED.equals(fieldName)
                 && !EXTENSION_NAME.equals(fieldName)
+                && !EXTENSION_GIVEN_NAME.equals(fieldName)
+                && !EXTENSION_FAMILY_NAME.equals(fieldName)
                 && !EXTENSION_PICTURE.equals(fieldName)
                 && !EXTENSION_LOCALE.equals(fieldName)) {
             return Optional.empty();
@@ -256,7 +257,11 @@ public class GoogleUserIdentityService extends AbstractUserIdentityService {
                 .flatMap(identity -> this.identityGoogleRepository.findById(identity.getId()))
                 .map(child -> switch (fieldName) {
                     case EXTENSION_EMAIL -> child.getEmail();
+                    case EXTENSION_EMAIL_VERIFIED -> child.getEmailVerified() != null
+                            ? child.getEmailVerified().toString() : null;
                     case EXTENSION_NAME -> child.getName();
+                    case EXTENSION_GIVEN_NAME -> child.getGivenName();
+                    case EXTENSION_FAMILY_NAME -> child.getFamilyName();
                     case EXTENSION_PICTURE -> child.getPicture();
                     case EXTENSION_LOCALE -> child.getLocale();
                     default -> null;
@@ -269,21 +274,34 @@ public class GoogleUserIdentityService extends AbstractUserIdentityService {
         return this.identityGoogleRepository.findById(identityId).orElse(null);
     }
 
+    /**
+     * Copy profile attributes from a prototype into the child entity.
+     * Values in the prototype's extensions map carry their original types
+     * from the upstream IdP (e.g. {@code Boolean} for {@code email_verified},
+     * {@code String} for everything else); type coercion happens here at
+     * the persistence boundary.
+     */
+    private void populateChild(UserIdentityGoogleEntity child, UserIdentity prototype) {
+        Map<String, Object> ext = prototype.getExtensions();
+        child.setEmail(MapUtils.getString(ext, EXTENSION_EMAIL));
+        child.setEmailVerified(MapUtils.getBoolean(ext, EXTENSION_EMAIL_VERIFIED));
+        child.setName(MapUtils.getString(ext, EXTENSION_NAME));
+        child.setGivenName(MapUtils.getString(ext, EXTENSION_GIVEN_NAME));
+        child.setFamilyName(MapUtils.getString(ext, EXTENSION_FAMILY_NAME));
+        child.setPicture(MapUtils.getString(ext, EXTENSION_PICTURE));
+        child.setLocale(MapUtils.getString(ext, EXTENSION_LOCALE));
+    }
+
     private UserIdentity toModel(UserIdentityEntity identity, UserIdentityGoogleEntity child) {
         Map<String, Object> extensions = new LinkedHashMap<>();
         if (child != null) {
-            if (StringUtils.hasText(child.getEmail())) {
-                extensions.put(EXTENSION_EMAIL, child.getEmail());
-            }
-            if (StringUtils.hasText(child.getName())) {
-                extensions.put(EXTENSION_NAME, child.getName());
-            }
-            if (StringUtils.hasText(child.getPicture())) {
-                extensions.put(EXTENSION_PICTURE, child.getPicture());
-            }
-            if (StringUtils.hasText(child.getLocale())) {
-                extensions.put(EXTENSION_LOCALE, child.getLocale());
-            }
+            extensions.put(EXTENSION_EMAIL, child.getEmail());
+            extensions.put(EXTENSION_EMAIL_VERIFIED, child.getEmailVerified());
+            extensions.put(EXTENSION_NAME, child.getName());
+            extensions.put(EXTENSION_GIVEN_NAME, child.getGivenName());
+            extensions.put(EXTENSION_FAMILY_NAME, child.getFamilyName());
+            extensions.put(EXTENSION_PICTURE, child.getPicture());
+            extensions.put(EXTENSION_LOCALE, child.getLocale());
         }
         return UserIdentity.withExtensions(extensions)
                 .identityId(identity.getId())
