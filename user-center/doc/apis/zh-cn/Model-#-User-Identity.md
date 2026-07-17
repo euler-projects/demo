@@ -90,3 +90,38 @@
 |---|---|---|
 | `subject` | string | **邮箱地址确定性唯一标识**<br>由服务端根据原始邮箱地址自动生成, 不可逆; 用于全局唯一性约束. |
 | `email` | string | **脱敏后的邮箱地址**<br>用于管理页展示; 原始邮箱地址仅服务端持久化, 不下发 |
+
+---
+
+### 2.4 Google 登录 `google`
+
+#### 2.4.1 完整数据结构
+
+```json
+{
+  "identity_id": "7c3e9f20-b1a4-4d8e-9f2c-1a2b3c4d5e6f",
+  "identity_type": "google",
+  "subject": "118214213541635675211",
+  "bound_at": 1778899139687,
+  "email": "user@gmail.com",
+  "email_verified": true,
+  "name": "cFrost sun",
+  "given_name": "cFrost",
+  "family_name": "sun",
+  "picture": "https://lh3.googleusercontent.com/a/xxxxx=s96-c",
+  "locale": "zh-CN"
+}
+```
+
+| 字段 | 类型 | 含义 |
+|---|---|---|
+| `subject` | string | **Google 确定性唯一标识**<br>Google 签发的不可变 `sub` 值. |
+| `email` | string | **Google 邮箱**<br>用户在 Google 账户中的主邮箱; 授权 scope 包含 `email` 时返回. |
+| `email_verified` | boolean | **邮箱是否已验证**<br>Google 侧是否已验证该邮箱地址. |
+| `name` | string | **显示名称**<br>Google 账户的完整显示名 (given + family). |
+| `given_name` | string | **名**<br>Google 账户中的 given name (first name). |
+| `family_name` | string | **姓**<br>Google 账户中的 family name (last name). |
+| `picture` | string | **头像 URL**<br>Google 账户的头像地址. |
+| `locale` | string | **区域设置**<br>BCP47 语言标签 (如 `zh-CN`); 部分账户可能为空. |
+
+> Google 身份通过 OIDC 重定向流自动绑定, 不支持客户端手动创建或更新. 每次登录成功时服务端自动刷新上述 profile 字段.

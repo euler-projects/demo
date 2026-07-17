@@ -1,7 +1,7 @@
 import React, {useEffect, useState, useCallback} from 'react';
 import {useParams} from 'react-router';
 import {Card, Table, Tabs, Button, Modal, Select, Space, Descriptions, Popconfirm, message, Tooltip} from 'antd';
-import {EyeOutlined, EyeInvisibleOutlined} from '@ant-design/icons';
+import {EyeOutlined, EyeInvisibleOutlined, GoogleOutlined} from '@ant-design/icons';
 import {useTranslation} from 'react-i18next';
 import {apiGet, apiPut, apiDelete} from './_shared/api';
 
@@ -162,6 +162,46 @@ const UserDetail = () => {
         },
     ];
 
+    // --- Google identities table ---
+    const googleIdentities = identities.filter(i => i.identityType === 'google');
+
+    const googleColumns = [
+        {
+            title: t('user.detailPage.google.avatar'),
+            dataIndex: 'picture',
+            width: 60,
+            render: (url) => url
+                ? <img src={url} alt="avatar" style={{width: 32, height: 32, borderRadius: '50%'}}/>
+                : '-',
+        },
+        {title: t('user.detailPage.google.name'), dataIndex: 'name', width: 150},
+        {title: t('user.detailPage.google.email'), dataIndex: 'email', width: 220},
+        {
+            title: t('user.detailPage.google.emailVerified'),
+            dataIndex: 'emailVerified',
+            width: 100,
+            render: (val) => val === true ? t('common.yes') : val === false ? t('common.no') : '-',
+        },
+        {title: t('user.detailPage.google.givenName'), dataIndex: 'givenName', width: 120},
+        {title: t('user.detailPage.google.familyName'), dataIndex: 'familyName', width: 120},
+        {
+            title: t('user.detailPage.boundAt'),
+            dataIndex: 'boundAt',
+            width: 200,
+            render: (val) => val ? new Date(val).toLocaleString() : '-',
+        },
+        {
+            title: t('user.column.action'),
+            key: 'action',
+            width: 100,
+            render: (_, record) => (
+                <Popconfirm title={t('user.detailPage.confirmDelete')} onConfirm={() => handleDeleteIdentity(record.identityId)}>
+                    <a style={{color: '#ff4d4f'}}>{t('user.delete')}</a>
+                </Popconfirm>
+            ),
+        },
+    ];
+
     const identityTabs = [
         {
             key: 'phone',
@@ -170,6 +210,21 @@ const UserDetail = () => {
                 <Table
                     columns={phoneColumns}
                     dataSource={phoneIdentities}
+                    rowKey="identityId"
+                    loading={identitiesLoading}
+                    pagination={false}
+                    size="small"
+                    locale={{emptyText: t('user.detailPage.noIdentities')}}
+                />
+            ),
+        },
+        {
+            key: 'google',
+            label: <span><GoogleOutlined style={{marginRight: 4}}/>Google</span>,
+            children: (
+                <Table
+                    columns={googleColumns}
+                    dataSource={googleIdentities}
                     rowKey="identityId"
                     loading={identitiesLoading}
                     pagination={false}

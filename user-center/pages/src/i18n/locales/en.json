@@ -117,7 +117,15 @@
       "confirmDelete": "Confirm delete?",
       "noIdentities": "No identities",
       "authorityName": "Authority",
-      "selectAuthority": "Select authority"
+      "selectAuthority": "Select authority",
+      "google": {
+        "avatar": "Avatar",
+        "name": "Display Name",
+        "email": "Email",
+        "emailVerified": "Verified",
+        "givenName": "Given Name",
+        "familyName": "Family Name"
+      }
     }
   }
 }

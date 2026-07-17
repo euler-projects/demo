@@ -117,7 +117,15 @@
       "confirmDelete": "确认删除？",
       "noIdentities": "暂无身份记录",
       "authorityName": "权限",
-      "selectAuthority": "选择权限"
+      "selectAuthority": "选择权限",
+      "google": {
+        "avatar": "头像",
+        "name": "显示名称",
+        "email": "邮箱",
+        "emailVerified": "已验证",
+        "givenName": "名",
+        "familyName": "姓"
+      }
     }
   }
 }

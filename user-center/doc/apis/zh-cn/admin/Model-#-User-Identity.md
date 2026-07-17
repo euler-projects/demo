@@ -89,6 +89,37 @@
 | `headimgurl` | string | 否 | 微信原始头像 URL |
 | `unionid` | string | 否 | 微信 unionid |
 
+### 2.4 Google 登录 `google`
+
+```json
+{
+  "identityId": "7c3e9f20-b1a4-4d8e-9f2c-1a2b3c4d5e6f",
+  "userId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "identityType": "google",
+  "subject": "118214213541635675211",
+  "boundAt": 1778899139687,
+  "email": "user@gmail.com",
+  "emailVerified": true,
+  "name": "cFrost sun",
+  "givenName": "cFrost",
+  "familyName": "sun",
+  "picture": "https://lh3.googleusercontent.com/a/xxxxx=s96-c",
+  "locale": "zh-CN"
+}
+```
+
+| 字段 | 类型 | 脱敏 | 含义 |
+|---|---|---|---|
+| `email` | string | 否 | **Google 邮箱**<br>用户在 Google 账户中的主邮箱; 授权 scope 包含 `email` 时返回. |
+| `emailVerified` | boolean | 否 | **邮箱是否已验证**<br>Google 侧是否已验证该邮箱地址. |
+| `name` | string | 否 | **显示名称**<br>Google 账户的完整显示名 (given + family). |
+| `givenName` | string | 否 | **名**<br>Google 账户中的 given name (first name). |
+| `familyName` | string | 否 | **姓**<br>Google 账户中的 family name (last name). |
+| `picture` | string | 否 | **头像 URL**<br>Google 账户的头像地址. |
+| `locale` | string | 否 | **区域设置**<br>BCP47 语言标签 (如 `zh-CN`); 部分账户可能为空. |
+
+> Google 身份通过 OIDC 重定向流自动绑定, 不支持管理端手动创建或更新; `subject` 为 Google 签发的不可变 `sub` 值. 每次登录成功时服务端自动刷新上述 profile 字段.
+
 ---
 
 ## 3. 脱敏与原文查询
