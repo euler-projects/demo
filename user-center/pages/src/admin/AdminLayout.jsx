@@ -5,7 +5,6 @@ import {useTranslation} from 'react-i18next';
 import {
     ChevronRightIcon,
     ChevronsUpDownIcon,
-    Command,
     Gauge,
     Globe,
     KeyRound,
@@ -17,7 +16,7 @@ import {
     Users,
 } from 'lucide-react';
 
-import {ShieldOAuth} from '@/icons';
+import {Brand, ShieldOAuth} from '@/icons';
 
 import {Avatar, AvatarFallback} from '@/components/ui/avatar';
 import {
@@ -613,7 +612,7 @@ const AppSidebar = ({menuItems, selectedKey, openKey, currentUser, userLoading, 
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" render={<Link to="/"/>}>
                         <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                            <Command className="size-4"/>
+                            <Brand className="size-4"/>
                         </div>
                         <div className="grid flex-1 text-left text-sm leading-tight">
                             <span className="truncate font-medium">{SITE_NAME}</span>
