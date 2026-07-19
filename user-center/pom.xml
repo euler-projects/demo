@@ -117,21 +117,18 @@
             <classifier>jakarta</classifier>
         </dependency>
 
-        <!-- Required for Apple App Attest Validation -->
-        <dependency>
-            <groupId>org.eulerframework</groupId>
-            <artifactId>euler-security-webauthn</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.webauthn4j</groupId>
-            <artifactId>webauthn4j-core</artifactId>
-            <version>${webauthn4j.verison}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.webauthn4j</groupId>
-            <artifactId>webauthn4j-appattest</artifactId>
-            <version>${webauthn4j.verison}</version>
-        </dependency>
+        <!--
+            Apple App Attest validation defaults to
+            DefaultAppleAppAttestValidationService (in euler-security-core), which embeds
+            Apple's Root CA and validates attestations using pure JDK X.509 / CBOR - no
+            webauthn4j dependency is required. To switch to the webauthn4j-based
+            implementation, declare an AppleAppAttestValidationService bean of type
+            Webauthn4jAppleAppAttestValidationService and re-add the following:
+
+              org.eulerframework:euler-security-webauthn
+              com.webauthn4j:webauthn4j-core
+              com.webauthn4j:webauthn4j-appattest
+        -->
 
         <dependency>
             <groupId>org.bouncycastle</groupId>
