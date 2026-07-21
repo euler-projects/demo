@@ -58,7 +58,7 @@ OAuth-Client-Attestation-PoP: <PoP JWT>
 grant_type=authorization_code&client_id=default&code=...&code_verifier=...
 ```
 
-> 详细设计 (请求头语义、PoP 类型与载体、独立 / 增强两种使用场景、各认证方式与 PKCE 的组合约束) 较为复杂, 具体使用方式参考: [Attestation Based Client Auth 子文档](OAuth2-Client-Authentication-%23-Attestation-Based-Client-Auth.md) (_待补充_).
+> 详细设计 (请求头语义、PoP 类型与载体、独立 / 增强两种使用场景、各认证方式与 PKCE 的组合约束) 较为复杂, 具体使用方式参考: [Attestation Based Client Auth 子文档](OAuth2-Client-Authentication-%23-Attestation-Based.md) (_待补充_).
 
 ## 注意事项
 

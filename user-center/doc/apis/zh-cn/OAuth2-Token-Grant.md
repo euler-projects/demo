@@ -70,7 +70,6 @@ grant_type=<grant_type>&scope=<scope>&...
 | --- | --- | --- |
 | `authorization_code` | 标准 OAuth2 / OIDC 授权码流程, 推荐配合 PKCE | _待补充_ |
 | `refresh_token` | 使用 Refresh Token 续期 | _待补充_ |
-| `wechat_authorization_code` | 微信登录 (自定义) | _待补充_ |
 | `urn:ietf:params:oauth:grant-type:app_assertion` | 基于 Apple App Attest 的设备认证 Grant (自定义) | [App Attest](OAuth2-Token-Grant-%23-App-Attest.md) |
 
 > `authorization_code` / `refresh_token` 严格遵循 [RFC 6749][rfc6749] 与 [OIDC Core 1.0][oidc-core] 定义的标准行为, 用法可直接参考对应 RFC.
