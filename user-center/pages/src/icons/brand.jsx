@@ -19,16 +19,21 @@ import {cn} from '@/lib/utils';
  * faithful discrete sampling of `r = a·e^(θ/2π)`, Euler's namesake
  * growth law encoded in the shell geometry. Threading
  *
- *     (11.91,24) → (20,12) → (4,12) → (14,12) → (8,12)
+ *     (9.3,24.75) → (11.91,24) [as it crosses into the disc]
+ *                 → (20,12) → (4,12) → (14,12) → (8,12)
  *
  * Segments 1–3 are complete half-circles; segment 0 is the outward
- * extension whose r = 8φ ≈ 12.94 circle overshoots the r=12 disc, so
- * it's truncated at the exact circle-circle intersection with the
- * disc boundary. Solving that intersection analytically gives
- * x = 20 − 5φ ≈ 11.9098 at y ≈ 24; segment 0 is only ~68° of arc
- * rather than a half-turn, precisely because the disc geometry cuts
- * the log-spiral short — the spiral doesn't stop by convention, it
- * stops where the mathematics of the two circles say it must.
+ * extension whose r = 8φ ≈ 12.94 circle intersects the r=12 disc at
+ * x = 20 − 5φ ≈ 11.91, y ≈ 24 (solved analytically from the two
+ * circle equations). The mask stroke does NOT start at that crossing
+ * though — it starts 12° farther along the same segment-0 circle,
+ * at (9.3, 24.75), which sits outside both the disc and the viewBox.
+ * That way the stroke's `round` line-cap and its curved lead-in are
+ * entirely off-canvas, and where the stroke first enters the disc
+ * it does so as an unadorned middle section. The resulting cut-edge
+ * along the disc rim is exactly an arc of the outer circle (r=12) —
+ * the boundary carries the mark's own curve, with no half-moon lump
+ * from a stray line-cap.
  *
  * The spiral also deliberately terminates on the inner side at r=3
  * rather than curling all the way to (12,12): the tail rests ~4 px
@@ -38,10 +43,7 @@ import {cn} from '@/lib/utils';
  * All four arc joints are tangent-continuous — segment 0's centre
  * (20 − 8φ, 12) sits on the y=12 axis just like the other three, so
  * the tangent at every seam is vertical and the mark reads as one
- * smooth curve. The stroke's round line-cap at the (11.91, 24) start
- * extends beyond the disc boundary and is naturally clipped by the
- * mask, so the tail dissolves into the disc rim precisely where the
- * spiral intersects it — no visible "stop" mark.
+ * smooth curve.
  *
  * The mask uses SVG's "white keeps, black erases" convention:
  *
@@ -79,7 +81,7 @@ const Brand = React.forwardRef(function Brand(
                 <mask id={maskId}>
                     <circle cx="12" cy="12" r="12" fill="white"/>
                     <path
-                        d="M 11.91 24 A 12.94 12.94 0 0 0 20 12 A 8 8 0 1 0 4 12 A 5 5 0 1 0 14 12 A 3 3 0 1 0 8 12"
+                        d="M 9.3 24.75 A 12.94 12.94 0 0 0 20 12 A 8 8 0 1 0 4 12 A 5 5 0 1 0 14 12 A 3 3 0 1 0 8 12"
                         fill="none"
                         stroke="black"
                         strokeWidth={2}
