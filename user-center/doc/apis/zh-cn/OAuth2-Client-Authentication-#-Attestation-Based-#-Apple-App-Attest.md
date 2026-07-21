@@ -215,9 +215,74 @@ iOS App                Apple             Authorization Server
 - 重新执行 Attestation 会产生新的设备注册, 原关联用户数据不可复用
 - 该 Grant Type 不签发 `refresh_token`: 每次请求均需完整的 challenge + assertion 验证, refresh token 无法提供额外安全价值
 
+## 设计决策: 为什么采用非标扩展
+
+### 草案标准流程
+
+[draft-ietf-oauth-attestation-based-client-auth] 的架构假设是: 平台级 attestation 发生在 Client Instance 与 **Client Attester (后端)** 之间, Client Attester 验证平台证明后转译为标准 `oauth-client-attestation+jwt` 签发给客户端. 授权服务器只看到标准 JWT:
+
+```
+iOS App            Client Attester          Authorization Server
+  |                      |                        |
+  |  attestKey (Apple)   |                        |
+  |--------------------->|                        |
+  |                      |  Verify Apple CBOR     |
+  |                      |  Sign standard JWT     |
+  |  OAuth-Client-Attestation (JWT)               |
+  |<---------------------|                        |
+  |                                               |
+  |  Sign PoP JWT with separate key               |
+  |                                               |
+  |  POST /oauth2/token                           |
+  |  OAuth-Client-Attestation: <JWT>              |
+  |  OAuth-Client-Attestation-PoP: <PoP JWT>      |
+  |---------------------------------------------->|
+```
+
+### 标准流程的问题
+
+若严格遵循上述架构, 存在以下限制:
+
+1. **必须放弃 Apple Assertion 能力** — 草案要求 PoP JWT 由 `cnf` 中声明的公钥签名. 但 Secure Enclave 密钥只能通过 `generateAssertion()` 生成 Apple 特定格式签名 (CBOR), 不能签任意 JWT payload. 客户端需要**额外生成一个独立密钥对**来签 PoP JWT, 平台硬件绑定的安全优势在 PoP 阶段丢失.
+
+2. **多一次网络请求** — 客户端必须先调用 Client Attester 端点换取 JWT, 再向授权服务器请求 Token. 对于移动网络环境增加延迟.
+
+3. **密钥管理复杂度翻倍** — 设备需管理两个密钥: Secure Enclave 密钥 (用于 attestation) + 独立密钥 (用于签 PoP JWT). 后者不在硬件保护中, 安全性降级.
+
+4. **Attestation 退化为一次性注册** — Apple 的 Assertion 能力 (每次请求由硬件签名) 无法融入标准 PoP JWT 流程, 后续所有验证仅依赖软件密钥.
+
+### 本实现的选择
+
+通过自定义 `OAuth-Client-Attestation-Type: apple_app_attest` 头, 让授权服务器直接理解 Apple 的原生证明格式:
+
+| 对比 | 标准方案 | 本实现 |
+|------|---------|--------|
+| 额外网络请求 | 是 (Client Attester) | 否 |
+| Assertion 持续验证 | 不可用 | 每次请求均由 Secure Enclave 签名 |
+| 密钥对数量 | 2 个 | 1 个 (Secure Enclave) |
+| 全链路硬件绑定 | 仅注册阶段 | 全生命周期 |
+| 标准合规性 | 完全 | 自行扩展 |
+| Client Attester 后端 | 需要 | 不需要 |
+
+### 合规性说明
+
+草案 Section 4 明确允许这种变体:
+
+> "This specification is designed to be flexible and can be implemented even in scenarios where the client does not have a backend serving as a Client Attester. In such cases, each Client Instance is responsible for performing the functions typically handled by the Client Attester on its own."
+
+草案同时定义了 IANA "OAuth Client Attestation Proof-of-Possession Methods" 注册表, 并在 Section 5 预留了扩展点:
+
+> "Other specifications or profiles may define additional proof of possession mechanisms for use with the Client Attestation."
+
+本实现的 `apple_app_attest` PoP 类型符合该扩展机制的精神, 尽管尚未注册为正式的 PoP Method.
+
+---
+
 ## 相关文档
 
 - [OAuth2 Attestation-Based Client Authentication](OAuth2-Client-Authentication-%23-Attestation-Based.md) — 上层协议
 - [OAuth2 Token Grant - App Attest](OAuth2-Token-Grant-%23-App-Attest.md) — 独立 Grant Type 完整流程与时序图
 - [Establishing Your App's Integrity](https://developer.apple.com/documentation/devicecheck/establishing-your-app-s-integrity) — Apple 官方文档
 - [draft-ietf-oauth-attestation-based-client-auth-08](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-08) — IETF 草案
+
+[draft-ietf-oauth-attestation-based-client-auth]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-08
