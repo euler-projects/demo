@@ -57,6 +57,7 @@
     "delete": "删除",
     "column": {
       "username": "用户名",
+      "userId": "用户 ID",
       "email": "邮箱",
       "phone": "手机号",
       "authorities": "权限",

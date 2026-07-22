@@ -169,6 +169,7 @@ const OAuth2Client = () => {
                 loading={loading}
                 onChange={handleTableChange}
                 scroll={{x: 'max-content'}}
+                size="small"
             />
         </div>
     );

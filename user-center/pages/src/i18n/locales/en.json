@@ -57,6 +57,7 @@
     "delete": "Delete",
     "column": {
       "username": "Username",
+      "userId": "User ID",
       "email": "Email",
       "phone": "Phone",
       "authorities": "Authorities",

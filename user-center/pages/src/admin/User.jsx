@@ -96,11 +96,19 @@ const User = () => {
 
     const columns = useMemo(() => [
         {
-            title: t('user.column.username'),
+            // The column is captioned "User ID" (i18n key `user.column.userId`)
+            // but intentionally sources the `username` field: username IS the
+            // user-facing identifier in this system. The key/field mismatch is
+            // deliberate, not a typo.
+            title: t('user.column.userId'),
             dataIndex: 'username',
             sorter: true,
             width: 160,
-            render: (text, record) => <Link to={record.userId} state={{fromPage: tableParams.pagination.current}}>{text}</Link>,
+            render: (text, record) => (
+                <Link to={record.userId} state={{fromPage: tableParams.pagination.current}}>
+                    <span style={{fontFamily: 'monospace'}}>{text}</span>
+                </Link>
+            ),
         },
         {
             title: t('user.column.phone'),
@@ -341,6 +349,7 @@ const User = () => {
                 loading={loading}
                 onChange={handleTableChange}
                 scroll={{x: 'max-content'}}
+                size="small"
             />
             <Modal title={modalTitle} open={isModalOpen} onOk={handleOk} onCancel={handleCancel} okText={t('common.ok')} cancelText={t('common.cancel')}>
                 <UserForm operationType={formType}/>

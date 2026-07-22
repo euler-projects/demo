@@ -240,8 +240,14 @@ const UserDetail = () => {
             {/* Basic Info */}
             <Card title={t('user.detailPage.basicInfo')} style={{marginBottom: 16}}>
                 <Descriptions column={2}>
-                    <Descriptions.Item label={t('user.column.username')}>
-                        {user?.username ?? '-'}
+                    {/*
+                      Labelled "User ID" (i18n key `user.column.userId`) yet
+                      bound to `user.username`: username is the user-facing
+                      identifier here, so the key/field mismatch is intentional,
+                      matching the User list column.
+                    */}
+                    <Descriptions.Item label={t('user.column.userId')}>
+                        <span style={{fontFamily: 'monospace'}}>{user?.username ?? '-'}</span>
                     </Descriptions.Item>
                 </Descriptions>
             </Card>
