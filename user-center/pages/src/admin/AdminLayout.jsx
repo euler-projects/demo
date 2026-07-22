@@ -16,7 +16,7 @@ import {
     Users,
 } from 'lucide-react';
 
-import {Brand, ShieldOAuth} from '@/icons';
+import {Brand, ShieldLock} from '@/icons';
 
 import {Avatar, AvatarFallback} from '@/components/ui/avatar';
 import {
@@ -108,7 +108,7 @@ const buildMenuItems = (t) => [
     },
     {
         key: 'oauth2',
-        icon: ShieldOAuth,
+        icon: ShieldLock,
         label: t('nav.oauth2'),
         children: [
             {
@@ -323,8 +323,12 @@ const NavMainGroupItem = ({item, selectedKey, openKey}) => {
             <CollapsibleTrigger
                 render={
                     <SidebarMenuButton
-                        isActive={parentActive}
                         tooltip={item.label}
+                        className={
+                            parentActive
+                                ? 'font-medium text-sidebar-accent-foreground'
+                                : undefined
+                        }
                     />
                 }
             >
@@ -335,13 +339,14 @@ const NavMainGroupItem = ({item, selectedKey, openKey}) => {
                 />
             </CollapsibleTrigger>
             <CollapsibleContent>
-                <SidebarMenuSub>
+                <SidebarMenuSub className="mr-0 pr-0">
                     {item.children.map((child) => {
                         const ChildIcon = child.icon;
                         return (
                             <SidebarMenuSubItem key={child.key}>
                                 <SidebarMenuSubButton
                                     isActive={selectedKey === child.key}
+                                    className="h-8 data-active:font-medium"
                                     render={<Link to={child.to}/>}
                                 >
                                     <ChildIcon/>
@@ -402,7 +407,6 @@ const NavMain = ({items, selectedKey, openKey}) => (
  */
 const NavLocale = ({className}) => {
     const {t, i18n} = useTranslation();
-    const {isMobile} = useSidebar();
     const currentLabel = t(`language.${i18n.language}`);
     return (
         <SidebarGroup className={className}>
@@ -424,8 +428,8 @@ const NavLocale = ({className}) => {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent
                                 className="min-w-40 rounded-lg"
-                                side={isMobile ? 'bottom' : 'right'}
-                                align="end"
+                                side="top"
+                                align="start"
                                 sideOffset={4}
                             >
                                 <DropdownMenuRadioGroup

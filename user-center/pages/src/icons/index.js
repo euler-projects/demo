@@ -12,4 +12,5 @@
  */
 export {createIcon} from './create-icon';
 export {ShieldOAuth} from './shield-oauth';
+export {ShieldLock} from './shield-lock';
 export {Brand} from './brand';
