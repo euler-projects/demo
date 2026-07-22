@@ -260,7 +260,18 @@ const NavMainGroupItem = ({item, selectedKey, openKey}) => {
     const {state, isMobile} = useSidebar();
     const Icon = item.icon;
     const parentActive = item.children.some((c) => c.key === selectedKey);
-    const defaultOpen = openKey === item.key;
+    // Controlled open state instead of `defaultOpen`. `defaultOpen` is
+    // read only once at mount, which loses the redirect case: landing on
+    // a route that redirects into this group's child (e.g. `/console`
+    // → `/console/users`) mounts the group before `openKey` resolves, so
+    // it would stay collapsed even after the location settles on the
+    // child. Seeding from the initial `openKey` and re-opening whenever
+    // the group owns the active leaf covers that, while `onOpenChange`
+    // still lets the user collapse it by hand afterwards.
+    const [open, setOpen] = useState(openKey === item.key);
+    useEffect(() => {
+        if (parentActive) setOpen(true);
+    }, [parentActive]);
 
     if (state === 'collapsed' && !isMobile) {
         return (
@@ -317,7 +328,8 @@ const NavMainGroupItem = ({item, selectedKey, openKey}) => {
     // that named group.
     return (
         <Collapsible
-            defaultOpen={defaultOpen}
+            open={open}
+            onOpenChange={setOpen}
             render={<SidebarMenuItem/>}
         >
             <CollapsibleTrigger
