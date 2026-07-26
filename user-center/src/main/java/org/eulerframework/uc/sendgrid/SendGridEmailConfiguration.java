@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.eulerframework.uc.yunpian;
+package org.eulerframework.uc.sendgrid;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -24,20 +24,20 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 /**
- * Activates the YunPian SMS {@link YunPianSmsOtpChannel} when {@code yunpian.api-key}
- * is configured. The {@code DelegatingOtpChannel} assembled by
- * {@code OtpChannelConfiguration} routes OTP deliveries with
- * {@code channel=sms} to this channel via its explicit routing table.
+ * Activates the SendGrid email {@link SendGridEmailOtpChannel} when
+ * {@code sendgrid.api-key} is configured. The {@code DelegatingOtpChannel}
+ * assembled by {@code OtpChannelConfiguration} routes OTP deliveries with
+ * {@code channel=email} to this channel via its explicit routing table.
  */
 @Configuration(proxyBeanMethods = false)
-@EnableConfigurationProperties(YunPianProperties.class)
-@ConditionalOnProperty(prefix = "yunpian", name = "api-key")
-public class YunPianSmsConfiguration {
+@EnableConfigurationProperties(SendGridProperties.class)
+@ConditionalOnProperty(prefix = "sendgrid", name = "api-key")
+public class SendGridEmailConfiguration {
 
-    @Bean("yunPianSmsOtpChannel")
-    public YunPianSmsOtpChannel yunPianSmsOtpChannel(
-            YunPianProperties properties,
+    @Bean("sendGridEmailOtpChannel")
+    public SendGridEmailOtpChannel sendGridEmailOtpChannel(
+            SendGridProperties properties,
             @Qualifier("otpDeliveryTaskExecutor") ThreadPoolTaskExecutor otpDeliveryTaskExecutor) {
-        return new YunPianSmsOtpChannel(properties, otpDeliveryTaskExecutor);
+        return new SendGridEmailOtpChannel(properties, otpDeliveryTaskExecutor);
     }
 }

@@ -108,6 +108,7 @@
       "identities": "用户身份",
       "authorities": "用户权限",
       "phone": "手机号",
+      "email": "邮箱",
       "identityId": "身份 ID",
       "boundAt": "绑定时间",
       "viewRaw": "查看原值",

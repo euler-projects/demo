@@ -22,6 +22,7 @@ import org.eulerframework.common.http.HttpTemplate;
 import org.eulerframework.common.http.JdkHttpClientTemplate;
 import org.eulerframework.common.http.ResponseBody;
 import org.eulerframework.common.http.request.UrlEncodedRequestBody;
+import org.eulerframework.security.authentication.otp.AbstractAsyncOtpChannel;
 import org.eulerframework.security.authentication.otp.OtpChannel;
 import org.eulerframework.security.authentication.otp.OtpDelivering;
 import org.eulerframework.security.authentication.otp.OtpDeliveryException;
@@ -33,9 +34,12 @@ import org.springframework.util.StringUtils;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Map;
+import java.util.concurrent.Executor;
 
 /**
  * {@link OtpChannel} backed by the YunPian (云片网) HTTP single-send API.
+ * Extends {@link AbstractAsyncOtpChannel}, so the blocking HTTP call runs on
+ * the injected executor and never blocks the OTP issue request thread.
  * <p>
  * Selects an SMS template by {@link OtpDelivering#purpose() purpose}, falling
  * back to the {@link YunPianProperties#DEFAULT_TEMPLATE_KEY default} template
@@ -46,7 +50,7 @@ import java.util.Map;
  * @see <a href="https://www.yunpian.com/official/document/sms/zh_cn/domestic_single_send">
  * YunPian single-send API</a>
  */
-public class YunPianSmsOtpChannel implements OtpChannel {
+public class YunPianSmsOtpChannel extends AbstractAsyncOtpChannel {
 
     private static final Logger logger = LoggerFactory.getLogger(YunPianSmsOtpChannel.class);
 
@@ -59,11 +63,12 @@ public class YunPianSmsOtpChannel implements OtpChannel {
     private final String apiUrl;
     private final Map<String, String> templates;
 
-    public YunPianSmsOtpChannel(YunPianProperties properties) {
-        this(properties, JdkHttpClientTemplate.INSTANCE);
+    public YunPianSmsOtpChannel(YunPianProperties properties, Executor executor) {
+        this(properties, JdkHttpClientTemplate.INSTANCE, executor);
     }
 
-    public YunPianSmsOtpChannel(YunPianProperties properties, HttpTemplate httpTemplate) {
+    public YunPianSmsOtpChannel(YunPianProperties properties, HttpTemplate httpTemplate, Executor executor) {
+        super(executor);
         Assert.notNull(properties, "properties must not be null");
         Assert.hasText(properties.getApiKey(), "yunpian.api-key must be configured");
         Assert.hasText(properties.getApiUrl(), "yunpian.api-url must be configured");
@@ -79,7 +84,14 @@ public class YunPianSmsOtpChannel implements OtpChannel {
     }
 
     @Override
-    public void send(OtpDelivering delivering) throws OtpDeliveryException {
+    public String getChannel() {
+        return CHANNEL_NAME;
+    }
+
+    @Override
+    protected void doSend(OtpDelivering delivering) throws OtpDeliveryException {
+        // Defensive re-check; unsupported channels are already rejected
+        // synchronously by AbstractAsyncOtpChannel via supports().
         Assert.isTrue(CHANNEL_NAME.equalsIgnoreCase(delivering.channel()),
                 "YunPianSmsOtpChannel only support sms channel.");
 

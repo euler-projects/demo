@@ -108,6 +108,7 @@
       "identities": "User Identities",
       "authorities": "User Authorities",
       "phone": "Phone",
+      "email": "Email",
       "identityId": "Identity ID",
       "boundAt": "Bound at",
       "viewRaw": "View original",

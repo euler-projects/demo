@@ -16,7 +16,7 @@ const UserDetail = () => {
     const [user, setUser] = useState(null);
     const [identities, setIdentities] = useState([]);
     const [identitiesLoading, setIdentitiesLoading] = useState(false);
-    const [revealedPhones, setRevealedPhones] = useState({});  // identityId -> rawValue
+    const [revealedRawValues, setRevealedRawValues] = useState({});  // identityId -> rawValue
     const [addAuthorityOpen, setAddAuthorityOpen] = useState(false);
     const [newAuthority, setNewAuthority] = useState(null);
 
@@ -44,9 +44,9 @@ const UserDetail = () => {
 
     // --- Identity actions ---
     const handleToggleRaw = async (identityId, fieldName) => {
-        if (revealedPhones[identityId]) {
+        if (revealedRawValues[identityId]) {
             // Hide
-            setRevealedPhones(prev => {
+            setRevealedRawValues(prev => {
                 const next = {...prev};
                 delete next[identityId];
                 return next;
@@ -57,7 +57,7 @@ const UserDetail = () => {
                 `/admin/api/users/${encodeURIComponent(userId)}/identities/${encodeURIComponent(identityId)}/raw-fields/${fieldName}`
             );
             if (result) {
-                setRevealedPhones(prev => ({...prev, [identityId]: result.rawValue}));
+                setRevealedRawValues(prev => ({...prev, [identityId]: result.rawValue}));
             }
         }
     };
@@ -108,12 +108,53 @@ const UserDetail = () => {
             dataIndex: 'phone',
             width: 200,
             render: (masked, record) => {
-                const revealed = revealedPhones[record.identityId];
+                const revealed = revealedRawValues[record.identityId];
                 return (
                     <Space>
                         <span style={{fontFamily: 'monospace'}}>{revealed || masked}</span>
                         <Tooltip title={revealed ? t('user.detailPage.hideRaw') : t('user.detailPage.viewRaw')}>
                             <a onClick={() => handleToggleRaw(record.identityId, 'phone')}>
+                                {revealed ? <EyeInvisibleOutlined/> : <EyeOutlined/>}
+                            </a>
+                        </Tooltip>
+                    </Space>
+                );
+            },
+        },
+        {
+            title: t('user.detailPage.boundAt'),
+            dataIndex: 'boundAt',
+            width: 200,
+            render: (val) => val ? new Date(val).toLocaleString() : '-',
+        },
+        {
+            title: t('user.column.action'),
+            key: 'action',
+            width: 100,
+            render: (_, record) => (
+                <Popconfirm title={t('user.detailPage.confirmDelete')} onConfirm={() => handleDeleteIdentity(record.identityId)}>
+                    <a style={{color: '#ff4d4f'}}>{t('user.delete')}</a>
+                </Popconfirm>
+            ),
+        },
+    ];
+
+    // --- Email identities table ---
+    const emailIdentities = identities.filter(i => i.identityType === 'email');
+
+    const emailColumns = [
+        {title: t('user.detailPage.identityId'), dataIndex: 'identityId', width: 300},
+        {
+            title: t('user.detailPage.email'),
+            dataIndex: 'email',
+            width: 240,
+            render: (masked, record) => {
+                const revealed = revealedRawValues[record.identityId];
+                return (
+                    <Space>
+                        <span style={{fontFamily: 'monospace'}}>{revealed || masked}</span>
+                        <Tooltip title={revealed ? t('user.detailPage.hideRaw') : t('user.detailPage.viewRaw')}>
+                            <a onClick={() => handleToggleRaw(record.identityId, 'email')}>
                                 {revealed ? <EyeInvisibleOutlined/> : <EyeOutlined/>}
                             </a>
                         </Tooltip>
@@ -210,6 +251,21 @@ const UserDetail = () => {
                 <Table
                     columns={phoneColumns}
                     dataSource={phoneIdentities}
+                    rowKey="identityId"
+                    loading={identitiesLoading}
+                    pagination={false}
+                    size="small"
+                    locale={{emptyText: t('user.detailPage.noIdentities')}}
+                />
+            ),
+        },
+        {
+            key: 'email',
+            label: t('user.detailPage.email'),
+            children: (
+                <Table
+                    columns={emailColumns}
+                    dataSource={emailIdentities}
                     rowKey="identityId"
                     loading={identitiesLoading}
                     pagination={false}

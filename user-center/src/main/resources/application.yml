@@ -190,3 +190,27 @@ euler:
       #   expires-in: 5m
       #   retry-after: 60s
       #   max-failures: 5
+
+# ---- OTP delivery gateways ----
+# Each channel activates only when its api-key is present; the keys below are
+# commented out so both channels stay disabled by default. Enable one by
+# providing the api-key via a profile override, e.g. in application-local.yml:
+#     yunpian:
+#       api-key: ${YUNPIAN_APIKEY}
+
+yunpian:
+  # api-key: ${YUNPIAN_APIKEY}
+  # api-url: https://sms.yunpian.com/v2/sms/single_send.json
+  templates:
+    # Required fallback template; used when purpose is missing or unmatched.
+    default: ${YUNPIAN_DEFAULT_TEMPLATE}
+
+sendgrid:
+  # api-key: ${SENDGRID_APIKEY}
+  # api-url: https://api.sendgrid.com/v3/mail/send
+  from:
+    email: ${SENDGRID_SENDER_EMAIL:no-reply@eulerproject.org}
+    name: ${SENDGRID_SENDER_NAME:Euler Projects}
+  templates:
+    # Required fallback dynamic template id; used when purpose is missing or unmatched.
+    default: ${SENDGRID_DEFAULT_TEMPLATE}
