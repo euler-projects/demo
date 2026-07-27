@@ -163,17 +163,14 @@ euler:
       # login-methods:
       #   google:
       #     type: oauth2
+      #     # identity-type defaults to the login-method key; stored as
+      #     # t_user_identity.identity_type on first federation.
+      #     identity-type: google
       #     properties:
       #       # oauth-client-registration-id defaults to the login-method
       #       # key; must match the key under
       #       # spring.security.oauth2.client.registration.<key>.
       #       oauth-client-registration-id: google
-      #       auto-create-user: true
-      #       default-authorities:
-      #         - user
-      #       # identity-type defaults to the login-method key; stored as
-      #       # t_user_identity.identity_type on first federation.
-      #       identity-type: google
     oauth2:
       authorizationserver:
         authorization-store-type: redis
