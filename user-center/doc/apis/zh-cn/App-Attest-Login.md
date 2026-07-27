@@ -519,7 +519,7 @@ sequenceDiagram
 ## 七. 相关文档
 
 - [微信登录 IdP 接入细节](App-Attest-Login-%23-WeChat.md) — 本文档的具体实现示例, 以微信 IdP 作为 `<user_grant>` 落地
-- [短信 / 邮箱 OTP 接入细节](App-Attest-Login-%23-OTP.md) — 以手机号 / 邮箱 OTP 作为 `<user_grant>` 的落地, 含 PKCE 风格的安全增强
+- [短信 / 邮箱 OTP 接入细节](App-Attest-Login-%23-OTP.md) — 以手机号 / 邮箱 OTP 作为 `<user_grant>` 的落地
 - [APIs # Apple App Attest](APIs-%23-Apple-App-Attest.md)
 - [APIs # OAuth2 Grant](APIs-%23-OAuth2-Grant.md)
 - [APIs # OAuth2 Challenge](APIs-%23-OAuth2-Challenge.md)

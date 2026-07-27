@@ -297,7 +297,7 @@ public class EmailUserIdentityService extends AbstractUserIdentityService {
         if (!StringUtils.hasText(otp)) {
             throw new InvalidUserIdentityException("otp is required");
         }
-        OtpVerification verification = this.otpTicketService.consume(otpTicket, null, otp, null);
+        OtpVerification verification = this.otpTicketService.consume(otpTicket, otp, null);
         if (verification == null) {
             throw new InvalidUserIdentityException("otp_ticket consumption failed");
         }
