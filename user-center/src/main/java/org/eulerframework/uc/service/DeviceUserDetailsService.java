@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import java.util.List;
+
 @Service
 public class DeviceUserDetailsService implements EulerDeviceUserDetailsService {
 
@@ -31,7 +33,7 @@ public class DeviceUserDetailsService implements EulerDeviceUserDetailsService {
     }
 
     @Override
-    public EulerUserDetails createUser(AppAttestUser appAttestUser) {
+    public EulerUserDetails createUser(AppAttestUser appAttestUser, List<String> authorities) {
         AppAttestAttestationUserMappingEntity mappingEntity = new AppAttestAttestationUserMappingEntity();
         mappingEntity.setKeyId(appAttestUser.getKeyId());
         mappingEntity.setTeamId(appAttestUser.getTeamId());
@@ -40,7 +42,7 @@ public class DeviceUserDetailsService implements EulerDeviceUserDetailsService {
         EulerUserDetails userDetails = EulerUserDetails.builder()
                 .username(RandomUsernameGenerator.generate())
                 .password("{noop}" + StringUtils.randomString(32))
-                .authorities("user")
+                .authorities(authorities.toArray(new String[0]))
                 .build();
         User userCreation = new User();
         userCreation.reloadUserDetails(userDetails);

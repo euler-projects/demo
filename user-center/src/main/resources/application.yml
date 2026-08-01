@@ -149,28 +149,21 @@ euler:
           enabled: true
           signup-page: /create-account
           signup-processing-url: /doSignup
-      # Unified login-method declarations. Each entry becomes a button on
-      # the shared /signin page and is dispatched to the LoginMethodTypeHandler
-      # bean registered for its `type`. Empty in the default profile so no
-      # federated login shows up until a deployment-specific profile
-      # explicitly opts one in.
-      #
-      # Example (activate Google login by adding the following block in a
-      # deployment profile and pairing it with a matching
-      # spring.security.oauth2.client.registration.google.* entry that
-      # carries client-id / client-secret / provider):
-      #
-      # login-methods:
-      #   google:
-      #     type: oauth2
-      #     # identity-type defaults to the login-method key; stored as
-      #     # t_user_identity.identity_type on first federation.
-      #     identity-type: google
-      #     properties:
-      #       # oauth-client-registration-id defaults to the login-method
-      #       # key; must match the key under
-      #       # spring.security.oauth2.client.registration.<key>.
-      #       oauth-client-registration-id: google
+    login-method:
+      password:
+        method-type: password
+        primary: true
+    identity-type:
+      email:
+        jit-provisioning:
+          enabled: true
+          default-authorities:
+            - user
+    authentication:
+      otp:
+        enabled: true
+        storage: redis
+        issue-endpoint-uri: /otp/tickets
     oauth2:
       authorizationserver:
         authorization-store-type: redis
@@ -178,15 +171,6 @@ euler:
       resourceserver:
         url-patterns:
           - /api/**
-    otp:
-      enabled: true
-      storage: redis                      # in-memory | jdbc | redis (复用现有 spring.data.redis)
-      # issue-endpoint-uri: /otp/tickets  # 默认值，可省
-      # policy:                           # 默认 6 位 / 5分钟 / 60s / 5 次，如需调整可解锁
-      #   otp-length: 6
-      #   expires-in: 5m
-      #   retry-after: 60s
-      #   max-failures: 5
 
 # ---- OTP delivery gateways ----
 # Each channel activates only when its api-key is present; the keys below are

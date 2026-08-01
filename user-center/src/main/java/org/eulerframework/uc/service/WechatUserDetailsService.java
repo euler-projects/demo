@@ -13,6 +13,8 @@ import org.eulerframework.uc.repository.WechatUserMappingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class WechatUserDetailsService implements EulerWechatUserDetailsService {
 
@@ -30,7 +32,7 @@ public class WechatUserDetailsService implements EulerWechatUserDetailsService {
     }
 
     @Override
-    public EulerUserDetails createUser(WechatUser wechatUser) {
+    public EulerUserDetails createUser(WechatUser wechatUser, List<String> authorities) {
         WechatUserMappingEntity wechatUserMappingEntity = new WechatUserMappingEntity();
         wechatUserMappingEntity.setOpenId(wechatUser.getOpenId());
         wechatUserMappingEntity.setUnionId(wechatUser.getUnionId());
@@ -44,7 +46,7 @@ public class WechatUserDetailsService implements EulerWechatUserDetailsService {
         EulerUserDetails userDetails = EulerUserDetails.builder()
                 .username(RandomUsernameGenerator.generate())
                 .password("{noop}" + StringUtils.randomString(32))
-                .authorities("user")
+                .authorities(authorities.toArray(new String[0]))
                 .build();
         User userCreation = new User();
         userCreation.reloadUserDetails(userDetails);
