@@ -59,7 +59,8 @@ spring:
             require-authorization-consent: true
             registration:
               client-id: default
-              client-authentication-methods: none
+              client-authentication-methods:
+                -  none
               authorization-grant-types:
                 - authorization_code
               scopes:
@@ -151,8 +152,8 @@ euler:
           signup-processing-url: /doSignup
     login-method:
       password:
-        method-type: password
-        primary: true
+        password:
+          primary: true
     identity-type:
       email:
         jit-provisioning:
