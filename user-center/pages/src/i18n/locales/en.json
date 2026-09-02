@@ -18,7 +18,7 @@
     "language": "Language"
   },
   "language": {
-    "zh-Hans": "中文",
+    "zh-Hans": "简体中文",
     "en": "English"
   },
   "common": {
@@ -26,10 +26,45 @@
     "cancel": "Cancel",
     "yes": "Yes",
     "no": "No",
-    "more": "More"
+    "more": "More",
+    "loading": "Loading…",
+    "coming_soon": "Coming soon",
+    "back": "Back",
+    "search": "Search",
+    "reset": "Reset",
+    "filters": "Filters",
+    "refresh": "Refresh",
+    "column_settings": "Column Settings",
+    "restore_default": "Restore Default",
+    "edit": "Edit",
+    "edit_with_title": "Edit {{title}}",
+    "delete": "Delete",
+    "detail": "Detail",
+    "save": "Save",
+    "create": "Create",
+    "updated": "Updated",
+    "created": "Created",
+    "deleted": "Deleted",
+    "copy": "Copy",
+    "copied": "Copied",
+    "status": "Status",
+    "actions": "Actions",
+    "type": "Type",
+    "name": "Name",
+    "description": "Description",
+    "close": "Close"
+  },
+  "descriptions": {
+    "expand": "more",
+    "collapse": "less"
   },
   "breadcrumb": {
     "expand": "Expand {{group}} menu"
+  },
+  "shell": {
+    "sidebar_toggle": "Toggle Sidebar",
+    "sidebar_title": "Sidebar",
+    "sidebar_description": "Displays the mobile sidebar."
   },
   "oauth2": {
     "client": {

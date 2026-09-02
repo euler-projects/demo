@@ -1,0 +1,57 @@
+/*
+ * ConsoleLayout-scoped CSS. Imported by ConsoleLayout.tsx itself, so
+ * the console carries its own styles and index.css stays neutral.
+ *
+ * Console + business-page styling shares this file for now; it may be
+ * split further later.
+ */
+
+/*
+ * Fix icon clipping on size="lg" SidebarMenuButtons when the sidebar
+ * is collapsed to the icon rail (brand tile in SidebarHeader, avatar
+ * tile in NavUser). Root cause lives in shadcn's `sidebarMenuButtonVariants`:
+ *
+ *   base:     group-data-[collapsible=icon]:p-2!   (all sizes)
+ *   size=lg:  group-data-[collapsible=icon]:p-0!
+ *
+ * Both rules carry `!important` and share the same specificity, so the
+ * CSS cascade defers to source order. Tailwind v4 emits utilities in
+ * value-ascending order (`p-0` before `p-2`), which flips the intent
+ * and leaves the lg tile at 32×32 with 8px padding; its size-8 child
+ * (Avatar / brand tile) then gets sliced off by `overflow-hidden`.
+ *
+ * Rather than patch the upstream component and diverge from the
+ * shadcn CLI output, override here. Two subtleties:
+ *
+ *   1. The rule MUST live inside `@layer utilities` — CSS Cascade
+ *      Level 5 flips layer priority for `!important` declarations, so
+ *      an unlayered `!important` rule actually loses to Tailwind's
+ *      layered ones. Adding to the same layer lets normal source-order
+ *      cascade take over and our later declaration wins.
+ *   2. The selector matches by `[data-size="lg"]` alone, not
+ *      `[data-slot="sidebar-menu-button"]`. When NavUser composes
+ *      `<DropdownMenuTrigger render={<SidebarMenuButton size="lg"/>}>`,
+ *      Base UI's `useRender` keeps `data-slot="dropdown-menu-trigger"`
+ *      on the DOM element (the trigger owns the slot) while still
+ *      forwarding `data-size` from the render target — so the slot
+ *      check would miss NavUser and NavLocale.
+ */
+@layer utilities {
+    [data-slot="sidebar"][data-collapsible="icon"] [data-size="lg"] {
+        padding: 0 !important;
+    }
+}
+
+/*
+ * Kill the macOS elastic rubber-band on the sidebar's own scroll
+ * surface. It lives inside the CLI-managed SidebarContent component
+ * (`overflow-auto`), so override here instead of patching the
+ * upstream component (same policy as the size=lg padding fix above).
+ * The page scroll container carries the `overscroll-none` utility in
+ * the TSX instead. The selector is deliberately unscoped by
+ * `sidebar-wrapper`: the mobile sidebar renders in a portal Sheet
+ * outside the wrapper but keeps the same slot.
+ */
+[data-slot="sidebar-content"] {
+    overscroll-behavior: none;
+}

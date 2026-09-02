@@ -1,4 +1,16 @@
 @import "tailwindcss";
+/*
+ * Upstream shadcn infrastructure (cn-* / base-* architecture):
+ * - `tw-animate-css` supplies the animate-in/out keyframes used by
+ *   overlay components (dropdown, sheet, tooltip).
+ * - `shadcn/tailwind.css` defines the cross-primitive custom variants
+ *   (`data-open:`, `data-closed:`, …) that map both Radix-style
+ *   `data-state="open"` and Base UI `data-open` attributes, plus the
+ *   accordion/collapsible keyframes. Without it those variants are
+ *   unknown to Tailwind v4 and silently generate no CSS.
+ */
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -85,46 +97,16 @@
 }
 
 /*
- * Fix icon clipping on size="lg" SidebarMenuButtons when the sidebar
- * is collapsed to the icon rail (brand tile in SidebarHeader, avatar
- * tile in NavUser). Root cause lives in shadcn's `sidebarMenuButtonVariants`:
- *
- *   base:     group-data-[collapsible=icon]:p-2!   (all sizes)
- *   size=lg:  group-data-[collapsible=icon]:p-0!
- *
- * Both rules carry `!important` and share the same specificity, so the
- * CSS cascade defers to source order. Tailwind v4 emits utilities in
- * value-ascending order (`p-0` before `p-2`), which flips the intent
- * and leaves the lg tile at 32×32 with 8px padding; its size-8 child
- * (Avatar / brand tile) then gets sliced off by `overflow-hidden`.
- *
- * Rather than patch the upstream component and diverge from the
- * shadcn CLI output, override here. Two subtleties:
- *
- *   1. The rule MUST live inside `@layer utilities` — CSS Cascade
- *      Level 5 flips layer priority for `!important` declarations, so
- *      an unlayered `!important` rule actually loses to Tailwind's
- *      layered ones. Adding to the same layer lets normal source-order
- *      cascade take over and our later declaration wins.
- *   2. The selector matches by `[data-size="lg"]` alone, not
- *      `[data-slot="sidebar-menu-button"]`. When NavUser composes
- *      `<DropdownMenuTrigger render={<SidebarMenuButton size="lg"/>}>`,
- *      Base UI's `useRender` keeps `data-slot="dropdown-menu-trigger"`
- *      on the DOM element (the trigger owns the slot) while still
- *      forwarding `data-size` from the render target — so the slot
- *      check would miss NavUser and NavLocale.
- */
-@layer utilities {
-    [data-slot="sidebar"][data-collapsible="icon"] [data-size="lg"] {
-        padding: 0 !important;
-    }
-}
-
-/*
  * Page shell defaults. Kept minimal so antd's cssinjs surface renders
  * flush against the shadcn Sidebar. Tailwind's preflight already sets
  * `box-sizing: border-box` and zeroes body margin; the rules below
  * only add height guarantees.
+ *
+ * Layout-scoped rules live beside their owners instead of here:
+ *   - console chrome  → src/layout/ConsoleLayout.css (imported by
+ *     ConsoleLayout.tsx)
+ *   - table cells     → src/pages/_shared/tableLayout.css (imported
+ *     by tableLayout.tsx)
  */
 html,
 body,

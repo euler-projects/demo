@@ -1,0 +1,20 @@
+/*
+ * Cell affordance icons (CopyableCell / EditableCell in
+ * tableLayout.tsx) are hidden by default; the base rule below owns
+ * the hide + fade. Inline opacity styles manage the 'always' /
+ * cell-'hover' modes and the state-level overrides (open editor,
+ * just-copied flash) — since inline styles beat stylesheets, they
+ * always win when present. The THIRD mode, 'row-hover', emits NO
+ * inline opacity at all: it relies on these stylesheet rules so that
+ * hovering ANY part of a row reveals every affordance icon in it
+ * (cross-cell coordination cannot live in one cell's state; same
+ * shape as antd's own row hover background rule).
+ */
+.table-cell-affordance {
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.ant-table-row:hover .table-cell-affordance {
+    opacity: 1;
+}
