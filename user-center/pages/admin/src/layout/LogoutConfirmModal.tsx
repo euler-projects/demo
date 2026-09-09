@@ -66,9 +66,11 @@ interface LogoutConfirmModalProps {
  * Built on the shadcn AlertDialog so the console chrome carries no antd
  * component (matching ConsoleLayout's pure-shadcn boundary). The confirm
  * affordance is a native <button type="submit" form=…> styled with
- * `buttonVariants` rather than the shadcn <Button>: Base UI's Button
- * pins `type="button"` (its internal props are merged last), which would
- * never submit the form, so the native element is required here.
+ * `buttonVariants`. It sits outside the <form> (which only holds the CSRF
+ * token) and is bound to it through the `form` attribute, so the browser
+ * submits it natively and follows Spring Security's 302 as a full page
+ * navigation. The native element keeps that detached submit + native
+ * navigation path free of any component layer.
  */
 const LogoutConfirmModal = ({open, onCancel}: LogoutConfirmModalProps): ReactElement => {
     const {t} = useTranslation();

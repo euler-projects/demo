@@ -150,6 +150,12 @@ euler:
           enabled: true
           signup-page: /create-account
           signup-processing-url: /doSignup
+        login-methods:
+          discovery:
+            # The entrance SPA fetches GET /login-methods to render the
+            # offered login methods when its shell is statically deployed;
+            # the framework default keeps the discovery endpoint off.
+            enabled: true
     login-method:
       password:
         password:
@@ -172,6 +178,7 @@ euler:
       resourceserver:
         url-patterns:
           - /api/**
+        session-aware: true
 
 # ---- OTP delivery gateways ----
 # Each channel activates only when its api-key is present; the keys below are

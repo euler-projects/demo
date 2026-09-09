@@ -1,0 +1,47 @@
+{
+  "app": {
+    "title": "User Center"
+  },
+  "signIn": {
+    "username": "Username",
+    "password": "Password",
+    "submit": "Sign in",
+    "signingIn": "Signing in…",
+    "or": "or",
+    "signInWith": "Sign in with {{provider}}",
+    "usePassword": "Sign in with password",
+    "useEmailCode": "Sign in with email code",
+    "usePhoneCode": "Sign in with SMS code",
+    "continue": "Continue",
+    "sending": "Sending…",
+    "resend": "Resend code",
+    "resendIn": "Resend code in {{seconds}}s",
+    "back": "Back",
+    "codeSentTo": "Verification code sent to {{recipient}}",
+    "email": "Email",
+    "phone": "Phone",
+    "badCredentials": "Incorrect username or password.",
+    "badOtp": "Verification code is incorrect or expired.",
+    "errorGeneric": "Unable to sign in. Please try again."
+  },
+  "signOut": {
+    "confirm": "Are you sure you want to sign out?",
+    "submit": "Sign out",
+    "error": "Failed to fetch CSRF token. Please try again."
+  },
+  "error": {
+    "authentication_failed": "Authentication failed. Please try again.",
+    "account_locked": "This account is locked.",
+    "account_disabled": "This account is disabled.",
+    "account_expired": "This account has expired.",
+    "invalid_csrf_token": "Your session expired. Please try again.",
+    "access_denied": "Access denied.",
+    "server_error": "Server error. Please try again later.",
+    "too_many_requests": "Too many attempts. Please try again later.",
+    "invalid_request": "Invalid request.",
+    "unsupported_channel": "Unsupported delivery channel.",
+    "invalid_identity_id": "Invalid identity.",
+    "delivery_failed": "Failed to deliver the code.",
+    "network": "Network error. Please check your connection."
+  }
+}

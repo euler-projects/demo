@@ -13,6 +13,14 @@
 
 - [注销当前用户](APIs-%23-User-Delete.md)
 
+## 登录接口
+
+- [登录接口(浏览器会话)](APIs-%23-Login.md)
+- [登录方式列表](APIs-%23-Login-Methods.md)
+- [密码登录](APIs-%23-Login-Password.md)
+- [OTP 登录](APIs-%23-Login-OTP.md)
+- [OAuth2 登录](APIs-%23-Login-OAuth2.md)
+
 ## 登录身份接口
 
 - [绑定登录身份](APIs-%23-User-Identities-Create.md)

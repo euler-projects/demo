@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="site-name" th:content="${euler.ctx.__SITE_NAME}" content="User Center"/>
+    <meta name="copyright-holder" th:content="${euler.ctx.__COPYRIGHT_HOLDER}" content="Euler Project"/>
+    <meta name="copyright-holder-website" th:content="${euler.ctx.__COPYRIGHT_HOLDER_WEBSITE}" content="https://www.eulerproject.io"/>
+    <meta name="logout-processing-url" th:content="${logoutProcessingUrl}" content="/doLogout"/>
+    <meta name="current-username" th:content="${currentUsername}" content=""/>
+    <title th:text="${euler.ctx.__SITE_NAME}">User Center</title>
+</head>
+<body>
+<div id="root"></div>
+<script type="module" src="/src/main.tsx"></script>
+</body>
+</html>

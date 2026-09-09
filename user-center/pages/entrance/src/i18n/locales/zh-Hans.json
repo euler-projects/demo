@@ -1,0 +1,47 @@
+{
+  "app": {
+    "title": "用户中心"
+  },
+  "signIn": {
+    "username": "用户名",
+    "password": "密码",
+    "submit": "登录",
+    "signingIn": "登录中…",
+    "or": "或",
+    "signInWith": "使用 {{provider}} 登录",
+    "usePassword": "使用密码登录",
+    "useEmailCode": "使用邮箱验证码登录",
+    "usePhoneCode": "使用短信验证码登录",
+    "continue": "继续",
+    "sending": "发送中…",
+    "resend": "重新发送",
+    "resendIn": "{{seconds}} 秒后重新发送",
+    "back": "返回",
+    "codeSentTo": "验证码已发送至 {{recipient}}",
+    "email": "邮箱",
+    "phone": "手机号",
+    "badCredentials": "用户名或密码错误。",
+    "badOtp": "验证码错误或已过期。",
+    "errorGeneric": "无法登录，请重试。"
+  },
+  "signOut": {
+    "confirm": "确定要退出登录吗？",
+    "submit": "退出登录",
+    "error": "获取 CSRF token 失败，请重试。"
+  },
+  "error": {
+    "authentication_failed": "认证失败，请重试。",
+    "account_locked": "该账号已被锁定。",
+    "account_disabled": "该账号已被禁用。",
+    "account_expired": "该账号已过期。",
+    "invalid_csrf_token": "会话已过期，请重试。",
+    "access_denied": "访问被拒绝。",
+    "server_error": "服务器错误，请稍后重试。",
+    "too_many_requests": "尝试过于频繁，请稍后重试。",
+    "invalid_request": "请求无效。",
+    "unsupported_channel": "不支持的下发通道。",
+    "invalid_identity_id": "身份无效。",
+    "delivery_failed": "验证码发送失败。",
+    "network": "网络错误，请检查网络连接。"
+  }
+}
