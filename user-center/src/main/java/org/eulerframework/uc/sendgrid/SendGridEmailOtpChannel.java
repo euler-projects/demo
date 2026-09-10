@@ -28,6 +28,8 @@ import org.eulerframework.security.authentication.otp.AbstractAsyncOtpChannel;
 import org.eulerframework.security.authentication.otp.OtpChannel;
 import org.eulerframework.security.authentication.otp.OtpDelivering;
 import org.eulerframework.security.authentication.otp.OtpDeliveryException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -56,6 +58,7 @@ import java.util.concurrent.Executor;
 public class SendGridEmailOtpChannel extends AbstractAsyncOtpChannel {
 
     private static final String CHANNEL_NAME = "email";
+    private static final Logger log = LoggerFactory.getLogger(SendGridEmailOtpChannel.class);
 
     private final HttpTemplate httpTemplate;
     private final String apiKey;
@@ -97,6 +100,11 @@ public class SendGridEmailOtpChannel extends AbstractAsyncOtpChannel {
         // synchronously by AbstractAsyncOtpChannel via supports().
         Assert.isTrue(CHANNEL_NAME.equalsIgnoreCase(delivering.channel()),
                 "SendGridEmailOtpChannel only support email channel.");
+
+        if("test@example.com".equalsIgnoreCase(delivering.recipient())) {
+            log.warn("test send: {}", JacksonUtils.writeValueAsString(delivering));
+            return;
+        }
 
         StringRequestBody body = new StringRequestBody(
                 JacksonUtils.writeValueAsString(buildPayload(delivering)),
