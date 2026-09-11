@@ -6,6 +6,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import org.eulerframework.data.entity.AuditingEntity;
 
+/**
+ * Fixed device-to-user association behind {@code EulerDeviceUserDetailsService}.
+ *
+ * @deprecated the table is dropped together with that SPI; see it for the authoritative notice.
+ */
+@Deprecated
 @Entity
 @Table(name = "app_attest_attestation_user_mapping")
 public class AppAttestAttestationUserMappingEntity extends AuditingEntity {

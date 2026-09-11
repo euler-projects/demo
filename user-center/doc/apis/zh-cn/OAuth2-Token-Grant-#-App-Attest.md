@@ -7,6 +7,10 @@
 1. **首次使用**: 使用 `Attestation` 向 `/oauth2/token` 证明设备合法性, 服务端在同一次请求中完成公钥注册、匿名用户创建, 并直接签发 Access Token.
 2. **后续使用**: 使用 `Assertion` 向 `/oauth2/token` 证明设备合法性, 服务端签发 Access Token.
 
+> **⛔ 已废弃 (兼容期)**: 本 Grant Type (`urn:ietf:params:oauth:grant-type:app_assertion`) 已废弃, 仅为已发布的旧客户端保留, 且仅面向 STATIC 类型. 上述"后续使用"依赖"首次使用"已在同一个 KEY 上建立设备与用户的关联 —— **不能跳过首次使用直接以 assertion 请求本 Grant Type**, 否则返回 `invalid_grant`. 本 Grant Type 会**忽略**请求中同时携带的任何登录因素, 用户完全由该关联决定.
+>
+> 新接入的客户端不应使用本 Grant Type, 也不应在 token 端点提交 `attestation`: 设备注册走 `POST /app_attest/register`, assertion 只作为**客户端认证**手段, 需叠加其他因素申请 Token —— 用户级 Grant Type (如 OTP、授权码) 或 `refresh_token`. 详见 [Attestation Based Client Authentication (Apple App Attest)](OAuth2-Client-Authentication-%23-Attestation-Based-%23-Apple-App-Attest.md).
+
 > 本方案基于 `OAuth 2.0 Attestation-Based Client Authentication` 草案规范, 结合 `Apple App Attest` 的 `Attestation` / `Assertion` 两种证明方式作为客户端身份证明.
 
 > **安全须知**: 所有敏感数据 (Key ID、Token 等) 均应使用 Keychain 存储,
@@ -16,12 +20,13 @@
 
 ## 统一接口: `POST /oauth2/token`
 
-无论首次使用还是后续使用, 客户端都只请求 `/oauth2/token` 一个端点, 仅 `attestation` / `assertion` 参数的携带方式不同:
+无论首次使用还是后续使用, 客户端都只请求 `/oauth2/token` 一个端点, 仅 `attestation` / `assertion` 参数的携带方式不同. 二者**不互斥**, 共三种合法组合:
 
-| 场景     | 必填参数                                           |
-| -------- | -------------------------------------------------- |
-| 首次使用 | `grant_type`, `kid`, `challenge`, **`attestation`** |
-| 后续使用 | `grant_type`, `kid`, `challenge`, **`assertion`**   |
+| 场景     | 必填参数                                           | 说明 |
+| -------- | -------------------------------------------------- | ---- |
+| 首次使用 | `grant_type`, `challenge`, **`attestation`** | 注册设备 KEY 并签发 Token; `kid` 由服务端从 attestation 派生, **无需上传** |
+| 后续使用 | `grant_type`, **`kid`**, `challenge`, **`assertion`**   | 已注册设备的快速验证 |
+| 二者同时 | `grant_type`, `challenge`, **`attestation`**, **`assertion`** | 一次请求完成"注册 + 验证"; `kid` 同样无需上传 |
 
 **请求头:**
 
@@ -30,18 +35,22 @@
 | `OAuth-Client-Attestation-Type` | `apple_app_attest` | 指定使用 Apple App Attest 作为客户端证明方式 |
 | `Content-Type`                 | `application/x-www-form-urlencoded` | 请求体编码                                   |
 
+> 本文示例使用的是**已废弃的表单参数承载** (`kid` / `challenge` / `attestation` / `assertion` 放在请求体), 因为本文描述的 Grant Type 本身已废弃. 当前推荐的请求头承载方式 (`OAuth-Client-Attestation-Kid` / `-Challenge` / `-Assertion`) 见 [Apple App Attest 客户端认证](OAuth2-Client-Authentication-%23-Attestation-Based-%23-Apple-App-Attest.md).
+
 **请求体通用参数:**
 
 | 参数名      | 类型   | 说明                                                                 | 是否必填 |
 | ----------- | ------ | -------------------------------------------------------------------- | -------- |
 | grant_type  | enum   | 固定为 `urn:ietf:params:oauth:grant-type:app_assertion`              | 是       |
-| kid         | string | `DCAppAttestService.generateKey()` 生成的 Key Identifier             | 是       |
+| kid         | string | `DCAppAttestService.generateKey()` 生成的 Key Identifier             | 条件必填 |
 | challenge   | string | 从 `/oauth2/challenge` 获取的原始 challenge 值                       | 是       |
-| attestation | string | Base64 编码的 Attestation Object; **仅首次使用时携带**               | 条件必填 |
+| attestation | string | Base64 编码的 Attestation Object; **首次使用时携带**               | 条件必填 |
 | assertion   | string | Base64 编码的 Assertion Object; **后续使用时携带**                   | 条件必填 |
 | scope       | string | 申请的权限范围, 多个用空格分隔                                       | 否       |
 
-> 若同时携带 `attestation` 与 `assertion`, 服务端仅校验 `attestation`, `assertion` 会被忽略.
+> `attestation` 与 `assertion` **至少携带其一**; `kid` **仅在只传 `assertion` 时必填** (assertion 中不含该标识), 只要携带了 `attestation` 就无需上传 —— 服务端直接从 attestation 中解析, 其值与客户端 `generateKey()` 返回的 `keyId` 完全一致.
+>
+> 若同时携带 `attestation` 与 `assertion`, 服务端先用 `attestation` 完成设备注册并解析出 `kid`, 再用该 `kid` + 传入的 `assertion` 完成验证, 相当于一次请求做完"首次使用 + 后续使用". 这种用法严格来说是冗余的, 但仍予支持; 此时即便上传了 `kid` 也会被忽略.
 
 ---
 
@@ -228,8 +237,9 @@ sequenceDiagram
 * 每个 challenge 只能使用一次, 有效期 5 分钟, 过期或已使用的 challenge 会被拒绝.
 * `access_token` 过期后应重新执行阶段二 Assertion 流程获取新 Token.
 * 阶段一仅在首次使用或重新生成 Key 时执行, App 应在 Keychain 中持久化 `kid`.
-* 若同一次请求同时携带 `attestation` 与 `assertion`, 服务端仅校验 `attestation`.
+* 若同一次请求同时携带 `attestation` 与 `assertion`, 服务端先注册设备再验证 assertion (冗余但支持), 且无需上传 `kid`.
 * 如果设备密钥丢失或需要重新注册, 需重新执行完整的阶段一流程.
+* 阶段二依赖阶段一建立的设备与用户关联: 若该 `kid` 从未执行过阶段一 (例如设备是通过 `POST /app_attest/register` 注册的), 直接以 assertion 请求本 Grant Type 会返回 `invalid_grant`. 此时应改用用户级 Grant Type 或 `refresh_token`.
 * **重要!!** 重新执行阶段一 Attestation 后会创建新的匿名用户, 原用户数据无法继续使用.
 
 ## 相关文档

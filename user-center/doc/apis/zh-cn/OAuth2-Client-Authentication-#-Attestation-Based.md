@@ -74,14 +74,15 @@ grant_type=refresh_token&refresh_token=...
 
 ## Apple App Attest 类型 (`apple_app_attest`)
 
-当 `OAuth-Client-Attestation-Type: apple_app_attest` 时, 使用 Apple App Attest 框架作为 PoP 载体. 所有参数通过请求体传递:
+当 `OAuth-Client-Attestation-Type: apple_app_attest` 时, 使用 Apple App Attest 框架作为 PoP 载体. App Attest 数据通过**请求头**承载, 请求体只放 `grant_type` 与该 grant 自身的参数:
 
-| 参数 | 必需 | 说明 |
-|------|------|------|
-| `kid` | 是 | App Attest 密钥标识 |
-| `challenge` | 是 | 一次性挑战值 |
-| `attestation` | 条件 | 首次注册时提交的 Attestation 数据 (Base64). 提交后不再需要 |
-| `assertion` | 条件 | 后续请求的 Assertion 数据 (Base64). 与 `attestation` 二选一 |
+| 请求头 | 必需 | 说明 |
+|--------|------|------|
+| `OAuth-Client-Attestation-Kid` | 是 | App Attest 密钥标识, 即 `generateKey()` 返回的 keyId |
+| `OAuth-Client-Attestation-Challenge` | 是 | 一次性挑战值 (原始字符串, 非 hash) |
+| `OAuth-Client-Attestation-Assertion` | 是 | Base64 编码的 Assertion Object |
+
+> 表单参数承载 (`kid` / `challenge` / `assertion` / `attestation`)、以及在 token 端点提交 `attestation` 的用法**均已废弃**, 仅为兼容已发布的旧客户端保留. 两种承载不可混用: 一旦出现 `OAuth-Client-Attestation-Assertion` 头, 服务端即整体按请求头读取. 完整语义见 [Apple App Attest 子文档](OAuth2-Client-Authentication-%23-Attestation-Based-%23-Apple-App-Attest.md).
 
 ### 请求示例
 
@@ -89,8 +90,11 @@ grant_type=refresh_token&refresh_token=...
 POST /oauth2/token
 Content-Type: application/x-www-form-urlencoded
 OAuth-Client-Attestation-Type: apple_app_attest
+OAuth-Client-Attestation-Kid: {keyId}
+OAuth-Client-Attestation-Challenge: {challenge}
+OAuth-Client-Attestation-Assertion: {base64}
 
-grant_type=urn:ietf:params:oauth:grant-type:app_assertion&kid=<key-id>&challenge=<challenge>&assertion=<base64-assertion>&scope=openid
+grant_type={grant_type}&scope=openid&...
 ```
 
 > 详细流程参考: [Apple App Attest 子文档](OAuth2-Client-Authentication-%23-Attestation-Based-%23-Apple-App-Attest.md)
@@ -150,7 +154,7 @@ Client                                    Authorization Server
 |--------|-------------|------|
 | `invalid_client_attestation` | 400 | PoP 验证失败 (签名、时间窗口、challenge、jti 重放等) |
 | `invalid_client` | 401 | client_id 不匹配或客户端不存在 |
-| `unauthorized_client` | 400 | 客户端未配置 `attest_jwt_client_auth` 认证方式 |
+| `unauthorized_client` | 400 | 客户端未配置 `attest_jwt_client_auth` 认证方式; 或 Apple App Attest 变体下该 App 无可解析的 `client_id` (DYNAMIC 尚未动态注册 / 未启用 OAuth2) |
 
 ## 安全考量
 

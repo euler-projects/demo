@@ -30,7 +30,7 @@ Admin App Attest 应用接口的统一数据模型. 创建 / 查询 / 列出 / �
 
 | VALUE     | DESCRIPTION                                                                                                                                    |
 |-----------|------------------------------------------------------------------------------------------------------------------------------------------------|
-| `STATIC`  | 使用静态预置的 OAuth2 客户端. `clientId` 由 App Attest 侧按固定约定派生 (与 `appId` 对齐), 客户端配置在应用启动前已入库                           |
-| `DYNAMIC` | 首次 App Attest 校验通过后, 服务端按 [RFC 7591][RFC-7591] 动态注册一个与当前 App 绑定的 OAuth2 客户端; `clientId` 由服务端生成并回写             |
+| `STATIC`  | 静态预置客户端, 同一 App 的所有设备共享一个客户端. `clientId` 按固定约定从 `appId` 派生 (`base64url(SHA-256(appId))`), 在应用保存 / 启动时按 provision-if-absent 入库 (仅当 `clientId` 不存在时创建, 不覆盖管理员改动). 兼容"仅凭 assertion 续期 + JIT 匿名用户"(过渡期, 后续可下掉), 默认不签发 `refresh_token` |
+| `DYNAMIC` | 每个设备 KEY 独享一个客户端, 与用户解耦. 两步式: 先 `POST /app_attest/register` (attestation, 单次) 注册设备 KEY, 再按 [RFC 7591][RFC-7591] 携带 assertion 请求[动态注册端点](OAuth2-Client-Registration-%23-App-Attest-Dynamic.md), 服务端生成随机 `clientId` 并回绑到该 KEY. Token 签发须凭其他用户因素 (如 OTP), 续期凭 `refresh_token` + assertion |
 
 [RFC-7591]: https://datatracker.ietf.org/doc/html/rfc7591

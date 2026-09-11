@@ -16,6 +16,10 @@ import org.springframework.util.Assert;
 
 import java.util.List;
 
+/**
+ * @deprecated compatibility implementation; see {@link EulerDeviceUserDetailsService}.
+ */
+@Deprecated
 @Service
 public class DeviceUserDetailsService implements EulerDeviceUserDetailsService {
 
