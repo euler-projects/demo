@@ -3,11 +3,33 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { issueOtpTicket, pendingRedirectUrl, submitDispatch, type LoginMethod } from './api';
 import { formErrorOf, type FormError } from './errors';
 
 /** Digit boxes the code entry renders; the code length this deployment issues. */
 const CODE_LENGTH = 6;
+
+/**
+ * Dialing codes offered beside the SMS national-number field, in
+ * presentation order. `region` is an i18n key under `dialingCode.regions`;
+ * the trigger shows only the compact `code` while the popup pairs it with
+ * the region name. Only +86 is offered for now; add entries here (plus the
+ * matching `dialingCode.regions` labels) to widen the list.
+ */
+const DIALING_CODES = [
+  { code: '+86', region: 'CN' },
+] as const;
+
+/** Dialing code preselected on the SMS recipient field. */
+const DEFAULT_DIALING_CODE = '+86';
 
 /**
  * Two-step OTP form. Step one asks the issue endpoint to deliver a code
@@ -33,13 +55,14 @@ export function OtpForm({
 }) {
   const { t } = useTranslation();
   const channel = method.attributes.channel ?? 'email';
-  // One derivation of the recipient field's channel-dependent traits.
-  const recipientField = channel === 'email'
-    ? { label: t('signIn.email'), autoComplete: 'email' }
-    : { label: t('signIn.phone'), autoComplete: 'tel' };
+  const isSms = channel === 'sms';
+  // SMS collects a national number beside a dialing-code selector; email
+  // collects the whole address in a single field.
+  const recipientLabel = isSms ? t('signIn.phone') : t('signIn.email');
 
   const [stage, setStage] = useState<'recipient' | 'code'>('recipient');
   const [recipient, setRecipient] = useState('');
+  const [dialingCode, setDialingCode] = useState(DEFAULT_DIALING_CODE);
   const [ticket, setTicket] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
@@ -47,6 +70,12 @@ export function OtpForm({
   // resend affordance counts down and stays disabled until it reaches
   // zero. Seeded from the issue response's retry_after.
   const [retryLeft, setRetryLeft] = useState(0);
+
+  // The channel-addressable target the issuer receives and the "code sent
+  // to" line echoes: for SMS the selected dialing code prefixed to the
+  // national number (digits only) forms the E.164 string the backend
+  // hashes into the phone identity's subject; for email it is the address.
+  const target = isSms ? `${dialingCode}${recipient.replace(/\D/g, '')}` : recipient;
 
   useEffect(() => {
     if (retryLeft <= 0) return;
@@ -64,7 +93,7 @@ export function OtpForm({
     setBusy(true);
     onError(null);
 
-    const result = await issueOtpTicket(channel, recipient);
+    const result = await issueOtpTicket(channel, target);
     if (result.ok) {
       setTicket(result.otpTicket);
       setCode('');
@@ -111,16 +140,56 @@ export function OtpForm({
         }}
         className="flex flex-col gap-4"
       >
-        <Input
-          id="otp-recipient"
-          type="text"
-          autoComplete={recipientField.autoComplete}
-          placeholder={recipientField.label}
-          aria-label={recipientField.label}
-          value={recipient}
-          onChange={(e) => setRecipient(e.target.value)}
-          disabled={busy}
-        />
+        {isSms ? (
+          <div className="flex gap-2">
+            {/* Dialing-code prefix: the trigger stays compact (just the
+                code) while the popup pairs each code with its region. */}
+            <Select
+              items={DIALING_CODES.map(({ code }) => ({ value: code, label: code }))}
+              value={dialingCode}
+              onValueChange={(value) => setDialingCode(value as string)}
+            >
+              <SelectTrigger className="shrink-0" aria-label={t('dialingCode.label')}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align="start" alignItemWithTrigger={false} className="min-w-44">
+                <SelectGroup>
+                  {DIALING_CODES.map(({ code, region }) => (
+                    <SelectItem key={code} value={code}>
+                      <span>{code}</span>
+                      <span className="text-muted-foreground">
+                        {t(`dialingCode.regions.${region}`)}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <Input
+              id="otp-recipient"
+              className="flex-1"
+              type="tel"
+              inputMode="numeric"
+              autoComplete="tel-national"
+              placeholder={recipientLabel}
+              aria-label={recipientLabel}
+              value={recipient}
+              onChange={(e) => setRecipient(e.target.value)}
+              disabled={busy}
+            />
+          </div>
+        ) : (
+          <Input
+            id="otp-recipient"
+            type="text"
+            autoComplete="email"
+            placeholder={recipientLabel}
+            aria-label={recipientLabel}
+            value={recipient}
+            onChange={(e) => setRecipient(e.target.value)}
+            disabled={busy}
+          />
+        )}
 
         <Button type="submit" className="w-full" disabled={busy}>
           {busy ? t('signIn.sending') : t('signIn.continue')}
@@ -132,7 +201,7 @@ export function OtpForm({
   return (
     <div className="flex flex-col gap-4">
       <p className="text-center text-xs text-muted-foreground">
-        {t('signIn.codeSentTo', { recipient })}
+        {t('signIn.codeSentTo', { recipient: target })}
       </p>
 
       <InputOTP

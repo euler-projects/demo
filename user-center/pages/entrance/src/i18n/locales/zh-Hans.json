@@ -24,6 +24,12 @@
     "badOtp": "验证码错误或已过期。",
     "errorGeneric": "无法登录，请重试。"
   },
+  "dialingCode": {
+    "label": "区号",
+    "regions": {
+      "CN": "中国大陆"
+    }
+  },
   "signOut": {
     "confirm": "确定要退出登录吗？",
     "submit": "退出登录",
