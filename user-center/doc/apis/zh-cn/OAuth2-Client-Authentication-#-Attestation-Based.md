@@ -7,7 +7,7 @@
 Attestation-Based Client Authentication 允许客户端通过设备证明 (Client Attestation) 和持有证明 (Proof-of-Possession) 向授权服务器证明自身身份. 本实现支持两种使用模式:
 
 1. **独立认证** — `attest_jwt_client_auth` 作为唯一的客户端认证方式, 适用于原生 App 等无法安全存储 client_secret 的场景.
-2. **增强认证** — 在标准认证 (如 `client_secret_basic`, PKCE) 基础上叠加设备证明, 为已认证客户端提供额外的安全信号.
+2. **增强认证** — 在标准认证 (如 `client_secret_basic`, `client_secret_post`, `private_key_jwt`, `tls_client_auth`) 基础上叠加设备证明, 为已认证客户端提供额外的安全信号.
 
 ## 请求头
 

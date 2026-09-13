@@ -22,7 +22,7 @@ import org.eulerframework.security.authentication.appattest.AppAttestAttestation
 import org.eulerframework.security.core.userdetails.EulerUserDetails;
 import org.eulerframework.security.oauth2.core.oidc.EulerOidcClaimNames;
 import org.eulerframework.security.oauth2.core.oidc.EulerOidcScopes;
-import org.eulerframework.security.oauth2.server.authorization.web.EulerOAuth2AttestationBasedClientAuthenticationFilter;
+import org.eulerframework.security.oauth2.server.authorization.authentication.EulerOAuth2ClientAttestationAuthenticationToken;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -36,7 +36,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationGrantAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.util.CollectionUtils;
@@ -213,26 +212,29 @@ public class UserCenterApplication {
             //
             // Where "bid" is the app's bundle identifier, and "env" indicates the attestation
             // environment: 0 = production, 1 = development.
-            if (context.getAuthorizationGrant() instanceof OAuth2AuthorizationGrantAuthenticationToken grant) {
-                Object value = grant.getAdditionalParameters().get(
-                        EulerOAuth2AttestationBasedClientAuthenticationFilter.VERIFIED_CLIENT_ATTESTATION_PARAMETER);
-                if (value instanceof AppAttestAttestationRegistration reg) {
-                    String bundleId = reg.getBundleId();
-                    byte[] aaguid = reg.getAaguid();
-                    Map<String, Object> verifiedAppMetadata = new HashMap<>(4);
-                    if (StringUtils.hasText(bundleId)) {
-                        verifiedAppMetadata.put(EulerOidcClaimNames.VERIFIED_APP_METADATA_BUNDLE_ID, bundleId);
+            //
+            // The registration travels on the client authentication that is the grant token's
+            // principal.
+            Authentication authorizationGrant = context.getAuthorizationGrant();
+            if (authorizationGrant != null
+                    && authorizationGrant.getPrincipal()
+                    instanceof EulerOAuth2ClientAttestationAuthenticationToken attestation) {
+                AppAttestAttestationRegistration reg = attestation.getVerifiedRegistration();
+                String bundleId = reg.getBundleId();
+                byte[] aaguid = reg.getAaguid();
+                Map<String, Object> verifiedAppMetadata = new HashMap<>(4);
+                if (StringUtils.hasText(bundleId)) {
+                    verifiedAppMetadata.put(EulerOidcClaimNames.VERIFIED_APP_METADATA_BUNDLE_ID, bundleId);
+                }
+                if (aaguid != null) {
+                    if (MessageDigest.isEqual(aaguid, PRODUCTION_AAGUID)) {
+                        verifiedAppMetadata.put(EulerOidcClaimNames.VERIFIED_APP_METADATA_ENVIRONMENT, 0);
+                    } else if (MessageDigest.isEqual(aaguid, DEVELOPMENT_AAGUID)) {
+                        verifiedAppMetadata.put(EulerOidcClaimNames.VERIFIED_APP_METADATA_ENVIRONMENT, 1);
                     }
-                    if (aaguid != null) {
-                        if (MessageDigest.isEqual(aaguid, PRODUCTION_AAGUID)) {
-                            verifiedAppMetadata.put(EulerOidcClaimNames.VERIFIED_APP_METADATA_ENVIRONMENT, 0);
-                        } else if (MessageDigest.isEqual(aaguid, DEVELOPMENT_AAGUID)) {
-                            verifiedAppMetadata.put(EulerOidcClaimNames.VERIFIED_APP_METADATA_ENVIRONMENT, 1);
-                        }
-                    }
-                    if (!verifiedAppMetadata.isEmpty()) {
-                        context.getClaims().claim(EulerOidcClaimNames.VERIFIED_APP_METADATA, verifiedAppMetadata);
-                    }
+                }
+                if (!verifiedAppMetadata.isEmpty()) {
+                    context.getClaims().claim(EulerOidcClaimNames.VERIFIED_APP_METADATA, verifiedAppMetadata);
                 }
             }
         };
