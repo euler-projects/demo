@@ -204,6 +204,8 @@ export function OtpForm({
         {t('signIn.codeSentTo', { recipient: target })}
       </p>
 
+      {/* autoFocus lands the caret in the first digit box the moment the
+          code stage mounts, for either channel - no click needed. */}
       <InputOTP
         maxLength={CODE_LENGTH}
         value={code}
@@ -215,6 +217,7 @@ export function OtpForm({
         }}
         disabled={busy}
         containerClassName="w-full justify-center"
+        autoFocus
       >
         <InputOTPGroup>
           {Array.from({ length: CODE_LENGTH }, (_, index) => (
