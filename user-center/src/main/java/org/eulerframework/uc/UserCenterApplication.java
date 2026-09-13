@@ -22,6 +22,7 @@ import org.eulerframework.security.authentication.appattest.AppAttestAttestation
 import org.eulerframework.security.core.userdetails.EulerUserDetails;
 import org.eulerframework.security.oauth2.core.oidc.EulerOidcClaimNames;
 import org.eulerframework.security.oauth2.core.oidc.EulerOidcScopes;
+import org.eulerframework.security.oauth2.server.authorization.OAuth2AuthorizationUtils;
 import org.eulerframework.security.oauth2.server.authorization.authentication.EulerOAuth2ClientAttestationAuthenticationToken;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -29,7 +30,6 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -169,34 +169,33 @@ public class UserCenterApplication {
                 includeEulerOidcClaims = scopes.contains(OidcScopes.OPENID);
             }
 
-            if (includeEulerOidcClaims) {
-                if (context.get(PRINCIPAL_AUTHENTICATION_KEY) instanceof UsernamePasswordAuthenticationToken token
-                        && token.getPrincipal() instanceof EulerUserDetails eulerUserDetails) {
-                    List<Tag> tags = eulerUserDetails.getTags();
-                    if (tags != null && !tags.isEmpty()) {
-                        List<Map<String, String>> tagClaim = tags.stream()
-                                .map(tag -> tag.value() == null
-                                        ? Map.of(EulerOidcClaimNames.TAGS_KEY, tag.key())
-                                        : Map.of(
-                                                EulerOidcClaimNames.TAGS_KEY, tag.key(),
-                                                EulerOidcClaimNames.TAGS_VALUE, tag.value()))
-                                .toList();
-                        context.getClaims().claim(EulerOidcClaimNames.TAGS, tagClaim);
-                    }
+            // The principal is whatever the grant provider authenticated the user with, so it is
+            // unwrapped by shape rather than by concrete token type; see the helper's contract.
+            UserDetails userDetails =
+                    OAuth2AuthorizationUtils.resolveUserDetails(context.get(PRINCIPAL_AUTHENTICATION_KEY));
+
+            if (includeEulerOidcClaims && userDetails instanceof EulerUserDetails eulerUserDetails) {
+                List<Tag> tags = eulerUserDetails.getTags();
+                if (tags != null && !tags.isEmpty()) {
+                    List<Map<String, String>> tagClaim = tags.stream()
+                            .map(tag -> tag.value() == null
+                                    ? Map.of(EulerOidcClaimNames.TAGS_KEY, tag.key())
+                                    : Map.of(
+                                            EulerOidcClaimNames.TAGS_KEY, tag.key(),
+                                            EulerOidcClaimNames.TAGS_VALUE, tag.value()))
+                            .toList();
+                    context.getClaims().claim(EulerOidcClaimNames.TAGS, tagClaim);
                 }
             }
 
-            if (includeAuthorities) {
-                if (context.get(PRINCIPAL_AUTHENTICATION_KEY) instanceof UsernamePasswordAuthenticationToken token
-                        && token.getPrincipal() instanceof UserDetails userDetails) {
-                    Set<String> authorities = userDetails.getAuthorities()
-                            .stream()
-                            .map(GrantedAuthority::getAuthority)
-                            .filter(StringUtils::hasText)
-                            .collect(Collectors.toSet());
-                    if (!CollectionUtils.isEmpty(authorities)) {
-                        context.getClaims().claim(EulerOidcClaimNames.AUTHORITIES, authorities);
-                    }
+            if (includeAuthorities && userDetails != null) {
+                Set<String> authorities = userDetails.getAuthorities()
+                        .stream()
+                        .map(GrantedAuthority::getAuthority)
+                        .filter(StringUtils::hasText)
+                        .collect(Collectors.toSet());
+                if (!CollectionUtils.isEmpty(authorities)) {
+                    context.getClaims().claim(EulerOidcClaimNames.AUTHORITIES, authorities);
                 }
             }
 
