@@ -1,8 +1,8 @@
 # OAuth2 Client Registration (App Attest DYNAMIC)
 
-面向 `oauth2ClientType=DYNAMIC` 的 App: 每个设备 KEY 独享一个 OAuth2 客户端, 且客户端与用户**解耦**. 注册分两步 —— 先注册设备 KEY (attestation, 单次), 再携带 assertion 完成 [RFC 7591][RFC-7591] 动态客户端注册.
+面向所有 `oauth2Enabled=true` 的 App: 每个设备 KEY 独享一个 OAuth2 客户端, 且客户端与用户**解耦**. 注册分两步 —— 先注册设备 KEY (attestation, 单次), 再携带 assertion 完成 [RFC 7591][RFC-7591] 动态客户端注册.
 
-> STATIC App 无需本文流程: 其 `clientId` 由服务端按 `base64url(SHA-256(appId))` 预置, 设备直接用 assertion 走 [OAuth2 Token Grant - App Attest](OAuth2-Token-Grant-%23-App-Attest.md). 两种模型的差异见 [App Attest App](Model-%23-App-Attest-App.md#oauth2clienttype-枚举值).
+> 存量客户端 (历史上预置的 App 级共享客户端) 仍可继续使用 [OAuth2 Token Grant - App Attest](OAuth2-Token-Grant-%23-App-Attest.md) 中的 `app_assertion` 流程 (已废弃); 新设备统一走本文的 RFC 7591 流程.
 
 ---
 
@@ -60,7 +60,7 @@ attestation={base64}&challenge={challenge}
 | `OAuth-Client-Attestation-Challenge` | 是 | 一次性挑战值 |
 | `OAuth-Client-Attestation-Assertion` | 是 | `generateAssertion()` 产物的 Base64 编码 (证明持有已注册 KEY) |
 
-> 本端点**不接受 attestation** —— DYNAMIC 类型的 attestation 只能提交至 `/app_attest/register`.
+> 本端点**不接受 attestation** —— attestation 只能提交至 `/app_attest/register`.
 
 ### 请求体 (RFC 7591 JSON)
 
@@ -73,7 +73,7 @@ attestation={base64}&challenge={challenge}
 }
 ```
 
-无论请求体如何声明, 服务端对 DYNAMIC 客户端强制: `token_endpoint_auth_method=attest_jwt_client_auth` 且无 `client_secret`; 移除 `urn:ietf:params:oauth:grant-type:app_assertion` grant; 追加 `refresh_token` grant.
+无论请求体如何声明, 服务端对动态注册的客户端强制: `token_endpoint_auth_method=attest_jwt_client_auth` 且无 `client_secret`; 追加 `refresh_token` grant. 已废弃的 `urn:ietf:params:oauth:grant-type:app_assertion` grant 不再被静默移除, 而是在持久化层被拒绝: 请求一旦携带该 grant 即注册失败, 任何入口都无法再新建带此 grant 的客户端 (仅历史存量客户端保留).
 
 ### 响应 (201)
 
@@ -96,7 +96,7 @@ attestation={base64}&challenge={challenge}
 |------|---------|------|
 | 401 | `invalid_token` | 未携带任何 App Attest 头 |
 | 400 | `invalid_client_attestation` | 缺失任一必需头, `OAuth-Client-Attestation-Type` 非 `apple_app_attest`, challenge 无效或已消费, assertion 校验失败 |
-| 400 | `unauthorized_client` | 该 KEY 所属 App 未启用 OAuth2 或非 DYNAMIC 类型 |
+| 400 | `unauthorized_client` | 该 KEY 所属 App 未启用 OAuth2 |
 | 401 | `invalid_client` | 已绑定的 `client_id` 已不存在 |
 | 400 | `invalid_request` | 请求体缺失或不是合法的 RFC 7591 JSON |
 
@@ -124,7 +124,7 @@ sequenceDiagram
     AS-->>App: challenge2
     App->>App: generateAssertion(kid, SHA256(challenge2))
     App->>AS: POST /oauth2/register 头携带 kid+assertion+challenge2, 体为 RFC7591 JSON
-    AS->>AS: 校验 assertion, 确认 App 为 DYNAMIC, 铸造 per-key client, 回绑 client_id
+    AS->>AS: 校验 assertion, 确认 App 已启用 OAuth2, 铸造 per-key client, 回绑 client_id
     AS-->>App: 201 {client_id, ...}
 
     Note over App,AS: 3. 之后: grant_type=otp + assertion 取 AT/RT; grant_type=refresh_token + assertion 续期
@@ -137,6 +137,6 @@ sequenceDiagram
 - [OAuth2 Client Authentication - Attestation Based](OAuth2-Client-Authentication-%23-Attestation-Based.md) — 上层客户端认证协议
 - [OAuth2 Client Authentication - Attestation Based - Apple App Attest](OAuth2-Client-Authentication-%23-Attestation-Based-%23-Apple-App-Attest.md) — token 端点的 assertion 用法
 - [OAuth2 Token Grant - App Attest](OAuth2-Token-Grant-%23-App-Attest.md) — Token 签发与续期
-- [App Attest App](Model-%23-App-Attest-App.md) — `oauth2ClientType` 语义
+- [App Attest App](Model-%23-App-Attest-App.md) — 应用模型与 `oauth2Enabled` 语义
 
 [RFC-7591]: https://datatracker.ietf.org/doc/html/rfc7591

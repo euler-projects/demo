@@ -18,7 +18,6 @@ package org.eulerframework.uc.appattest.util;
 import org.eulerframework.security.authentication.appattest.AppAttestApp;
 import org.eulerframework.security.authentication.appattest.AppAttestUtils;
 import org.eulerframework.security.authentication.appattest.DefaultAppAttestApp;
-import org.eulerframework.security.authentication.appattest.RegisteredApp;
 import org.eulerframework.uc.appattest.entity.AppEntity;
 
 /**
@@ -50,7 +49,6 @@ public abstract class AppModelUtils {
         model.setTeamId(entity.getTeamId());
         model.setBundleId(entity.getBundleId());
         model.setOauth2Enabled(entity.isOauth2Enabled());
-        model.setOauth2ClientType(entity.getOauth2ClientType());
         return model;
     }
 
@@ -81,7 +79,6 @@ public abstract class AppModelUtils {
         entity.setTeamId(model.getTeamId());
         entity.setBundleId(model.getBundleId());
         entity.setOauth2Enabled(Boolean.TRUE.equals(model.getOauth2Enabled()));
-        entity.setOauth2ClientType(model.getOauth2ClientType());
         return entity;
     }
 
@@ -119,10 +116,6 @@ public abstract class AppModelUtils {
         if (oauth2Enabled != null) {
             target.setOauth2Enabled(oauth2Enabled);
         }
-        RegisteredApp.OAuth2ClientType oauth2ClientType = src.getOauth2ClientType();
-        if (oauth2ClientType != null) {
-            target.setOauth2ClientType(oauth2ClientType);
-        }
     }
 
     /**
@@ -152,6 +145,5 @@ public abstract class AppModelUtils {
         entity.setTeamId(model.getTeamId());
         entity.setBundleId(model.getBundleId());
         entity.setOauth2Enabled(Boolean.TRUE.equals(model.getOauth2Enabled()));
-        entity.setOauth2ClientType(model.getOauth2ClientType());
     }
 }

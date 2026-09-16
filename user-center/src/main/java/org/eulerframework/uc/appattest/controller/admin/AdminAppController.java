@@ -40,7 +40,7 @@ import java.util.List;
  * <p>Request and response bodies are the service-layer model
  * {@link AppAttestApp} itself ({@link DefaultAppAttestApp} on the request side).
  * The fields exposed ({@code registrationId}, {@code teamId}, {@code bundleId},
- * {@code oauth2Enabled}, {@code oauth2ClientType}) are simple enough that no
+ * {@code oauth2Enabled}) are simple enough that no
  * dedicated request/response DTO layer is needed at this stage. If field-level
  * rules grow in complexity, DTOs can be introduced following the same pattern
  * as the OAuth2 client admin API.

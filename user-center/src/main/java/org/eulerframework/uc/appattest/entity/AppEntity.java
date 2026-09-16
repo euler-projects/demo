@@ -17,12 +17,9 @@ package org.eulerframework.uc.appattest.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import org.eulerframework.data.entity.AuditingEntity;
-import org.eulerframework.security.authentication.appattest.RegisteredApp;
 import org.springframework.data.domain.Persistable;
 
 /**
@@ -57,10 +54,6 @@ public class AppEntity extends AuditingEntity implements Persistable<String> {
 
     @Column(name = "oauth2_enabled", nullable = false)
     private boolean oauth2Enabled;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "oauth2_client_type", length = 16)
-    private RegisteredApp.OAuth2ClientType oauth2ClientType;
 
     @Override
     public String getId() {
@@ -109,14 +102,6 @@ public class AppEntity extends AuditingEntity implements Persistable<String> {
 
     public void setOauth2Enabled(boolean oauth2Enabled) {
         this.oauth2Enabled = oauth2Enabled;
-    }
-
-    public RegisteredApp.OAuth2ClientType getOauth2ClientType() {
-        return oauth2ClientType;
-    }
-
-    public void setOauth2ClientType(RegisteredApp.OAuth2ClientType oauth2ClientType) {
-        this.oauth2ClientType = oauth2ClientType;
     }
 
     @Override

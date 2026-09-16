@@ -38,8 +38,7 @@ Authorization: Bearer <access_token>
         "appId": "ABCD1234EF.com.example.app",
         "teamId": "ABCD1234EF",
         "bundleId": "com.example.app",
-        "oauth2Enabled": true,
-        "oauth2ClientType": "STATIC"
+        "oauth2Enabled": true
     }
 ]
 ```

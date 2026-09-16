@@ -16,6 +16,7 @@
 
 package org.eulerframework.uc.oauth2.service;
 
+import org.eulerframework.security.oauth2.core.EulerAuthorizationGrantType;
 import org.eulerframework.security.oauth2.server.authorization.client.DefaultEulerOAuth2Client;
 import org.eulerframework.security.oauth2.server.authorization.client.EulerOAuth2Client;
 import org.eulerframework.security.oauth2.server.authorization.client.EulerOAuth2ClientService;
@@ -28,6 +29,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 import java.security.SecureRandom;
 import java.time.Instant;
@@ -48,6 +50,7 @@ public class OAuth2ClientService implements EulerOAuth2ClientService {
         Assert.isInstanceOf(DefaultEulerOAuth2Client.class, client, "client must be an instance of OAuth2Client");
 
         DefaultEulerOAuth2Client model = (DefaultEulerOAuth2Client) client;
+        rejectNewAppAssertionGrant(requestsAppAssertionGrant(client), null);
         OAuth2ClientEntity entity = OAuth2ClientModelUtils.toOAuth2ClientEntity(model);
 
         // registrationId / clientId / clientIdIssuedAt are fully owned by the server
@@ -66,6 +69,8 @@ public class OAuth2ClientService implements EulerOAuth2ClientService {
         Assert.notNull(registeredClient, "registeredClient must not be null");
         Assert.hasText(registeredClient.getId(), "registrationId must not be empty");
         Assert.hasText(registeredClient.getClientId(), "clientId must not be empty");
+
+        rejectNewAppAssertionGrant(requestsAppAssertionGrant(registeredClient), null);
 
         DefaultEulerOAuth2Client model = new DefaultEulerOAuth2Client();
         model.reloadRegisteredClient(registeredClient);
@@ -115,6 +120,8 @@ public class OAuth2ClientService implements EulerOAuth2ClientService {
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Client not found, registrationId: " + client.getRegistrationId()));
 
+        rejectNewAppAssertionGrant(requestsAppAssertionGrant(client), entity.getGrantTypes());
+
         OAuth2ClientModelUtils.replaceOAuth2ClientEntity(client, entity);
 
         this.oauth2ClientRepository.save(entity);
@@ -129,6 +136,8 @@ public class OAuth2ClientService implements EulerOAuth2ClientService {
         OAuth2ClientEntity entity = this.oauth2ClientRepository.findById(registeredClient.getId())
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Client not found, registrationId: " + registeredClient.getId()));
+
+        rejectNewAppAssertionGrant(requestsAppAssertionGrant(registeredClient), entity.getGrantTypes());
 
         DefaultEulerOAuth2Client model = new DefaultEulerOAuth2Client();
         model.reloadRegisteredClient(registeredClient);
@@ -147,6 +156,8 @@ public class OAuth2ClientService implements EulerOAuth2ClientService {
         OAuth2ClientEntity entity = this.oauth2ClientRepository.findById(client.getRegistrationId())
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Client not found, registrationId: " + client.getRegistrationId()));
+
+        rejectNewAppAssertionGrant(requestsAppAssertionGrant(client), entity.getGrantTypes());
 
         OAuth2ClientModelUtils.patchOAuth2ClientEntity(client, entity);
 
@@ -172,6 +183,44 @@ public class OAuth2ClientService implements EulerOAuth2ClientService {
     @Autowired
     public void setOauth2ClientRepository(OAuth2ClientRepository oauth2ClientRepository) {
         this.oauth2ClientRepository = oauth2ClientRepository;
+    }
+
+    /**
+     * The deprecated {@code urn:ietf:params:oauth:grant-type:app_assertion} grant value.
+     * No write path may newly introduce it; see {@link #rejectNewAppAssertionGrant}.
+     */
+    private static final String APP_ASSERTION_GRANT_TYPE = EulerAuthorizationGrantType.APP_ASSERTION.getValue();
+
+    private static boolean requestsAppAssertionGrant(EulerOAuth2Client client) {
+        return client.getGrantTypes() != null && client.getGrantTypes().contains(APP_ASSERTION_GRANT_TYPE);
+    }
+
+    private static boolean requestsAppAssertionGrant(RegisteredClient client) {
+        return client.getAuthorizationGrantTypes() != null
+                && client.getAuthorizationGrantTypes().contains(EulerAuthorizationGrantType.APP_ASSERTION);
+    }
+
+    /**
+     * Reject the deprecated {@code app_assertion} grant on any write that would newly introduce
+     * it. A client whose persisted state already carries the grant (a historical STATIC App
+     * Attest client) is grandfathered so operators can still update its other fields; every
+     * other case &mdash; create, or adding the grant to a client that does not already carry it
+     * &mdash; is rejected. This is the single chokepoint behind both the
+     * {@code RegisteredClientRepository} bridge and the Admin management API.
+     *
+     * @param requestsAppAssertion whether the incoming payload carries the {@code app_assertion} grant
+     * @param persistedGrantTypes  the comma-delimited grant types currently stored, or {@code null} on create
+     */
+    private static void rejectNewAppAssertionGrant(boolean requestsAppAssertion, String persistedGrantTypes) {
+        if (!requestsAppAssertion) {
+            return;
+        }
+        boolean alreadyPersisted = persistedGrantTypes != null
+                && StringUtils.commaDelimitedListToSet(persistedGrantTypes).contains(APP_ASSERTION_GRANT_TYPE);
+        if (!alreadyPersisted) {
+            throw new IllegalArgumentException("The deprecated grant type '" + APP_ASSERTION_GRANT_TYPE
+                    + "' must not be assigned to a client; it is reserved for pre-existing clients");
+        }
     }
 
     /**

@@ -32,7 +32,7 @@ application/json
 
 ### 请求体字段
 
-请求体为 [App Attest App](Model-%23-App-Attest-App.md) 模型的子集, 可选字段: `teamId`, `bundleId`, `oauth2Enabled`, `oauth2ClientType`. `registrationId` 不可变更 (以 URL path 为准); `appId` 由服务端派生.
+请求体为 [App Attest App](Model-%23-App-Attest-App.md) 模型的子集, 可选字段: `teamId`, `bundleId`, `oauth2Enabled`. `registrationId` 不可变更 (以 URL path 为准); `appId` 由服务端派生.
 
 > **约束**: `teamId` 与 `bundleId` 必须**成对**提交 — 两者同时存在或同时缺省; 仅提交其一会返回 `400 Bad Request`. 因为 `appId` 由两者共同派生, 任一字段单独变更会破坏派生一致性.
 
@@ -46,7 +46,7 @@ application/json
 }
 ```
 
-关闭 OAuth2 联动, 其它字段 (如 `teamId`, `bundleId`, `oauth2ClientType`) 保持不变.
+关闭 OAuth2 联动, 其它字段 (如 `teamId`, `bundleId`) 保持不变.
 
 #### 示例 2: 同时更新 `teamId` 与 `bundleId`
 
@@ -57,14 +57,13 @@ application/json
 }
 ```
 
-派生的 `appId` 会重新计算; `oauth2Enabled` / `oauth2ClientType` 保持不变.
+派生的 `appId` 会重新计算; `oauth2Enabled` 保持不变.
 
 |字段名|类型|说明|是否必填|默认值|
 |---|---|---|---|---|
 |teamId|string|Apple Developer Team ID; 与 `bundleId` 必须**成对**提交|否|保持原值|
 |bundleId|string|应用 Bundle Identifier; 与 `teamId` 必须**成对**提交|否|保持原值|
 |oauth2Enabled|boolean|是否联动 OAuth2 客户端注册|否|保持原值|
-|oauth2ClientType|enum|OAuth2 客户端注册策略, 可选值见 [App Attest App - oauth2ClientType 枚举值](Model-%23-App-Attest-App.md#oauth2clienttype-枚举值)|否|保持原值|
 
 ## Response
 
@@ -78,8 +77,7 @@ application/json
     "appId": "WXYZ5678GH.com.example.app.v3",
     "teamId": "WXYZ5678GH",
     "bundleId": "com.example.app.v3",
-    "oauth2Enabled": true,
-    "oauth2ClientType": "DYNAMIC"
+    "oauth2Enabled": true
 }
 ```
 

@@ -32,7 +32,7 @@ application/json
 
 ### 请求体字段
 
-请求体为 [App Attest App](Model-%23-App-Attest-App.md) 模型的子集, 仅接受下列字段: `teamId`, `bundleId`, `oauth2Enabled`, `oauth2ClientType`. `registrationId` 不可变更 (以 URL path 为准); `appId` 由服务端派生.
+请求体为 [App Attest App](Model-%23-App-Attest-App.md) 模型的子集, 仅接受下列字段: `teamId`, `bundleId`, `oauth2Enabled`. `registrationId` 不可变更 (以 URL path 为准); `appId` 由服务端派生.
 
 ### 请求示例
 
@@ -40,8 +40,7 @@ application/json
 {
     "teamId": "ABCD1234EF",
     "bundleId": "com.example.app.v2",
-    "oauth2Enabled": true,
-    "oauth2ClientType": "DYNAMIC"
+    "oauth2Enabled": true
 }
 ```
 
@@ -50,7 +49,6 @@ application/json
 |teamId|string|Apple Developer Team ID|是|无|
 |bundleId|string|应用 Bundle Identifier|是|无|
 |oauth2Enabled|boolean|是否联动 OAuth2 客户端注册|否|`false`|
-|oauth2ClientType|enum|OAuth2 客户端注册策略, 可选值见 [App Attest App - oauth2ClientType 枚举值](Model-%23-App-Attest-App.md#oauth2clienttype-枚举值); `oauth2Enabled=true` 时必填|否|无|
 
 ## Response
 
@@ -64,8 +62,7 @@ application/json
     "appId": "ABCD1234EF.com.example.app.v2",
     "teamId": "ABCD1234EF",
     "bundleId": "com.example.app.v2",
-    "oauth2Enabled": true,
-    "oauth2ClientType": "DYNAMIC"
+    "oauth2Enabled": true
 }
 ```
 

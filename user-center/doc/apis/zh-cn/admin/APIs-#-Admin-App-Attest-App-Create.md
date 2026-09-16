@@ -26,7 +26,7 @@ application/json
 
 ### 请求体字段
 
-请求体为 [App Attest App](Model-%23-App-Attest-App.md) 模型的子集, 仅接受下列字段: `teamId`, `bundleId`, `oauth2Enabled`, `oauth2ClientType`. 详细语义请参阅 [App Attest App](Model-%23-App-Attest-App.md) 模型.
+请求体为 [App Attest App](Model-%23-App-Attest-App.md) 模型的子集, 仅接受下列字段: `teamId`, `bundleId`, `oauth2Enabled`. 详细语义请参阅 [App Attest App](Model-%23-App-Attest-App.md) 模型.
 
 > `registrationId` 为服务端独占字段, 由服务端分配为 UUID 格式; 请求体中出现的同名字段会被忽略. 人类可读的 `registrationId` 仅保留给通过 `application.yml` 以 `euler.security.app-attest.apps.<key>` 预配置的条目. 其他属于 [App Attest App](Model-%23-App-Attest-App.md) 模型但未在上述列表中的字段 (`appId` 等) 由服务端派生, 请求体中出现会被忽略.
 
@@ -50,23 +50,21 @@ application/json
 |bundleId|string|应用 Bundle Identifier. **本示例**: 反向域名风格|是|无|
 |oauth2Enabled|boolean|是否联动 OAuth2 客户端注册. **本示例**: `false`, 不触发 OAuth2 侧动作|否|`false`|
 
-#### 示例 2: 启用静态 OAuth2 客户端联动
+#### 示例 2: 启用 OAuth2 客户端联动
 
-面向预置 OAuth2 客户端的静态部署模式, `clientId` 由 App Attest 侧按固定约定派生.
+面向需要联动 OAuth2 客户端注册的场景; 启用后每个设备 KEY 按 RFC 7591 动态注册独享一个客户端.
 
 ```json
 {
     "teamId": "ABCD1234EF",
     "bundleId": "com.example.app",
-    "oauth2Enabled": true,
-    "oauth2ClientType": "STATIC"
+    "oauth2Enabled": true
 }
 ```
 
 |字段名|类型|说明|是否必填|默认值|
 |---|---|---|---|---|
-|oauth2Enabled|boolean|是否联动 OAuth2 客户端注册. **本示例**: `true`, 需同步提供 `oauth2ClientType`|否|`false`|
-|oauth2ClientType|enum|OAuth2 客户端注册策略, 可选值见 [App Attest App - oauth2ClientType 枚举值](Model-%23-App-Attest-App.md#oauth2clienttype-枚举值). **本示例**: `STATIC`, 使用预置客户端|否 (`oauth2Enabled=true` 时必填)|无|
+|oauth2Enabled|boolean|是否联动 OAuth2 客户端注册. **本示例**: `true`, 设备 KEY 可通过 RFC 7591 动态注册端点获取独享客户端|否|`false`|
 
 ## Response
 
@@ -80,8 +78,7 @@ application/json
     "appId": "ABCD1234EF.com.example.app",
     "teamId": "ABCD1234EF",
     "bundleId": "com.example.app",
-    "oauth2Enabled": true,
-    "oauth2ClientType": "STATIC"
+    "oauth2Enabled": true
 }
 ```
 
