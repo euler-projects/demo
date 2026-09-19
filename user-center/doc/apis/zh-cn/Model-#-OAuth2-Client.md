@@ -182,4 +182,4 @@ TTL 类字段统一使用**秒**为单位.
 [RFC-8628]: https://datatracker.ietf.org/doc/html/rfc8628
 [RFC-8693]: https://datatracker.ietf.org/doc/html/rfc8693
 [RFC-8705]: https://datatracker.ietf.org/doc/html/rfc8705
-[attestation-based-client-auth]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-08
+[attestation-based-client-auth]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-11

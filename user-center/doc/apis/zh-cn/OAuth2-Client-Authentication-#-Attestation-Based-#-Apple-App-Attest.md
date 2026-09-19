@@ -15,12 +15,12 @@
 | API | 调用时机 | 产物 | 提交至 |
 |-----|---------|------|--------|
 | `generateKey()` | App 首次运行, 或需要更换密钥时 | `keyId` (即后续请求所需的 `kid`) | **不提交**, 存入 Keychain |
-| `attestKey(_:clientDataHash:)` | 注册设备时, 每个 KEY 一次 | `attestation` | `POST /app_attest/register` |
+| `attestKey(_:clientDataHash:)` | App 实例注册时, 每个 KEY 一次 | `attestation` | `POST /app_attest/register` |
 | `generateAssertion(_:clientDataHash:)` | 此后每次需要证明持有该 KEY 时 | `assertion` | `POST /oauth2/register`、`POST /oauth2/token` |
 
-> `generateKey()` 返回的 `keyId` 与服务端在设备注册后所持有的 `kid` 是同一个值. 客户端只需持久化本地 `keyId`, 无需依赖注册接口的响应内容.
+> `generateKey()` 返回的 `keyId` 与服务端在 App 实例注册后所持有的 `kid` 是同一个值. 客户端只需持久化本地 `keyId`, 无需依赖注册接口的响应内容.
 
-**App Attest 数据在 OAuth2 端点一律通过请求头承载** (`OAuth-Client-Attestation-*`), 请求体只放 `grant_type` 与该 grant 自身的参数. 设备注册端点 `POST /app_attest/register` 是唯一例外, 它使用表单参数, 详见步骤 2.
+**App Attest 数据在 OAuth2 端点一律通过请求头承载** (`OAuth-Client-Attestation-*`), 请求体只放 `grant_type` 与该 grant 自身的参数. App 实例注册端点 `POST /app_attest/register` 是唯一例外, 它使用表单参数, 详见步骤 2.
 
 ---
 
@@ -30,10 +30,10 @@
 
 | 类型 | 客户端需执行的步骤 |
 |------|------------------|
-| **STATIC** | 注册设备 → 申请 Token. 无需获知 `client_id`, 服务端可依据 App 身份自行解析 |
-| **DYNAMIC** | 注册设备 → 注册客户端 (获取该 KEY 专属的 `client_id`) → 申请 Token |
+| **STATIC** | App 实例注册 → 申请 Token. 无需获知 `client_id`, 服务端可依据 App 身份自行解析 |
+| **DYNAMIC** | App 实例注册 → 注册客户端 (获取该 KEY 专属的 `client_id`) → 申请 Token |
 
-> **设备注册一律先走 `POST /app_attest/register`**, OAuth2 端点只接受 `assertion`. 在 token 端点提交 `attestation` 的用法已废弃, 详见下文〈已废弃的用法〉.
+> **App 实例注册一律先走 `POST /app_attest/register`**, OAuth2 端点只接受 `assertion`. 在 token 端点提交 `attestation` 的用法已废弃, 详见下文〈已废弃的用法〉.
 
 ---
 
@@ -41,116 +41,25 @@
 
 ### 步骤 1: 获取 Challenge
 
-生成 `attestation` 或 `assertion` 之前, 需先获取一个 challenge.
+生成 `attestation` / `assertion` 前需先获取一次性 challenge (`POST /app_attest/challenge`): 一次性、约 5 分钟有效, 提交给 Apple 的是其 SHA-256 hash、提交给服务端的是原始字符串.
 
-```http
-POST /oauth2/challenge
-```
+> 端点契约与完整约束见 [Apple App Attest 实例注册](App-Attest-Registration.md). token 流程中**每次请求都需重新获取 challenge 并重新生成 assertion**, 不可复用; challenge 过期或已使用会返回 `invalid_client_attestation`, 重新获取后重试即可.
 
-无需认证, 无需请求体.
+### 步骤 2: App 实例注册 (两种类型均需执行)
 
-**Response (200):**
+首次接入需完成 **App 实例注册**: `generateKey()` → 获取 challenge → `attestKey()` → `POST /app_attest/register` (表单参数), 登记该 App 实例的 App Attest KEY (`kid`). attestation 每个 KEY 正常只提交一次, 此后一律用 assertion.
 
-```json
-{"challenge": "dGhpcyBpcyBhIHJhbmRvbSBjaGFsbGVuZ2U"}
-```
-
-约束:
-
-- **一次性**: 使用后即失效, 不得缓存或跨请求复用. 每次生成新的 attestation / assertion 前均需重新获取
-- **每个接口请求各需一个独立 challenge**: 注册设备、注册客户端 (仅 DYNAMIC)、申请 Token 属不同请求, 需分别获取
-- **有效期 5 分钟**: 超时后需重新获取
-- **提交给 Apple 的是 hash, 提交给服务端的是原值**:
-
-  ```swift
-  let clientDataHash = Data(SHA256.hash(data: challenge.data(using: .utf8)!))
-  ```
-
-  `attestKey` / `generateAssertion` 接收 `clientDataHash`; 提交给服务端的是 challenge **原始字符串**, 服务端独立计算 hash 并验证
-
-challenge 过期或已被使用时, 请求返回 `invalid_client_attestation`; 重新获取 challenge 并重新生成数据后重试即可.
-
-### 步骤 2: 注册设备 (两种类型均需执行)
-
-依次执行 `generateKey()` → 获取 challenge → `attestKey()`, 再提交注册端点. 本端点使用**表单参数**.
-
-```swift
-let keyId = try await DCAppAttestService.shared.generateKey()   // 每个 KEY 仅一次, 存入 Keychain
-let clientDataHash = Data(SHA256.hash(data: challenge.data(using: .utf8)!))
-let attestation = try await DCAppAttestService.shared.attestKey(keyId, clientDataHash: clientDataHash)
-```
-
-```http
-POST /app_attest/register
-Content-Type: application/x-www-form-urlencoded
-
-attestation={base64}&challenge={challenge}
-```
-
-**Response (200):**
-
-```json
-{"kid": "<Key Identifier>"}
-```
-
-- 请求**无需提交 `kid`**, 服务端直接从 attestation 中解析
-- 响应中的 `kid` 与 `generateKey()` 返回的 `keyId` **完全一致**. 客户端只需将本地 `keyId` 存入 Keychain 供后续请求使用, **无需存储或依赖本响应**; 该字段仅用于确认与问题排查
-- 本步骤仅登记设备, 不建立登录态, 也不签发 Token
-- 本端点匿名可访问
-
-完整契约 (含错误码与重试语义) 见[注册文档](OAuth2-Client-Registration-%23-App-Attest-Dynamic.md).
+> 完整流程与契约 (请求/响应、幂等与重试、错误码) 见 [Apple App Attest 实例注册](App-Attest-Registration.md).
 
 ### 步骤 3: 注册客户端 (仅 DYNAMIC)
 
-携带 assertion 请求动态注册端点, 获取该 KEY 专属的 `client_id`. **STATIC 类型跳过本步骤.**
+DYNAMIC 类型需携 assertion 请求 `POST /oauth2/register` (RFC 7591), 获取该 KEY 专属的 `client_id` 并持久化; **STATIC 类型跳过本步骤.** assertion 由 `generateAssertion(keyId, SHA256(challenge))` 生成, App Attest 数据经请求头 (`OAuth-Client-Attestation-*`) 承载, 注册体为 RFC 7591 JSON.
 
-本端点**非匿名, 且仅接受 assertion** —— 不接受 attestation. 由于注册体为 JSON, App Attest 数据由请求头承载. 端点实际路径以授权服务元数据的 `client_registration_endpoint` 为准 (默认 `/oauth2/register`).
-
-重新获取一个 challenge (步骤 1) 并生成 assertion:
-
-```swift
-let clientDataHash = Data(SHA256.hash(data: challenge.data(using: .utf8)!))
-let assertion = try await DCAppAttestService.shared.generateAssertion(keyId, clientDataHash: clientDataHash)
-```
-
-```http
-POST /oauth2/register
-Content-Type: application/json
-OAuth-Client-Attestation-Type: apple_app_attest
-OAuth-Client-Attestation-Kid: {keyId}
-OAuth-Client-Attestation-Challenge: {challenge}
-OAuth-Client-Attestation-Assertion: {base64}
-
-{
-  "client_name": "com.example.app",
-  "grant_types": ["otp", "refresh_token"],
-  "scope": "openid profile",
-  "token_endpoint_auth_method": "attest_jwt_client_auth"
-}
-```
-
-**Response (201):**
-
-```json
-{
-  "client_id": "<该 KEY 专属的客户端标识>",
-  "client_id_issued_at": "2026-05-10T12:34:56Z",
-  "client_name": "com.example.app",
-  "grant_types": ["otp", "refresh_token"],
-  "scope": "openid profile",
-  "token_endpoint_auth_method": "attest_jwt_client_auth"
-}
-```
-
-- 客户端需持久化 `client_id`, 后续申请 Token 时使用
-- 无论请求体如何声明, 服务端对 DYNAMIC 客户端强制: `token_endpoint_auth_method=attest_jwt_client_auth` 且无 `client_secret`; 移除 `urn:ietf:params:oauth:grant-type:app_assertion` grant; 追加 `refresh_token` grant
-- 对同一 KEY 重复注册具备幂等性, 返回既有 `client_id`
-
-完整契约 (含错误码) 见[注册文档](OAuth2-Client-Registration-%23-App-Attest-Dynamic.md).
+> 完整契约 (请求头、请求体、服务端强制项、响应、错误码) 见 [OAuth2 Client Registration - App Attest DYNAMIC](OAuth2-Client-Registration-%23-App-Attest-Dynamic.md).
 
 ### 步骤 4: 申请 Token
 
-再次获取一个新的 challenge (步骤 1) 并生成 assertion, 提交至 Token 端点. 请求头与步骤 3 完全一致.
+再次获取一个新的 challenge (步骤 1) 并生成 assertion, 提交至 Token 端点. 请求头见下方示例与〈`/oauth2/token` 请求速查〉.
 
 ```swift
 let clientDataHash = Data(SHA256.hash(data: challenge.data(using: .utf8)!))
@@ -185,9 +94,9 @@ grant_type={grant_type}&...
 ```
 iOS App                Apple             Authorization Server
   |                                               |
-  |  POST /oauth2/challenge                       |
+  |  POST /app_attest/challenge                   |
   |---------------------------------------------->|
-  |  {"challenge": "..."}                         |
+  |  {"attestation_challenge": "..."}             |
   |<----------------------------------------------|
   |                                               |
   |  generateAssertion(keyId, SHA256(challenge))  |
@@ -232,8 +141,8 @@ Token 过期后重复本步骤即可. 每次请求均需使用新的 challenge �
 | 已废弃用法 | 说明与替代 |
 |-----------|-----------|
 | 表单参数承载 | 将 `kid` / `challenge` / `assertion` 作为请求体表单参数提交. 改用请求头 |
-| 在 token 端点提交 `attestation` | 跳过设备注册, 一次请求完成注册 + 认证 + 签发. 仅 STATIC 可用; DYNAMIC 返回 `unauthorized_client` (但设备已登记成功, **无需重新 `attestKey()`**, 直接继续步骤 3). 改用步骤 2 的注册端点 |
-| `attestation` 与 `assertion` 同传 | 冗余: 设备登记本身已完成客户端认证, 附加 assertion 不提升安全强度 |
+| 在 token 端点提交 `attestation` | 跳过 App 实例注册, 一次请求完成注册 + 认证 + 签发. 仅 STATIC 可用; DYNAMIC 返回 `unauthorized_client` (但 App Attest KEY 已登记成功, **无需重新 `attestKey()`**, 直接继续步骤 3). 改用步骤 2 的注册端点 |
+| `attestation` 与 `assertion` 同传 | 冗余: App 实例注册本身已完成客户端认证, 附加 assertion 不提升安全强度 |
 | `urn:ietf:params:oauth:grant-type:app_assertion` | 仅凭 assertion 续期, 依赖此前 attestation 请求建立的设备与用户关联; 关联缺失返回 `invalid_grant`, 且该 grant 会忽略请求携带的任何登录因素. 改用用户级 Grant Type 或 `refresh_token`, 详见 [OAuth2 Token Grant - App Attest](OAuth2-Token-Grant-%23-App-Attest.md) |
 
 > 表单参数承载与请求头承载**不可混用**: 只要出现 `OAuth-Client-Attestation-Assertion` 头, 服务端即整体按请求头读取, 忽略全部 App Attest 表单参数.
@@ -257,7 +166,7 @@ Token 过期后重复本步骤即可. 每次请求均需使用新的 challenge �
 - **`keyId` 必须存入 Keychain**, 不得使用 `UserDefaults` 或明文存储. 丢失后需重新执行 `generateKey()` 并重新注册
 - **attestation 每个 KEY 正常仅提交一次**, 此后统一使用 assertion
 - **assertion 不证明用户身份**: 申请 Token 必须叠加用户级 Grant Type 或 `refresh_token`
-- **设备注册具备幂等性**: 若注册响应丢失 (如网络中断), 重新获取 challenge、重新执行 `attestKey()` 并再次提交即可, 服务端会返回同一份注册结果, 不会重复登记
+- **App 实例注册具备幂等性**: 若注册响应丢失 (如网络中断), 重新获取 challenge、重新执行 `attestKey()` 并再次提交即可, 服务端会返回同一份注册结果, 不会重复登记
 - **被截获的 attestation 无法重放**: 其 nonce 绑定的是已消费的那一次 challenge
 - **重新执行 `generateKey()` 等同于更换设备**: 会产生新的 `keyId` 与新的 attestation, 必须重新执行注册流程; 原 `keyId` 关联的服务端数据不会自动迁移
 - **assertion 由 Secure Enclave 签名, 毫秒级完成**: 日常获取与续期 Token 应优先使用 assertion, 避免重复执行 attestation
@@ -278,10 +187,12 @@ Token 过期后重复本步骤即可. 每次请求均需使用新的 challenge �
 
 ## 相关文档
 
+- [Apple App Attest 服务发现](App-Attest-Discovery.md) — 端点发现
+- [Apple App Attest 实例注册](App-Attest-Registration.md) — App 实例注册端点 (步骤 1-2 完整契约)
 - [OAuth2 Attestation-Based Client Authentication](OAuth2-Client-Authentication-%23-Attestation-Based.md) — 上层协议
-- [OAuth2 Client Registration - App Attest DYNAMIC](OAuth2-Client-Registration-%23-App-Attest-Dynamic.md) — 设备注册端点与动态注册契约
+- [OAuth2 Client Registration - App Attest DYNAMIC](OAuth2-Client-Registration-%23-App-Attest-Dynamic.md) — OAuth2 客户端动态注册契约
 - [OAuth2 Token Grant - App Attest](OAuth2-Token-Grant-%23-App-Attest.md) — 已废弃 Grant Type 的兼容说明
 - [Establishing Your App's Integrity](https://developer.apple.com/documentation/devicecheck/establishing-your-app-s-integrity) — Apple 官方文档
-- [draft-ietf-oauth-attestation-based-client-auth-08](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-08) — IETF 草案
+- [draft-ietf-oauth-attestation-based-client-auth-11](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-11) — IETF 草案
 
-[draft-ietf-oauth-attestation-based-client-auth]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-08
+[draft-ietf-oauth-attestation-based-client-auth]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-11

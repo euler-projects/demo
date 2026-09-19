@@ -1,5 +1,7 @@
 # App Attest 登录 - 短信 / 邮箱 OTP 接入细节
 
+> **[已废弃]** 本文档为历史版本 (上位文档 [App-Attest-Login](App-Attest-Login.md) 的附录), 内容已过时, 请勿据此接入. 最新流程见 [Apple App Attest 实例注册](App-Attest-Registration.md) 与 [Attestation Based Client Authentication (Apple App Attest)](OAuth2-Client-Authentication-%23-Attestation-Based-%23-Apple-App-Attest.md).
+
 本文档是 [Apple App Attest 登录完整流程文档](App-Attest-Login.md) 的配套附录, 专门描述**短信 / 邮箱 OTP**(One-Time Password, 一次性验证码)作为 `<user_grant>` 接入时的具体细节. 总流程、抽象概念、客户端持久化数据、异常处置、退出登录、常见坑位等均请参考上位文档, 本文只补充 OTP 侧的实例化内容.
 
 ---

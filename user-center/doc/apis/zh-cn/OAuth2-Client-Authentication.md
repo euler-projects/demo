@@ -45,7 +45,7 @@ grant_type=refresh_token&refresh_token=...&client_id=admin&client_secret=...
 
 ### `attest_jwt_client_auth` — 基于设备证明的客户端认证
 
-定义见 [OAuth 2.0 Attestation-Based Client Authentication (draft) §13.4]. 客户端通过 `OAuth-Client-Attestation` / `OAuth-Client-Attestation-PoP` 等请求头携带设备证明与 PoP 数据, 可作为独立认证方式, 也可叠加在其他标准认证方式之上作为安全增强.
+定义见 [OAuth 2.0 Attestation-Based Client Authentication (draft) §7.5]. 客户端通过 `OAuth-Client-Attestation` / `OAuth-Client-Attestation-PoP` 等请求头携带设备证明与 PoP 数据, 可作为独立认证方式, 也可叠加在其他标准认证方式之上作为安全增强.
 
 请求示例:
 
@@ -66,4 +66,4 @@ grant_type=authorization_code&client_id=default&code=...&code_verifier=...
 * `client_secret_basic` 的 client_id / client_secret 需先经 URL form-encode, 再以 `:` 拼接做 Base64 编码, 详见 [RFC6749 §2.3.1].
 
 [RFC6749 §2.3.1]: https://datatracker.ietf.org/doc/html/rfc6749#section-2.3.1
-[OAuth 2.0 Attestation-Based Client Authentication (draft) §13.4]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-08#section-13.4
+[OAuth 2.0 Attestation-Based Client Authentication (draft) §7.5]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-11#section-7.5

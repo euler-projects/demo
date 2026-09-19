@@ -52,7 +52,7 @@ application/json
 
 #### 示例 2: 启用 OAuth2 客户端联动
 
-面向需要联动 OAuth2 客户端注册的场景; 启用后每个设备 KEY 按 RFC 7591 动态注册独享一个客户端.
+面向需要联动 OAuth2 客户端注册的场景; 启用后每个 App Attest KEY 按 RFC 7591 动态注册独享一个客户端.
 
 ```json
 {
@@ -64,7 +64,7 @@ application/json
 
 |字段名|类型|说明|是否必填|默认值|
 |---|---|---|---|---|
-|oauth2Enabled|boolean|是否联动 OAuth2 客户端注册. **本示例**: `true`, 设备 KEY 可通过 RFC 7591 动态注册端点获取独享客户端|否|`false`|
+|oauth2Enabled|boolean|是否联动 OAuth2 客户端注册. **本示例**: `true`, App Attest KEY 可通过 RFC 7591 动态注册端点获取独享客户端|否|`false`|
 
 ## Response
 

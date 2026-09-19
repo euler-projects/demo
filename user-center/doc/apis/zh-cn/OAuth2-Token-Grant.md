@@ -105,7 +105,7 @@ grant_type=<grant_type>&scope=<scope>&...
 [OAuth2 Client Authentication]: OAuth2-Client-Authentication.md
 [oidc-subject-types]: https://openid.net/specs/openid-connect-core-1_0.html#SubjectIDTypes
 [oidc-core]: https://openid.net/specs/openid-connect-core-1_0.html
-[attestation-draft]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-08
+[attestation-draft]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-11
 [rfc6749]: https://datatracker.ietf.org/doc/html/rfc6749
 [RFC6749 §4]: https://datatracker.ietf.org/doc/html/rfc6749#section-4
 [RFC6749 §5.2]: https://datatracker.ietf.org/doc/html/rfc6749#section-5.2

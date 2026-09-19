@@ -40,3 +40,8 @@
 - [OAuth2 Client Authentication - Attestation Based](OAuth2-Client-Authentication-%23-Attestation-Based.md)
 - [OAuth2 Client Authentication - Attestation Based - Apple App Attest](OAuth2-Client-Authentication-%23-Attestation-Based-%23-Apple-App-Attest.md)
 - [OAuth2 Client Registration - App Attest DYNAMIC](OAuth2-Client-Registration-%23-App-Attest-Dynamic.md)
+
+## Apple App Attest
+
+- [Apple App Attest 服务发现](App-Attest-Discovery.md)
+- [Apple App Attest 实例注册](App-Attest-Registration.md)

@@ -18,7 +18,7 @@ Admin App Attest 应用接口的统一数据模型. 创建 / 查询 / 列出 / �
 | appId            | string  | `-` `-` `-` `-` `-` | Yes      | 对外应用标识, 派生自 `teamId + "." + bundleId`; 对标 OAuth2 侧 `clientId`; 以原值持久化用于唯一索引查询                                                                                       |
 | teamId           | string  | `C` `-` `U` `-` `-` | No       | Apple Developer Team ID, Apple App Attest 场景下为 10 位字母数字                                                                                                                                    |
 | bundleId         | string  | `C` `-` `U` `-` `-` | No       | 应用的 Bundle Identifier, 例如 `com.example.app`                                                                                                                                                      |
-| oauth2Enabled    | boolean | `C` `-` `U` `-` `-` | No       | 是否启用 OAuth2 客户端联动注册; 启用后每个设备 KEY 按 [RFC 7591][RFC-7591] 动态注册独享一个客户端; 默认 `false`                                                                                                                                                  |
+| oauth2Enabled    | boolean | `C` `-` `U` `-` `-` | No       | 是否启用 OAuth2 客户端联动注册; 启用后每个 App Attest KEY 按 [RFC 7591][RFC-7591] 动态注册独享一个客户端; 默认 `false`                                                                                                                                                  |
 
 > 协议层指纹 (App Attest RP ID hash = `SHA-256(appId)`) 不在模型中暴露, 由服务端在需要时按 `appId` 派生; 持久化层以 hex 字符串形式落到唯一索引列并用于协议查询路径.
 

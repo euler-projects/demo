@@ -1,5 +1,7 @@
 # OAuth2 Token Grant - App Attest
 
+> **[已废弃]** 本文档描述的 `urn:ietf:params:oauth:grant-type:app_assertion` grant 已废弃, 请勿用于新接入. 最新流程见 [Apple App Attest 实例注册](App-Attest-Registration.md) 与 [Attestation Based Client Authentication (Apple App Attest)](OAuth2-Client-Authentication-%23-Attestation-Based-%23-Apple-App-Attest.md) (token 端点以 assertion 叠加用户级 grant 或 `refresh_token`).
+
 本文档描述 Apple Native App 如何利用 [Apple App Attest](https://developer.apple.com/documentation/devicecheck/establishing-your-app-s-integrity) 能力, 通过 `/oauth2/token` 端点一步完成设备注册与 OAuth2 Token 签发, 实现无账号登录并获取用户级 OAuth2 Token.
 
 整个流程只围绕 OAuth2 Token 端点进行, 无需独立的设备注册接口:

@@ -1,5 +1,7 @@
 # Apple App Attest 登录完整流程文档
 
+> **[已废弃]** 本文档为历史版本, 内容已过时, 请勿据此接入. 最新流程见 [Apple App Attest 服务发现](App-Attest-Discovery.md)、[Apple App Attest 实例注册](App-Attest-Registration.md)、[Attestation Based Client Authentication (Apple App Attest)](OAuth2-Client-Authentication-%23-Attestation-Based-%23-Apple-App-Attest.md)、[OAuth2 Client Registration - App Attest DYNAMIC](OAuth2-Client-Registration-%23-App-Attest-Dynamic.md).
+
 本文档从客户端开发者视角, 系统性地梳理 iOS App 使用身份认证服务基于 Apple App Attest 一次性完成"设备证明 + 用户证明", 由服务端完成设备注册并签发 Token 的完整流程, 并列出两种典型场景及其调用顺序、关键参数与数据结构演变.
 
 本文档采用抽象描述, **用户认证方式统一以 `<user_grant>` 代指**. 它可以是任意一种 OAuth 2.1 Grant Type, 例如:

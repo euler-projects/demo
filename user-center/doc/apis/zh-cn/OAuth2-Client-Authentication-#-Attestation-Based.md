@@ -1,6 +1,6 @@
 # OAuth2 Attestation-Based Client Authentication
 
-基于 [draft-ietf-oauth-attestation-based-client-auth-08] 实现, 认证方式标识为 `attest_jwt_client_auth`.
+基于 [draft-ietf-oauth-attestation-based-client-auth-11] 实现, 认证方式标识为 `attest_jwt_client_auth`.
 
 ## 概述
 
@@ -164,8 +164,8 @@ Client                                    Authorization Server
 
 ## 参考
 
-* [draft-ietf-oauth-attestation-based-client-auth-08] — OAuth 2.0 Attestation-Based Client Authentication
+* [draft-ietf-oauth-attestation-based-client-auth-11] — OAuth 2.0 Attestation-Based Client Authentication
 * [RFC6749] — The OAuth 2.0 Authorization Framework
 
-[draft-ietf-oauth-attestation-based-client-auth-08]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-08
+[draft-ietf-oauth-attestation-based-client-auth-11]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-11
 [RFC6749]: https://datatracker.ietf.org/doc/html/rfc6749
