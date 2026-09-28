@@ -25,7 +25,7 @@ channel=sms
 响应 `200`:
 
 ```json
-{ "otp_ticket": "ot_2b8f4e...", "expires_in": 300, "retry_after": 60 }
+{ "otp_ticket": "3f2504e0-4f89-11d3-9a0c-0305e82c3301", "expires_in": 300, "retry_after": 60 }
 ```
 
 | 字段 | 说明 |

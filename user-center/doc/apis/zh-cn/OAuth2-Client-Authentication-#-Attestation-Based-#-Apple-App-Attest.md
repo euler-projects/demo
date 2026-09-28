@@ -41,9 +41,12 @@
 
 ### 步骤 1: 获取 Challenge
 
-生成 `attestation` / `assertion` 前需先获取一次性 challenge (`POST /app_attest/challenge`): 一次性、约 5 分钟有效, 提交给 Apple 的是其 SHA-256 hash、提交给服务端的是原始字符串.
+生成 `attestation` / `assertion` 前需先获取一次性 challenge: 一次性、约 5 分钟有效, 提交给 Apple 的是其 SHA-256 hash、提交给服务端的是原始字符串. **两个业务域各有自己的 challenge 端点, 须用对**:
 
-> 端点契约与完整约束见 [Apple App Attest 实例注册](App-Attest-Registration.md). token 流程中**每次请求都需重新获取 challenge 并重新生成 assertion**, 不可复用; challenge 过期或已使用会返回 `invalid_client_attestation`, 重新获取后重试即可.
+- **App 实例注册**(生成 `attestation`): `POST /app_attest/challenge` —— 见 [Apple App Attest 服务发现](App-Attest-Discovery.md).
+- **OAuth 客户端认证**(生成 `assertion`, 用于 `/oauth2/register` 与 `/oauth2/token`): `POST /oauth2/challenge` —— 即 OAuth AS 元数据的标准 `challenge_endpoint`.
+
+> 二者实现同源, 但 path 与归属域不同. App 实例注册端点契约见 [Apple App Attest 实例注册](App-Attest-Registration.md). token 流程中**每次请求都需重新获取 challenge 并重新生成 assertion**, 不可复用; challenge 过期或已使用会返回 `invalid_client_attestation`, 重新获取后重试即可.
 
 ### 步骤 2: App 实例注册 (两种类型均需执行)
 
@@ -59,7 +62,7 @@ DYNAMIC 类型需携 assertion 请求 `POST /oauth2/register` (RFC 7591), 获取
 
 ### 步骤 4: 申请 Token
 
-再次获取一个新的 challenge (步骤 1) 并生成 assertion, 提交至 Token 端点. 请求头见下方示例与〈`/oauth2/token` 请求速查〉.
+再次获取一个新的 challenge(步骤 1 的 `/oauth2/challenge`)并生成 assertion, 提交至 Token 端点. 请求头见下方示例与〈`/oauth2/token` 请求速查〉.
 
 ```swift
 let clientDataHash = Data(SHA256.hash(data: challenge.data(using: .utf8)!))
@@ -94,7 +97,7 @@ grant_type={grant_type}&...
 ```
 iOS App                Apple             Authorization Server
   |                                               |
-  |  POST /app_attest/challenge                   |
+  |  POST /oauth2/challenge                       |
   |---------------------------------------------->|
   |  {"attestation_challenge": "..."}             |
   |<----------------------------------------------|

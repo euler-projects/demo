@@ -91,7 +91,7 @@ sequenceDiagram
     AS-->>App: {kid} 仅登记 KEY, 无用户/登录态
 
     Note over App,AS: 2. 动态注册 per-key 客户端 (assertion)
-    App->>AS: POST /app_attest/challenge
+    App->>AS: POST /oauth2/challenge
     AS-->>App: challenge2
     App->>App: generateAssertion(kid, SHA256(challenge2))
     App->>AS: POST /oauth2/register 头携带 kid+assertion+challenge2, 体为 RFC7591 JSON
