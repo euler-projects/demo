@@ -24,9 +24,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 /**
- * Activates the SendGrid email {@link SendGridEmailOtpChannel} when
- * {@code sendgrid.api-key} is configured. The {@code DelegatingOtpChannel}
- * assembled by {@code OtpChannelConfiguration} routes OTP deliveries with
+ * Activates the SendGrid email {@link SendGridEmailOneTimePasswordChannel} when
+ * {@code sendgrid.api-key} is configured. The {@code DelegatingOneTimePasswordChannel}
+ * assembled by {@code OneTimePasswordChannelConfiguration} routes OTP deliveries with
  * {@code channel=email} to this channel via its explicit routing table.
  */
 @Configuration(proxyBeanMethods = false)
@@ -34,10 +34,10 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 @ConditionalOnProperty(prefix = "sendgrid", name = "api-key")
 public class SendGridEmailConfiguration {
 
-    @Bean("sendGridEmailOtpChannel")
-    public SendGridEmailOtpChannel sendGridEmailOtpChannel(
+    @Bean("sendGridEmailOneTimePasswordChannel")
+    public SendGridEmailOneTimePasswordChannel sendGridEmailOneTimePasswordChannel(
             SendGridProperties properties,
             @Qualifier("otpDeliveryTaskExecutor") ThreadPoolTaskExecutor otpDeliveryTaskExecutor) {
-        return new SendGridEmailOtpChannel(properties, otpDeliveryTaskExecutor);
+        return new SendGridEmailOneTimePasswordChannel(properties, otpDeliveryTaskExecutor);
     }
 }

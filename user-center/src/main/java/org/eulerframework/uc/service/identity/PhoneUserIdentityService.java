@@ -16,8 +16,9 @@
 package org.eulerframework.uc.service.identity;
 
 import org.eulerframework.security.core.identity.*;
-import org.eulerframework.security.authentication.otp.OtpTicketService;
-import org.eulerframework.security.authentication.otp.OtpVerification;
+import org.eulerframework.security.authentication.otp.OneTimePasswordAuthenticationToken;
+import org.eulerframework.security.authentication.otp.OneTimePasswordService;
+import org.eulerframework.security.authentication.otp.OneTimePassword;
 import org.eulerframework.uc.entity.UserIdentityEntity;
 import org.eulerframework.uc.entity.UserIdentityPhoneEntity;
 import org.eulerframework.uc.repository.UserIdentityPhoneRepository;
@@ -47,7 +48,7 @@ import java.util.Optional;
  * on the parent row.
  *
  * <p>The OTP credential is not persisted on this aggregate; one-time
- * password values are managed by {@link OtpTicketService} in a separate
+ * password values are managed by {@link OneTimePasswordService} in a separate
  * ticket cache.
  */
 @Service
@@ -73,17 +74,17 @@ public class PhoneUserIdentityService extends AbstractUserIdentityService {
     private static final String PARAM_OTP_TICKET = "otp_ticket";
     private static final String PARAM_OTP = "otp";
 
-    private final OtpTicketService otpTicketService;
+    private final OneTimePasswordService oneTimePasswordService;
     private final UserIdentityRepository identityRepository;
     private final UserIdentityPhoneRepository identityPhoneRepository;
 
-    public PhoneUserIdentityService(OtpTicketService otpTicketService,
+    public PhoneUserIdentityService(OneTimePasswordService oneTimePasswordService,
                                     UserIdentityRepository identityRepository,
                                     UserIdentityPhoneRepository identityPhoneRepository) {
-        Assert.notNull(otpTicketService, "otpTicketService is required");
+        Assert.notNull(oneTimePasswordService, "oneTimePasswordService is required");
         Assert.notNull(identityRepository, "identityRepository is required");
         Assert.notNull(identityPhoneRepository, "identityPhoneRepository is required");
-        this.otpTicketService = otpTicketService;
+        this.oneTimePasswordService = oneTimePasswordService;
         this.identityRepository = identityRepository;
         this.identityPhoneRepository = identityPhoneRepository;
     }
@@ -296,11 +297,12 @@ public class PhoneUserIdentityService extends AbstractUserIdentityService {
         if (!StringUtils.hasText(otp)) {
             throw new InvalidUserIdentityException("otp is required");
         }
-        OtpVerification verification = this.otpTicketService.consume(otpTicket, otp, null);
-        if (verification == null) {
+        OneTimePassword verifiedOtp = this.oneTimePasswordService.consume(
+                new OneTimePasswordAuthenticationToken(otpTicket, otp));
+        if (verifiedOtp == null) {
             throw new InvalidUserIdentityException("otp_ticket consumption failed");
         }
-        String phone = verification.recipient();
+        String phone = verifiedOtp.recipient();
         if (!StringUtils.hasText(phone)) {
             throw new InvalidUserIdentityException("otp_ticket carries no recipient");
         }

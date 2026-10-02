@@ -22,10 +22,10 @@ import org.eulerframework.common.http.HttpTemplate;
 import org.eulerframework.common.http.JdkHttpClientTemplate;
 import org.eulerframework.common.http.ResponseBody;
 import org.eulerframework.common.http.request.UrlEncodedRequestBody;
-import org.eulerframework.security.authentication.otp.AbstractAsyncOtpChannel;
-import org.eulerframework.security.authentication.otp.OtpChannel;
-import org.eulerframework.security.authentication.otp.OtpDelivering;
-import org.eulerframework.security.authentication.otp.OtpDeliveryException;
+import org.eulerframework.security.authentication.otp.AbstractAsyncOneTimePasswordChannel;
+import org.eulerframework.security.authentication.otp.OneTimePasswordChannel;
+import org.eulerframework.security.authentication.otp.OneTimePasswordDelivering;
+import org.eulerframework.security.authentication.otp.OneTimePasswordDeliveryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
@@ -37,11 +37,11 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 
 /**
- * {@link OtpChannel} backed by the YunPian (云片网) HTTP single-send API.
- * Extends {@link AbstractAsyncOtpChannel}, so the blocking HTTP call runs on
+ * {@link OneTimePasswordChannel} backed by the YunPian (云片网) HTTP single-send API.
+ * Extends {@link AbstractAsyncOneTimePasswordChannel}, so the blocking HTTP call runs on
  * the injected executor and never blocks the OTP issue request thread.
  * <p>
- * Selects an SMS template by {@link OtpDelivering#purpose() purpose}, falling
+ * Selects an SMS template by {@link OneTimePasswordDelivering#purpose() purpose}, falling
  * back to the {@link YunPianProperties#DEFAULT_TEMPLATE_KEY default} template
  * when the purpose is empty or has no dedicated entry. The chosen template is
  * rendered by substituting {@code {code}} with the OTP value and
@@ -50,9 +50,9 @@ import java.util.concurrent.Executor;
  * @see <a href="https://www.yunpian.com/official/document/sms/zh_cn/domestic_single_send">
  * YunPian single-send API</a>
  */
-public class YunPianSmsOtpChannel extends AbstractAsyncOtpChannel {
+public class YunPianSmsOneTimePasswordChannel extends AbstractAsyncOneTimePasswordChannel {
 
-    private static final Logger logger = LoggerFactory.getLogger(YunPianSmsOtpChannel.class);
+    private static final Logger logger = LoggerFactory.getLogger(YunPianSmsOneTimePasswordChannel.class);
 
     private static final String CHANNEL_NAME = "sms";
     private static final String PLACEHOLDER_CODE = "{code}";
@@ -63,11 +63,11 @@ public class YunPianSmsOtpChannel extends AbstractAsyncOtpChannel {
     private final String apiUrl;
     private final Map<String, String> templates;
 
-    public YunPianSmsOtpChannel(YunPianProperties properties, Executor executor) {
+    public YunPianSmsOneTimePasswordChannel(YunPianProperties properties, Executor executor) {
         this(properties, JdkHttpClientTemplate.INSTANCE, executor);
     }
 
-    public YunPianSmsOtpChannel(YunPianProperties properties, HttpTemplate httpTemplate, Executor executor) {
+    public YunPianSmsOneTimePasswordChannel(YunPianProperties properties, HttpTemplate httpTemplate, Executor executor) {
         super(executor);
         Assert.notNull(properties, "properties must not be null");
         Assert.hasText(properties.getApiKey(), "yunpian.api-key must be configured");
@@ -89,17 +89,17 @@ public class YunPianSmsOtpChannel extends AbstractAsyncOtpChannel {
     }
 
     @Override
-    protected void doSend(OtpDelivering delivering) throws OtpDeliveryException {
+    protected void doSend(OneTimePasswordDelivering delivering) throws OneTimePasswordDeliveryException {
         // Defensive re-check; unsupported channels are already rejected
-        // synchronously by AbstractAsyncOtpChannel via supports().
+        // synchronously by AbstractAsyncOneTimePasswordChannel via supports().
         Assert.isTrue(CHANNEL_NAME.equalsIgnoreCase(delivering.channel()),
-                "YunPianSmsOtpChannel only support sms channel.");
+                "YunPianSmsOneTimePasswordChannel only support sms channel.");
 
         String text = renderText(delivering);
         doSend(this.httpTemplate, this.apiUrl, this.apiKey, delivering.recipient(), text);
     }
 
-    public static void doSend(HttpTemplate httpTemplate, String apiUrl, String apiKey, String phone, String message) throws OtpDeliveryException {
+    public static void doSend(HttpTemplate httpTemplate, String apiUrl, String apiKey, String phone, String message) throws OneTimePasswordDeliveryException {
         UrlEncodedRequestBody body = UrlEncodedRequestBody.newBuilder()
                 .add("apikey", apiKey)
                 .add("mobile", phone)
@@ -114,22 +114,22 @@ public class YunPianSmsOtpChannel extends AbstractAsyncOtpChannel {
             String payload = readBody(response);
 
             if (response.getStatus() != 200) {
-                throw new OtpDeliveryException("YunPian sms request failed with HTTP "
+                throw new OneTimePasswordDeliveryException("YunPian sms request failed with HTTP "
                         + response.getStatus() + ", body=" + payload);
             }
 
             // YunPian returns {"code":0,...} on success; any non-zero code indicates failure.
             if (!isSuccess(payload)) {
-                throw new OtpDeliveryException("YunPian sms delivery failed: " + payload);
+                throw new OneTimePasswordDeliveryException("YunPian sms delivery failed: " + payload);
             }
 
             System.out.println(payload);
         } catch (IOException | URISyntaxException e) {
-            throw new OtpDeliveryException("Failed to call YunPian single_send API", e);
+            throw new OneTimePasswordDeliveryException("Failed to call YunPian single_send API", e);
         }
     }
 
-    private String renderText(OtpDelivering delivering) {
+    private String renderText(OneTimePasswordDelivering delivering) {
         String template = pickTemplate(delivering.purpose());
         return template
                 .replace(PLACEHOLDER_CODE, delivering.otp());

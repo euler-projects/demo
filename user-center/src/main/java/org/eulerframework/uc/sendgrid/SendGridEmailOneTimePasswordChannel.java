@@ -24,10 +24,10 @@ import org.eulerframework.common.http.JdkHttpClientTemplate;
 import org.eulerframework.common.http.ResponseBody;
 import org.eulerframework.common.http.request.StringRequestBody;
 import org.eulerframework.common.util.jackson.JacksonUtils;
-import org.eulerframework.security.authentication.otp.AbstractAsyncOtpChannel;
-import org.eulerframework.security.authentication.otp.OtpChannel;
-import org.eulerframework.security.authentication.otp.OtpDelivering;
-import org.eulerframework.security.authentication.otp.OtpDeliveryException;
+import org.eulerframework.security.authentication.otp.AbstractAsyncOneTimePasswordChannel;
+import org.eulerframework.security.authentication.otp.OneTimePasswordChannel;
+import org.eulerframework.security.authentication.otp.OneTimePasswordDelivering;
+import org.eulerframework.security.authentication.otp.OneTimePasswordDeliveryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
@@ -41,12 +41,12 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 
 /**
- * {@link OtpChannel} backed by the SendGrid v3 mail send API. Extends
- * {@link AbstractAsyncOtpChannel}, so the blocking HTTP call runs on the
+ * {@link OneTimePasswordChannel} backed by the SendGrid v3 mail send API. Extends
+ * {@link AbstractAsyncOneTimePasswordChannel}, so the blocking HTTP call runs on the
  * injected executor and never blocks the OTP issue request thread.
  * <p>
  * Selects a SendGrid dynamic template by
- * {@link OtpDelivering#purpose() purpose}, falling back to the
+ * {@link OneTimePasswordDelivering#purpose() purpose}, falling back to the
  * {@link SendGridProperties#DEFAULT_TEMPLATE_KEY default} template when the
  * purpose is empty or has no dedicated entry. The template receives
  * {@code code} (the OTP value) and {@code minutes} (the OTP validity in
@@ -55,10 +55,10 @@ import java.util.concurrent.Executor;
  * @see <a href="https://www.twilio.com/docs/sendgrid/api-reference/mail-send/mail-send">
  * SendGrid v3 mail send API</a>
  */
-public class SendGridEmailOtpChannel extends AbstractAsyncOtpChannel {
+public class SendGridEmailOneTimePasswordChannel extends AbstractAsyncOneTimePasswordChannel {
 
     private static final String CHANNEL_NAME = "email";
-    private static final Logger log = LoggerFactory.getLogger(SendGridEmailOtpChannel.class);
+    private static final Logger log = LoggerFactory.getLogger(SendGridEmailOneTimePasswordChannel.class);
 
     private final HttpTemplate httpTemplate;
     private final String apiKey;
@@ -66,11 +66,11 @@ public class SendGridEmailOtpChannel extends AbstractAsyncOtpChannel {
     private final SendGridProperties.From from;
     private final Map<String, String> templates;
 
-    public SendGridEmailOtpChannel(SendGridProperties properties, Executor executor) {
+    public SendGridEmailOneTimePasswordChannel(SendGridProperties properties, Executor executor) {
         this(properties, JdkHttpClientTemplate.INSTANCE, executor);
     }
 
-    public SendGridEmailOtpChannel(SendGridProperties properties, HttpTemplate httpTemplate, Executor executor) {
+    public SendGridEmailOneTimePasswordChannel(SendGridProperties properties, HttpTemplate httpTemplate, Executor executor) {
         super(executor);
         Assert.notNull(properties, "properties must not be null");
         Assert.hasText(properties.getApiKey(), "sendgrid.api-key must be configured");
@@ -95,11 +95,11 @@ public class SendGridEmailOtpChannel extends AbstractAsyncOtpChannel {
     }
 
     @Override
-    protected void doSend(OtpDelivering delivering) throws OtpDeliveryException {
+    protected void doSend(OneTimePasswordDelivering delivering) throws OneTimePasswordDeliveryException {
         // Defensive re-check; unsupported channels are already rejected
-        // synchronously by AbstractAsyncOtpChannel via supports().
+        // synchronously by AbstractAsyncOneTimePasswordChannel via supports().
         Assert.isTrue(CHANNEL_NAME.equalsIgnoreCase(delivering.channel()),
-                "SendGridEmailOtpChannel only support email channel.");
+                "SendGridEmailOneTimePasswordChannel only support email channel.");
 
         if("test@example.com".equalsIgnoreCase(delivering.recipient())) {
             log.warn("test send: {}", JacksonUtils.writeValueAsString(delivering));
@@ -117,11 +117,11 @@ public class SendGridEmailOtpChannel extends AbstractAsyncOtpChannel {
                         .build())) {
             // SendGrid answers 202 Accepted with an empty body on success.
             if (response.getStatus() < 200 || response.getStatus() >= 300) {
-                throw new OtpDeliveryException("SendGrid mail request failed with HTTP "
+                throw new OneTimePasswordDeliveryException("SendGrid mail request failed with HTTP "
                         + response.getStatus() + ", body=" + readBody(response));
             }
         } catch (IOException | URISyntaxException e) {
-            throw new OtpDeliveryException("Failed to call SendGrid mail send API", e);
+            throw new OneTimePasswordDeliveryException("Failed to call SendGrid mail send API", e);
         }
     }
 
@@ -129,7 +129,7 @@ public class SendGridEmailOtpChannel extends AbstractAsyncOtpChannel {
      * Assemble the SendGrid v3 mail send payload; serialised by Jackson so
      * recipient addresses and template data are always properly escaped.
      */
-    private Map<String, Object> buildPayload(OtpDelivering delivering) {
+    private Map<String, Object> buildPayload(OneTimePasswordDelivering delivering) {
         Map<String, Object> dynamicTemplateData = new LinkedHashMap<>();
         dynamicTemplateData.put("code", delivering.otp());
         // Rounded-up minutes, e.g. a 90s TTL renders as "2".

@@ -16,10 +16,10 @@
 
 package org.eulerframework.uc.otp;
 
-import org.eulerframework.security.authentication.otp.DelegatingOtpChannel;
-import org.eulerframework.security.authentication.otp.OtpChannel;
-import org.eulerframework.security.authentication.otp.SingleOtpChannel;
-import org.eulerframework.security.authentication.otp.StdoutOtpChannel;
+import org.eulerframework.security.authentication.otp.DelegatingOneTimePasswordChannel;
+import org.eulerframework.security.authentication.otp.OneTimePasswordChannel;
+import org.eulerframework.security.authentication.otp.SingleOneTimePasswordChannel;
+import org.eulerframework.security.authentication.otp.StdoutOneTimePasswordChannel;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -35,15 +35,15 @@ import java.util.concurrent.ThreadPoolExecutor;
  * <p>
  * The gateway channels are conditional beans activated by their respective
  * {@code api-key} properties; this configuration composes whichever are
- * present into a {@link DelegatingOtpChannel} keyed by each channel's
- * self-declared {@link SingleOtpChannel#getChannel() channel name}, marked
+ * present into a {@link DelegatingOneTimePasswordChannel} keyed by each channel's
+ * self-declared {@link SingleOneTimePasswordChannel#getChannel() channel name}, marked
  * {@code @Primary} so the OTP configurer's by-type lookup stays unambiguous
  * no matter how many channels are active. When no gateway channel is
- * configured at all, the delegator falls back to {@link StdoutOtpChannel} to
+ * configured at all, the delegator falls back to {@link StdoutOneTimePasswordChannel} to
  * keep development setups working.
  */
 @Configuration(proxyBeanMethods = false)
-public class OtpChannelConfiguration {
+public class OneTimePasswordChannelConfiguration {
 
     /**
      * Dedicated executor shared by the asynchronous OTP delivery channels.
@@ -66,22 +66,22 @@ public class OtpChannelConfiguration {
     }
 
     /**
-     * Primary {@link OtpChannel} routing by each gateway's self-declared
-     * {@link SingleOtpChannel#getChannel() channel name}, decoupled from
+     * Primary {@link OneTimePasswordChannel} routing by each gateway's self-declared
+     * {@link SingleOneTimePasswordChannel#getChannel() channel name}, decoupled from
      * bean names. With at least one gateway present there is no fallback, so
      * unknown channel names are rejected synchronously as
      * {@code unsupported_channel}.
      */
     @Bean
     @Primary
-    public DelegatingOtpChannel otpChannel(List<SingleOtpChannel> channels) {
-        Map<String, OtpChannel> routes = new LinkedHashMap<>();
+    public DelegatingOneTimePasswordChannel oneTimePasswordChannel(List<SingleOneTimePasswordChannel> channels) {
+        Map<String, OneTimePasswordChannel> routes = new LinkedHashMap<>();
         channels.forEach(channel -> routes.put(channel.getChannel(), channel));
         if (routes.isEmpty()) {
             // No gateway configured (e.g. local dev without credentials) -
             // print OTPs to the log instead of failing.
-            return new DelegatingOtpChannel(routes, new StdoutOtpChannel());
+            return new DelegatingOneTimePasswordChannel(routes, new StdoutOneTimePasswordChannel());
         }
-        return new DelegatingOtpChannel(routes);
+        return new DelegatingOneTimePasswordChannel(routes);
     }
 }

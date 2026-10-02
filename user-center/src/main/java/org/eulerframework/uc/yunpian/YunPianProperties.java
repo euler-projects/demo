@@ -26,7 +26,7 @@ import java.util.Map;
  * {@code yunpian.*} namespace.
  * <p>
  * Templates are keyed by an opaque purpose tag matching
- * {@link org.eulerframework.security.authentication.otp.OtpDelivering#purpose()};
+ * {@link org.eulerframework.security.authentication.otp.OneTimePasswordDelivering#purpose()};
  * the entry under {@link #DEFAULT_TEMPLATE_KEY} is required and used as the
  * fallback when the incoming purpose is missing or has no dedicated template.
  * <p>

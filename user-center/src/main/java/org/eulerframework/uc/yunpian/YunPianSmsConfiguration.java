@@ -24,9 +24,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 /**
- * Activates the YunPian SMS {@link YunPianSmsOtpChannel} when {@code yunpian.api-key}
- * is configured. The {@code DelegatingOtpChannel} assembled by
- * {@code OtpChannelConfiguration} routes OTP deliveries with
+ * Activates the YunPian SMS {@link YunPianSmsOneTimePasswordChannel} when {@code yunpian.api-key}
+ * is configured. The {@code DelegatingOneTimePasswordChannel} assembled by
+ * {@code OneTimePasswordChannelConfiguration} routes OTP deliveries with
  * {@code channel=sms} to this channel via its explicit routing table.
  */
 @Configuration(proxyBeanMethods = false)
@@ -34,10 +34,10 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 @ConditionalOnProperty(prefix = "yunpian", name = "api-key")
 public class YunPianSmsConfiguration {
 
-    @Bean("yunPianSmsOtpChannel")
-    public YunPianSmsOtpChannel yunPianSmsOtpChannel(
+    @Bean("yunPianSmsOneTimePasswordChannel")
+    public YunPianSmsOneTimePasswordChannel yunPianSmsOneTimePasswordChannel(
             YunPianProperties properties,
             @Qualifier("otpDeliveryTaskExecutor") ThreadPoolTaskExecutor otpDeliveryTaskExecutor) {
-        return new YunPianSmsOtpChannel(properties, otpDeliveryTaskExecutor);
+        return new YunPianSmsOneTimePasswordChannel(properties, otpDeliveryTaskExecutor);
     }
 }
