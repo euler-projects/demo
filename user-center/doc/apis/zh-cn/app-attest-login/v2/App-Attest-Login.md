@@ -119,6 +119,17 @@ App 安装实例首次启动时利用 Apple App Attest 的 Attestation 向认证
 例如用 Assertion 作为 RFC 7591 OAuth Client 动态注册请求的认证凭据.
 完整契约见 [Apple App Attest 实例注册](../../App-Attest-Registration.md).
 
+请求示例:
+
+```http
+POST /app_attest/register
+Content-Type: application/x-www-form-urlencoded
+
+attestation={Base64(Attestation Object)}&challenge={challenge}
+```
+
+时序图:
+
 ```mermaid
 sequenceDiagram
     participant App as iOS App
@@ -137,6 +148,28 @@ App 安装实例利用 Apple App Attest 的 Assertion
 按 [RFC 7591 OAuth 2.0 Dynamic Client Registration Protocol](../../OAuth2-Client-Registration-%23-App-Attest-Dynamic.md)
 将自己注册为一个 OAuth Client, 为后续申请 Token 做准备.
 
+请求示例:
+
+```http
+POST /oauth2/register
+Content-Type: application/json
+OAuth-Client-Attestation-Type: apple_app_attest
+OAuth-Client-Attestation-Kid: {kid}
+OAuth-Client-Attestation-Challenge: {challenge}
+OAuth-Client-Attestation-Assertion: {Base64(Assertion Object)}
+
+{
+  "client_name": "com.example.app",
+  "grant_types": ["otp", "user_assertion", "refresh_token"],
+  "scope": "openid profile",
+  "token_endpoint_auth_method": "attest_jwt_client_auth"
+}
+```
+
+> ⚠️ 若需支持 3.3.1 的匿名试用, 需要在 grant_types 中包含 `user_assertion`.
+
+时序图:
+
 ```mermaid
 sequenceDiagram
     participant App as iOS App
@@ -148,8 +181,7 @@ sequenceDiagram
     Server -->> App: 201 {client_id} 回绑至 kid
 ```
 
-> ⚠️ 3.1 中 `generateKey` 产生的 `kid` 和 3.2 中 `POST /oauth2/register` 接口返回的 `client_id` 的生命周期应该都是 App
-> 安装实例级的. 即不随用户退出登录而清除, 仅在 App 被卸载或 kid 被吊销时才清除.
+> ⚠️ 3.1 中 `generateKey` 产生的 `kid` 和 3.2 中 `POST /oauth2/register` 接口返回的 `client_id` 的生命周期应该都是 App 安装实例级的. 即不随用户退出登录而清除, 仅在 App 被卸载或 kid 被吊销时才清除.
 
 ### 3.3 Token 申请与续期
 
