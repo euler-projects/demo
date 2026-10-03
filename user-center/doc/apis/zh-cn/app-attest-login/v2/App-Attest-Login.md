@@ -41,30 +41,65 @@ graph TB
 
 ## 一. 核心概念
 
-| 概念 | 说明 |
-|---|---|
-| AT | Access Token. OAuth 2.1 访问令牌, 调业务接口与 Account Service 用. |
-| RT | Refresh Token. OAuth 2.1 续期令牌. 服务端可配置为**轮换**(refresh token rotation): RT 一次性、每次续期换发新 RT、旧的随即失效. 客户端每次续期后都应以响应中的 RT 覆盖本地保存的. |
-| Issuer | **用户认证服务基地址**(OAuth 2.1 + OIDC). 可能含路径(例 `https://auth.example.com` 或 `https://account.example.com/auth`). |
-| Account Service | **用户账号服务基地址**. 提供 `/user/identities` 等账号身份管理接口, **独立于 Issuer**、不经 OIDC Discovery 发现, 需客户端**独立配置**; 以 `Authorization: Bearer <AT>` 调用. |
-| `<user_grant>` | **用户证明方式**, 即一个 OAuth `grant_type`(`otp` / IdP 授权码 / `user_assertion` 等). |
-| `<credential>` | **`<user_grant>` 所需的用户凭据参数**(泛指), 由对应 grant 的专项文档定义. 其提供方(Credential Provider, CP)可能是外部 IdP, 也可能就是用户本人. |
+| 概念            | 说明                                                                                                                                                                                   |
+|-----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| AT              | **Access Token**<br>OAuth 2.1 访问令牌, 调业务接口与 Account Service 用.                                                                                                               |
+| RT              | **Refresh Token**<br>OAuth 2.1 续期令牌. 服务端可配置为**轮换**(refresh token rotation): RT 一次性、每次续期换发新 RT、旧的随即失效. 客户端每次续期后都应以响应中的 RT 覆盖本地保存的. |
+| Issuer          | **认证服务**<br>包含两套认证服务<br>- 基于 OAuth 2.1 和 OIDC 协议的用户认证服务<br>- 基于设备证明的 App 安装实例认证服务<br>本文档还会用 `{issuer}` 表示认证服务的基地址.              |
+| Account Service | **账号服务**<br>提供 `/user/identities` 等账号身份管理接口.<br>本文档还会用 `{account-servcie}` 表示用户账号服务的基地址.                                                              |
+| `<user_grant>`  | **申请 OAuth Token 时所用的用户证明方式**<br>即一个 `/oauth2/token` 请求的 `grant_type`.                                                                                               |
+| `<credential>`  | **`<user_grant>` 所需的用户凭据参数**<br>由对应 grant 的专项文档定义. 例如 `authorization_code` 请求的用户凭据就是授权码 `code`.                                                       |
 
-> App Attest 专有概念(`kid` / `client_id` / attestation / assertion)在下述接入步骤中随用随讲.
+> 本文档为了书写方便, 描述接口 URL 时, 默认不带基地址, 例如申请 Token 接口一般会直接写为 `POST /oauth2/token` 或 `POST {issuer}/oauth2/token`, 实际请求时应在前面拼接用户认证服务基地址.
+> 
+> 基地址可能是域名, 也可能包含路径, 以下地址都是合法的基地址, 客户端接入时应注意兼容.
+> - 域名: `https://auth.example.com`
+> - 域名 + ContextPath: `https://account.example.com/auth`
+> - 域名 + API 版本路径: `https://account.example.com/api/v1`
+> 
+> 以获取用户身份接口 `GET {account-service}/user/identities` 为例 , 假设账号服务的基地址为 `https://account.example.com/api/v1`, 则完整的接口 URL 为
+> ```http
+> GET https://account.example.com/api/v1/user/identities
+> ```
 
 ---
 
-## 二. 端点发现
+## 二. 服务端点发现
 
-本文涉及三类端点, 客户端寻址方式不同:
+### 2.1 认证服务端点
 
-1. **授权服务端点**(随授权服务部署): `/oauth2/token`、`/oauth2/register`、`/oauth2/challenge`、`/userinfo`、JWKS 等. 遵循 [OpenID Connect Discovery 1.0](https://openid.net/specs/openid-connect-discovery-1_0.html), 客户端**不要硬编码**, 应从 `{issuer}/.well-known/openid-configuration` 拉取并缓存 `OpenID Provider Metadata`, 读取 `token_endpoint` / `client_registration_endpoint` / `challenge_endpoint` / `userinfo_endpoint` / `jwks_uri` 等. 本文为简洁沿用 `/oauth2/token` 等简写, 实际以 Discovery 返回值为准.
-2. **App Attest 端点**(与授权服务同源, 但**不属于 OAuth**): `/app_attest/challenge`、`/app_attest/register`, **仅用于 App 实例注册**(attestation). 不出现在 OIDC Discovery 中, 应从 `{issuer}/.well-known/app-attest-configuration` 拉取 `challenge_endpoint` 与 `registration_endpoint`. 完整说明见 [Apple App Attest 服务发现](../../App-Attest-Discovery.md).
-3. **Account Service 端点**: `/user/identities` 等. 独立配置基地址, 不经 `issuer` 发现. 文中形如 `POST /user/identities` 均为相对简写, 实际请求**追加到 Account Service 基地址之后**(基地址自带路径需一并保留, 例 `https://account.example.com/api/v1` + `/user/identities`).
+#### 2.1.1 用户认证服务端点
 
-> **两个 challenge 端点勿混**: `/app_attest/challenge`(经 app-attest-configuration 发现)**只用于 App 实例注册**(attestation); `/oauth2/challenge`(经 openid-configuration 的 `challenge_endpoint` 发现)**用于 OAuth 流程**(客户端注册与取 Token 的 assertion 客户端认证). 二者实现同源, 但 path 与业务域不同, 各用各的.
+遵循 [OpenID Connect Discovery 1.0](https://openid.net/specs/openid-connect-discovery-1_0.html) 规范, 从以下 well-known 端点获取
 
-> **demo 环境说明**: Account Service 与授权服务合部署于同一主机但基地址不同 —— `issuer` 为 `https://auth.example.com`, Account Service 为 `https://auth.example.com/api/v1`(带路径后缀). 客户端**必须将二者作为独立配置项分别维护**, 不能由 `issuer` 推导 Account Service 基地址, 以免账号服务拆分或路径变更时需发版修复.
+```http
+GET {issuer}/.well-known/openid-configuration
+```
+
+#### 2.1.2 App 安装实例认证服务端点
+
+属自定义扩展协议, 从以下 well-known 端点动态获取
+
+```http
+GET {issuer}/.well-known/app-attest-configuration
+```
+
+> ⚠️ **两个 challenge 端点勿混**: 用户认证服务和 App 安装实例认证服务各有一个 `challenge` 端点, 但其地址不同, 应分别从各自的 well-known 端点获取, 切勿混用.
+> 
+> 用户认证服务的端点为 `POST /oauth2/challenge`, 其获取位置为
+> ```http
+> GET {issuer}/.well-known/openid-configuration#challenge_endpoint
+> ```
+> App 安装实例认证服务的端点为 ` POST /app_attest/challenge`, 其获取位置为
+> ```http
+> GET {issuer}/.well-known/app-attest-configuration#challenge_endpoint
+> ```
+
+### 2.2 账号服务端点
+
+账号服务不支持 well-known 端点, 其端点地址都是固定的, 接入方根据接口文档拼接上 `{account-service}` 即可.
+
+> ⚠️ **认证服务和账号服务合并部署时的注意事项**: 认证服务和账号服务支持合并部署, 即 `{issuer}` 和 `{account-service}` 可能相同, 但接入时仍应维护两个相互独立的配置项, 防止其中某一个被单独修改.
 
 ---
 
