@@ -72,7 +72,7 @@ graph TB
 
 遵循 [OpenID Connect Discovery 1.0](https://openid.net/specs/openid-connect-discovery-1_0.html) 规范, 从以下 well-known 端点获取
 
-```http
+```
 GET {issuer}/.well-known/openid-configuration
 ```
 
@@ -80,18 +80,18 @@ GET {issuer}/.well-known/openid-configuration
 
 属自定义扩展协议, 从以下 well-known 端点动态获取
 
-```http
+```
 GET {issuer}/.well-known/app-attest-configuration
 ```
 
 > ⚠️ **两个 challenge 端点勿混**: 用户认证服务和 App 安装实例认证服务各有一个 `challenge` 端点, 但其地址不同, 应分别从各自的 well-known 端点获取, 切勿混用.
 > 
 > 用户认证服务的端点为 `POST /oauth2/challenge`, 其获取位置为
-> ```http
+> ```
 > GET {issuer}/.well-known/openid-configuration#challenge_endpoint
 > ```
 > App 安装实例认证服务的端点为 ` POST /app_attest/challenge`, 其获取位置为
-> ```http
+> ```
 > GET {issuer}/.well-known/app-attest-configuration#challenge_endpoint
 > ```
 
