@@ -349,14 +349,45 @@ sequenceDiagram
 
 ### 3.4 绑定用户身份
 
-一个账号可绑定多个用户身份, 例如手机, 邮箱, IdP 账号 (Google, 微信) 等.
+一个账号可绑定多个用户身份 (手机 / 邮箱 / IdP 账号如 Google、微信 等). 匿名试用账号绑定其他用户身份后即**升级为正式账号**; 正式账号也可继续追加其他身份.
 
-- 接口: `POST /user/identities`(携 AT). 它只为 **当前 AT 对应的账号**追加一条绑定, **不下发新 AT、也不改账号**;
-  绑定结果体现在后续会话 (下次续期时服务端返回反映已绑定身份的新 AT).
-- 绑定其他用户身份后, 该账号的 `user_assertion` 登录 **随即失效**(返回 `invalid_grant`), 改由该身份登录, 数据无损; 无需删除原
-  `public_key` 身份数据.
-- 各身份类型的绑定参数见其专项文档
-  (如 [OTP 接入细节 · 绑定场景](App-Attest-Login-%23-OTP.md#三-绑定场景-账号追加手机--邮箱绑定)).
+绑定走账号服务接口 `POST /user/identities` (携 AT), 它只为**当前 AT 对应的账号**追加一条绑定, **不下发新 AT、也不改账号**; 绑定结果体现在后续会话 (下次续期时服务端返回反映已绑定身份的新 AT).
+
+> ⚠️ 绑定其他用户身份后, 该账号的 `user_assertion` 登录**随即失效** (返回 `invalid_grant`), 改由该身份登录, 数据无损; 无需删除原 `public_key` 身份数据.
+
+请求示例:
+
+```http
+POST /user/identities
+Authorization: Bearer {access_token}
+Content-Type: application/x-www-form-urlencoded
+
+identity_type=<identity_type>
+&<credential>
+```
+
+`<identity_type>` 为要绑定的身份类型 (如 `phone` / `email` / `wechat` / `google`), `<credential>` 为该身份所需的用户凭据 (与同类型登录一致, 如 `phone` / `email` 用 `otp_ticket` + `otp`). 各身份类型的具体绑定参数见专项文档 (如 [OTP 接入细节 · 绑定场景](App-Attest-Login-%23-OTP.md#三-绑定场景-账号追加手机--邮箱绑定)、[绑定用户身份接口](../../APIs-%23-User-Identities-Create.md)).
+
+时序图:
+
+```mermaid
+sequenceDiagram
+    participant App as iOS App
+    participant Server as Account Service
+    participant CP as <credential> 提供方<br>(用户, IdP)
+    App ->> CP: 请求绑定所需的 <credential>
+    CP -->> App: <credential><br>(例如用户输入 OTP 或 IdP 返回授权码)
+    App ->> Server: POST /user/identities (Authorization Bearer AT, 体 identity_type 与 <credential>)
+    Server ->> Server: 校验 AT 归属账号, 验证 <credential> 得到该身份的唯一标识
+    alt 唯一标识未被占用
+        Server ->> Server: 在当前账号下追加该身份绑定
+        Server -->> App: 200 绑定结果
+        App ->> App: 追加到本地用户身份数据, 会话凭证保持不变 (绑定结果下次续期体现)
+    else 唯一标识已属于另一账号
+        Server -->> App: 409 identity_occupied 附带短期 conflict_token (当前账号不变)
+        App ->> App: 弹窗引导用户二选一 (见下方绑定冲突处置)
+    end
+```
 
 **绑定冲突处置**: 若目标身份的 `唯一标识` 在服务端已属于 **另一个账号**, `POST /user/identities` 返回
 `409 identity_occupied` 并附带短期 `conflict_token`(固定不改变当前账号). 客户端应弹窗引导用户二选一:
@@ -369,45 +400,19 @@ sequenceDiagram
   在服务端保留但自身无任何用户身份, 成为 **孤儿账号**(试用数据留在服务端、客户端无法再访问, 且不迁移到 `账号_2`). 这是
   **账号切换而非数据合并**, 落地后应在调用前明确告知用户.
 
-### 3.5 退出登录
+### 3.5 异常处置: `kid` 被吊销
 
-退出登录执行统一清理:
+触发 Apple 风控时服务端会吊销 `kid`, 此后所有携该 `kid` assertion 的请求 (取 Token、续期) 都会失败. 客户端应把失效的 `kid` + `client_id` 与会话数据一并清除. 下次启动时按本文档的完整流程重新注册 App 实例和 OAuth Client, 并引导用户重新登录.
 
-| 数据                                              | 退出时动作 |
-|---------------------------------------------------|------------|
-| `access_token` / `refresh_token`                  | 删除       |
-| 用户身份数据(identities)                          | 整体删除   |
-| App 实例注册信息(`kid` / `client_id`, 见〈五.1〉) | **保留**   |
-
-- **为何保留 `kid` / `client_id`**: 它们是 **App 实例的注册凭据**, 与用户身份解耦 (只标识"哪台设备上的哪个 App 实例",
-  不含用户数据), 保留以便下次登录直接复用、免去重新 `attestKey`(Apple 对 attestation 有频率限制). Secure Enclave 中的私钥由
-  iOS 管理, APP 无需也无法显式销毁.
-- **下次登录路径**: 本地无用户身份数据与 AT/RT, 但 App 实例级 `kid` + `client_id` 仍在 → 直接走〈三.3〉取 Token, 无需重新注册.
-- **服务端侧无账号关联**: 退出登录是客户端本地动作, 不通知服务端. 服务端只保留 App 实例注册信息 (`kid → client_id`,
-  属客户端域), `kid` **不与任何用户账号绑定** —— 同一 App 实例的 `kid` 可供该实例上任意账号的登录复用, 退出或换账号都无需服务端清理.
+> ⚠️ 对于匿名试用账号由于清空会话数据会把 `user_assertion` 的私钥也一并清除, 所以原账号将不可恢复. 如果想保留原账号, 也有办法: 清会话数据时保留 `user_assertion` 的私钥和匿名账号的 `sub`, 下次启动时按本文档的完整流程重新注册 App 实例和 OAuth Client 后, 用原私钥静默重签 `user_assertion` 即可重新取 AT (无需用户参与), 账号数据无损.
 
 ---
 
-## 四. 异常处置: `kid` 被服务端吊销
-
-`kid` 吊销主要发生在 **触发 Apple 风控时**: Apple 判定该设备或其 App Attest 密钥存在欺诈风险, 服务端随即吊销对应 `kid`.
-被吊销后该 `kid` 及其绑定的 `client_id` 在服务端不再可用, 所有携其 assertion 的请求 (取 Token、续期)都会失败.
-
-**失效处置**: 客户端清除本地 **失效的 App 实例注册信息**(`kid` + `client_id`)与用户数据 (用户身份数据 + 会话凭证),
-使下次启动静默 `generateKey()` 重新完成 App 实例注册 + 客户端注册 (得 `kid_new` + `client_id`), 再按账号类型恢复:
-
-- **正式账号**: 用新 `kid` 重新走[取 Token](#33-取-token), 由用户凭据 (如 OTP)解析到原账号并下发新 AT, **账号数据无损**.
-- **匿名试用账号 (`user_assertion`)**: 其身份 **与 `kid` 解绑**(由用户自持私钥 + `sub` 定位,
-  见 [user_assertion 接入细节](App-Attest-Login-%23-User-Assertion.md)). 只要客户端仍持有该账号的私钥与 `sub`, 用新
-  `kid` 完成客户端认证后即可照常 `user_assertion` 登录, **账号数据无损**; 仅当私钥也丢失时账号才不可恢复 (成为孤儿).
-
----
-
-## 五. 客户端持久化数据
+## 四. 客户端持久化数据
 
 客户端持久化的数据分三类, 每类按两个维度定性, 由此决定存储位置与清理时机:
 
-- **生命周期**: `session`(退出登录 / 续期失败时清除, 见〈三.5〉) 或 `persistent`(仅"抹掉所有数据"或注册信息失效时才清除).
+- **生命周期**: `session`(退出登录 / 续期失败时清除, 见〈五〉) 或 `persistent`(仅"抹掉所有数据"或注册信息失效时才清除).
 - **是否机密**: 机密数据 (bearer 凭据、用户 PII)**强制存 Keychain**, 禁止明文存 `UserDefaults` / `plist`(越狱设备可读取);
   非机密数据 (标识符类, 如 `kid` / `client_id` —— 签名私钥不可导出, 泄露不构成风险)**不强制存储位置**, 由客户端自选.
 
@@ -417,7 +422,7 @@ sequenceDiagram
 | 会话凭证         | `session`    | 是       | **Keychain**       |
 | 用户身份数据     | `session`    | 是       | **Keychain**       |
 
-### 5.1 App 实例注册信息 (App Instance Enrollment)
+### 4.1 App 实例注册信息 (App Instance Enrollment)
 
 App 实例注册与客户端注册的产物, **归属 App 实例、独立于用户身份数据**.
 
@@ -435,7 +440,7 @@ App 实例注册与客户端注册的产物, **归属 App 实例、独立于用�
 | `client_id` | string | **per-KEY OAuth2 客户端标识**, 客户端注册(`/oauth2/register`)返回, 与 `kid` 一一绑定 |
 | `iat`       | date   | **Apple App Attest Key 的生成时间(Issued At)**                                       |
 
-### 5.2 会话凭证 (Session Credentials)
+### 4.2 会话凭证 (Session Credentials)
 
 > 下例为 `POST /oauth2/token` 成功响应结构 (下划线风格, APP 可自行映射为驼峰). 客户端把 token 值原样保存, 并在
 > **收到响应的当下**据 `expires_in` 换算出 AT 绝对过期时刻一并存下; `token_type` / `scope` 无需持久化.
@@ -463,7 +468,7 @@ App 实例注册与客户端注册的产物, **归属 App 实例、独立于用�
 > **用户 profile 不在本文档统一持久化**: 业务方可能有自己的 profile 服务, 故本文不定义 profile 结构. 与用户档案相关的信息由
 > `id_token` 承载 (或经 `GET /userinfo` 获取), 客户端按需处理.
 
-### 5.3 用户身份数据 (Identities)
+### 4.3 用户身份数据 (Identities)
 
 > 示例采用下划线风格 (与接口返回一致), APP 可自行映射为驼峰.
 
@@ -493,6 +498,12 @@ App 实例注册与客户端注册的产物, **归属 App 实例、独立于用�
 
 ---
 
+## 五. 退出登录
+
+退出登录即清除本地所有生命周期为 `session` 的数据 (会话凭证与用户身份数据), 其余 `persistent` 数据 (App 实例注册信息) 保留.
+
+---
+
 ## 六. 常见坑位
 
 1. **AT 续期用 `refresh_token` + assertion 请求头**: 每次续期后以响应中的新 RT 覆盖本地保存的 (服务端开启 **轮换**时旧
@@ -511,9 +522,8 @@ App 实例注册与客户端注册的产物, **归属 App 实例、独立于用�
    (`kid` / `client_id`)非机密 (私钥不可导出), 存储位置不强制.
 8. **三类数据生命周期不同**: App 实例注册信息 (`persistent`, 跨登录保留)、用户身份数据 (随账号切换变化)、会话凭证 (随每次
    Token 刷新变化), 建议分开存储 (各自独立条目), 避免一次写入失败导致全部丢失.
-9. **`kid` 被吊销时的处理**: assertion 被拒且错误码指向 `kid` 失效时, 清除失效的 `kid` + `client_id` 与用户数据, 回登录页;
-   下次启动静默重注册新 `kid` 再按账号类型恢复 (正式账号数据无损; `user_assertion` 账号只要私钥 + `sub` 仍在亦无损).
-   详见〈四〉.
+9. **`kid` 被吊销时的处理**: assertion 被拒且错误码指向 `kid` 失效时, 把失效的 `kid` + `client_id` 与会话数据一并清除 (匿名账号须保留 `user_assertion` 私钥 + `sub`),
+   下次启动静默重注册新 `kid` 后重新登录即可, 账号数据无损. 详见〈三.5〉.
 10. **`user_assertion` 保证级别低**: 只验客户端不验用户, 仅宜试用 / 低敏感场景; 账号绑定其他用户身份后 `user_assertion`
     登录失效. 详见 [user_assertion 接入细节](App-Attest-Login-%23-User-Assertion.md).
 

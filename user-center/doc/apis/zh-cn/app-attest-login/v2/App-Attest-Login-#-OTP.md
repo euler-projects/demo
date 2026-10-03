@@ -79,7 +79,7 @@ channel=sms
 
 ## 三. 绑定场景: 账号追加手机 / 邮箱绑定
 
-本场景对应[总文档〈三.4 绑定用户身份〉](App-Attest-Login.md#34-绑定用户身份升级为正式账号)(账号追加手机 / 邮箱绑定). 客户端先调 `POST /otp/tickets`触发下发, 用户输入 OTP 后, 凭当前 AT 调 `POST /user/identities` 上行 `otp_ticket` + `otp` 二元组, 服务端校验通过后在当前账号下新增 `phone` / `email` 元素.
+本场景对应[总文档〈三.4 绑定用户身份〉](App-Attest-Login.md#34-绑定用户身份)(账号追加手机 / 邮箱绑定). 客户端先调 `POST /otp/tickets`触发下发, 用户输入 OTP 后, 凭当前 AT 调 `POST /user/identities` 上行 `otp_ticket` + `otp` 二元组, 服务端校验通过后在当前账号下新增 `phone` / `email` 元素.
 
 ```mermaid
 sequenceDiagram
@@ -107,13 +107,13 @@ sequenceDiagram
     Note over App: 会话凭证保持不变 继续用原 AT
 ```
 
-> 若目标手机号 / 邮箱已被其他账号占用, 服务端返回 `409 identity_occupied` 附带 `conflict_token`, 处置方式参见[总文档〈三.4 绑定用户身份〉](App-Attest-Login.md#34-绑定用户身份升级为正式账号).
+> 若目标手机号 / 邮箱已被其他账号占用, 服务端返回 `409 identity_occupied` 附带 `conflict_token`, 处置方式参见[总文档〈三.4 绑定用户身份〉](App-Attest-Login.md#34-绑定用户身份).
 
 ---
 
 ## 四. 标准 OTP 登录完整流程
 
-本场景对应[总文档〈三.3 取 Token〉](App-Attest-Login.md#33-取-token). 客户端先走 `POST /otp/tickets`(无 `purpose`)拿到 `otp_ticket` 并等待用户输入 OTP; 若本地尚无可用 `kid` + `client_id`, 先完成 App 实例注册与 OAuth2 客户端注册(见总文档〈三.1〉〈三.2〉); 最后以 `grant_type=otp` + `otp_ticket` + `otp` + assertion 请求头上行 `/oauth2/token`, 服务端一次性完成"客户端认证 + OTP 验证". 对于新注册(`recipient` 尚未绑定任何账号)的分支, 服务端将 `recipient` 写入新账号的 `identities`; 已绑定账号的分支直接复用原有 `identities`.
+本场景对应[总文档〈三.3 Token 申请与续期〉](App-Attest-Login.md#33-token-申请与续期). 客户端先走 `POST /otp/tickets`(无 `purpose`)拿到 `otp_ticket` 并等待用户输入 OTP; 若本地尚无可用 `kid` + `client_id`, 先完成 App 实例注册与 OAuth2 客户端注册(见总文档〈三.1〉〈三.2〉); 最后以 `grant_type=otp` + `otp_ticket` + `otp` + assertion 请求头上行 `/oauth2/token`, 服务端一次性完成"客户端认证 + OTP 验证". 对于新注册(`recipient` 尚未绑定任何账号)的分支, 服务端将 `recipient` 写入新账号的 `identities`; 已绑定账号的分支直接复用原有 `identities`.
 
 ```mermaid
 sequenceDiagram
@@ -209,7 +209,7 @@ identity_type=phone
 
 ## 六. `identities` 中 phone / email 元素结构
 
-作为 `identities` 列表中 `identity_type=phone` / `identity_type=email` 的元素, 由公共字段(`identity_id` / `identity_type` / `identifier` / `bound_at`, 详见[总文档 5.3 用户身份数据](App-Attest-Login.md#53-用户身份数据-identities))与 OTP 原生字段两部分组成:
+作为 `identities` 列表中 `identity_type=phone` / `identity_type=email` 的元素, 由公共字段(`identity_id` / `identity_type` / `identifier` / `bound_at`, 详见[总文档 4.3 用户身份数据](App-Attest-Login.md#43-用户身份数据-identities))与 OTP 原生字段两部分组成:
 
 ```json
 {
