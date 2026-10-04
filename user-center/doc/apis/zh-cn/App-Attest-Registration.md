@@ -74,20 +74,30 @@ iOS 侧关键三步: `generateKey()` → `attestKey()` → 提交注册.
 
 > 本端点**幂等**: 若首次响应丢失, 客户端可用新 challenge 重新 `attestKey` 再次提交, 服务端完整校验通过后返回**既有**注册 (不重复登记, 也不报错). 被截获的 attestation 无法重放 —— 其 nonce 绑定已消费的一次性 challenge.
 
-### 请求 (`application/x-www-form-urlencoded`)
+### 请求
 
-| 参数 | 类型 | 必需 | 说明 |
-|------|------|------|------|
-| `attestation` | string | 是 | `attestKey()` 产物的 Base64 编码 (标准 Base64, 非 URL-safe) |
-| `challenge` | string | 是 | 从 `/app_attest/challenge` 获取的 `attestation_challenge` 原始值 (非 hash) |
+attestation 与 challenge 支持**两种承载方式**, 二选一、**不可混用**: 表单参数 (`application/x-www-form-urlencoded`) 或 HTTP 请求头. 无论哪种承载, `kid` 都**无需上传** —— 服务端直接从 attestation 的 credentialId 解析得到, 并在响应中返回.
 
-> `kid` **无需上传**: 服务端直接从 attestation 的 credentialId 解析得到, 并在响应中返回.
+| 字段 | 表单参数名 | 请求头名 | 必需 | 说明 |
+|------|-----------|---------|------|------|
+| attestation | `app_attest_attestation` | `App-Attest-Attestation` | 是 | `attestKey()` 产物的 Base64 编码 (标准 Base64, 非 URL-safe) |
+| challenge | `app_attest_challenge` | `App-Attest-Challenge` | 是 | 从 `/app_attest/challenge` 获取的 `attestation_challenge` 原始值 (非 hash) |
+
+**承载方式一 · 表单参数**:
 
 ```http
 POST /app_attest/register
 Content-Type: application/x-www-form-urlencoded
 
-attestation={base64}&challenge={attestation_challenge}
+app_attest_attestation={base64}&app_attest_challenge={attestation_challenge}
+```
+
+**承载方式二 · 请求头** (无请求体):
+
+```http
+POST /app_attest/register
+App-Attest-Attestation: {base64}
+App-Attest-Challenge: {attestation_challenge}
 ```
 
 ### 响应 (200)
@@ -102,7 +112,7 @@ attestation={base64}&challenge={attestation_challenge}
 
 | HTTP | `error` | 场景 |
 |------|---------|------|
-| 400 | `invalid_request` | 缺少 `attestation` / `challenge` |
+| 400 | `invalid_request` | 缺少 attestation / challenge (表单参数与请求头两种承载均未提供) |
 | 401 | `registration_failed` | challenge 无效或过期, 或 attestation 校验失败 (证书链 / nonce / AAGUID / 计数器非 0 / RP ID 未匹配任何已登记 App 等) |
 
 ---

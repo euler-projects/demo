@@ -5,7 +5,7 @@
 公共客户端 (Public Client) 不持有 client secret, 不在 `/oauth2/token` 上做客户端身份验证. 由于无法区分合法客户端与攻击者, **必须** 至少叠加以下增强手段之一:
 
 * 使用 `authorization_code` + PKCE (`code_challenge` / `code_verifier`);
-* 使用 `attest_jwt_client_auth` 作为附加的客户端证明 (`OAuth-Client-Attestation-*` 头).
+* 叠加基于设备证明的客户端认证 (见下两个 `attest_*` 方式) 作为附加的客户端证明.
 
 请求示例:
 
@@ -58,7 +58,25 @@ OAuth-Client-Attestation-PoP: <PoP JWT>
 grant_type=authorization_code&client_id=default&code=...&code_verifier=...
 ```
 
-> 详细设计 (请求头语义、PoP 类型与载体、独立 / 增强两种使用场景、各认证方式与 PKCE 的组合约束) 较为复杂, 具体使用方式参考: [Attestation Based Client Auth 子文档](OAuth2-Client-Authentication-%23-Attestation-Based.md) (_待补充_).
+> 详细设计 (请求头语义、PoP 类型与载体、独立 / 增强两种使用场景、各认证方式与 PKCE 的组合约束) 较为复杂, 具体使用方式参考: [Attestation Based Client Auth 子文档](OAuth2-Client-Authentication-%23-Attestation-Based.md).
+
+### `attest_appattest_client_auth` — 基于 Apple App Attest 的客户端认证
+
+以 [Apple App Attest](https://developer.apple.com/documentation/devicecheck) 的 assertion 替代 PoP JWT 作为持有证明, 适用于 iOS 原生 App. 凭据由 `App-Attest-Kid` / `App-Attest-Challenge` / `App-Attest-Assertion` 请求头承载, 同样可作独立认证方式或叠加在其他标准认证方式之上.
+
+请求示例:
+
+```http
+POST /oauth2/token
+Content-Type: application/x-www-form-urlencoded
+App-Attest-Kid: <keyId>
+App-Attest-Challenge: <challenge>
+App-Attest-Assertion: <Base64 assertion>
+
+grant_type=otp&otp=...
+```
+
+> 详见 [Apple App Attest 子文档](OAuth2-Client-Authentication-%23-Attestation-Based-%23-Apple-App-Attest.md).
 
 ## 注意事项
 

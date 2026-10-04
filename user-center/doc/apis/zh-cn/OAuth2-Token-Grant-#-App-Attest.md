@@ -37,7 +37,7 @@
 | `OAuth-Client-Attestation-Type` | `apple_app_attest` | 指定使用 Apple App Attest 作为客户端证明方式 |
 | `Content-Type`                 | `application/x-www-form-urlencoded` | 请求体编码                                   |
 
-> 本文示例使用的是**已废弃的表单参数承载** (`kid` / `challenge` / `attestation` / `assertion` 放在请求体), 因为本文描述的 Grant Type 本身已废弃. 当前推荐的请求头承载方式 (`OAuth-Client-Attestation-Kid` / `-Challenge` / `-Assertion`) 见 [Apple App Attest 客户端认证](OAuth2-Client-Authentication-%23-Attestation-Based-%23-Apple-App-Attest.md).
+> 本文示例使用的是**已废弃的表单参数承载** (`kid` / `challenge` / `attestation` / `assertion` 放在请求体), 因为本文描述的 Grant Type 本身已废弃. 当前推荐的请求头承载方式 (`App-Attest-Kid` / `App-Attest--Challenge` / `App-Attest--Assertion`) 见 [Apple App Attest 客户端认证](OAuth2-Client-Authentication-%23-Attestation-Based-%23-Apple-App-Attest.md).
 
 **请求体通用参数:**
 

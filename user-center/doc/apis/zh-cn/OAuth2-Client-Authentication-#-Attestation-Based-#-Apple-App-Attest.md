@@ -1,6 +1,6 @@
 # Attestation Based Client Authentication (Apple App Attest)
 
-当请求头 `OAuth-Client-Attestation-Type: apple_app_attest` 时, 使用 [Apple App Attest](https://developer.apple.com/documentation/devicecheck/establishing-your-app-s-integrity) 作为客户端证明的 PoP 载体, 替代草案中的标准 PoP JWT.
+使用 [Apple App Attest](https://developer.apple.com/documentation/devicecheck/establishing-your-app-s-integrity) 的 assertion 作为客户端证明的 PoP 载体, 替代草案中的标准 PoP JWT; 对应的客户端认证方式为 `attest_appattest_client_auth`. 服务端由请求携带的 App Attest 凭据判定使用该变体, **无需任何类型声明头**.
 
 ## 使用场景
 
@@ -20,7 +20,7 @@
 
 > `generateKey()` 返回的 `keyId` 与服务端在 App 实例注册后所持有的 `kid` 是同一个值. 客户端只需持久化本地 `keyId`, 无需依赖注册接口的响应内容.
 
-**App Attest 数据在 OAuth2 端点一律通过请求头承载** (`OAuth-Client-Attestation-*`), 请求体只放 `grant_type` 与该 grant 自身的参数. App 实例注册端点 `POST /app_attest/register` 是唯一例外, 它使用表单参数, 详见步骤 2.
+OAuth2 端点上的 Apple 凭据用 `App-Attest-Kid` / `App-Attest-Challenge` / `App-Attest-Assertion` 请求头承载, 或用等价的 `app_attest_kid` / `app_attest_challenge` / `app_attest_assertion` 表单参数(二选一、**不可混用**); 服务端据此判定使用本变体. 请求体只放 `grant_type` 与该 grant 自身的参数.
 
 ---
 
@@ -50,13 +50,13 @@
 
 ### 步骤 2: App 实例注册 (两种类型均需执行)
 
-首次接入需完成 **App 实例注册**: `generateKey()` → 获取 challenge → `attestKey()` → `POST /app_attest/register` (表单参数), 登记该 App 实例的 App Attest KEY (`kid`). attestation 每个 KEY 正常只提交一次, 此后一律用 assertion.
+首次接入需完成 **App 实例注册**: `generateKey()` → 获取 challenge → `attestKey()` → `POST /app_attest/register`, 登记该 App 实例的 App Attest KEY (`kid`). attestation 每个 KEY 正常只提交一次, 此后一律用 assertion.
 
 > 完整流程与契约 (请求/响应、幂等与重试、错误码) 见 [Apple App Attest 实例注册](App-Attest-Registration.md).
 
 ### 步骤 3: 注册客户端 (仅 DYNAMIC)
 
-DYNAMIC 类型需携 assertion 请求 `POST /oauth2/register` (RFC 7591), 获取该 KEY 专属的 `client_id` 并持久化; **STATIC 类型跳过本步骤.** assertion 由 `generateAssertion(keyId, SHA256(challenge))` 生成, App Attest 数据经请求头 (`OAuth-Client-Attestation-*`) 承载, 注册体为 RFC 7591 JSON.
+DYNAMIC 类型需携 assertion 请求 `POST /oauth2/register` (RFC 7591), 获取该 KEY 专属的 `client_id` 并持久化; **STATIC 类型跳过本步骤.** assertion 由 `generateAssertion(keyId, SHA256(challenge))` 生成, Apple 凭据经 `App-Attest-*` 请求头承载(注册体是 RFC 7591 JSON, 放不下表单参数), 并附 `OAuth-Client-Attestation-Type: apple_app_attest`.
 
 > 完整契约 (请求头、请求体、服务端强制项、响应、错误码) 见 [OAuth2 Client Registration - App Attest DYNAMIC](OAuth2-Client-Registration-%23-App-Attest-Dynamic.md).
 
@@ -72,16 +72,15 @@ let body: [String: String] = [
     "grant_type": "<grant_type>",
     // ... 其余参数按对应 grant type 的文档补充
 ]
-// App Attest 数据全部走请求头, 不进请求体
+// 本例走请求头承载; 也可改用等价的 app_attest_* 表单参数(与 grant_type 并列进请求体)
 ```
 
 ```http
 POST /oauth2/token
 Content-Type: application/x-www-form-urlencoded
-OAuth-Client-Attestation-Type: apple_app_attest
-OAuth-Client-Attestation-Kid: {keyId}
-OAuth-Client-Attestation-Challenge: {challenge}
-OAuth-Client-Attestation-Assertion: {base64}
+App-Attest-Kid: {keyId}
+App-Attest-Challenge: {challenge}
+App-Attest-Assertion: {base64}
 
 grant_type={grant_type}&...
 ```
@@ -108,7 +107,7 @@ iOS App                Apple             Authorization Server
   |<---------------------|                        |
   |                                               |
   |  POST /oauth2/token                           |
-  |  headers: -Kid, -Challenge, -Assertion        |
+  |  headers: App-Attest-Kid/-Challenge/-Assertion|
   |---------------------------------------------->|
   |                      |   Verify assertion     |
   |  {access_token, ...}                          |
@@ -127,11 +126,12 @@ Token 过期后重复本步骤即可. 每次请求均需使用新的 challenge �
 
 | 头 | 必需 | 说明 |
 |----|------|------|
-| `OAuth-Client-Attestation-Type` | 是 | 固定 `apple_app_attest` |
-| `OAuth-Client-Attestation-Kid` | 是 | `generateKey()` 返回的 keyId |
-| `OAuth-Client-Attestation-Challenge` | 是 | challenge 原始字符串 (**非** hash) |
-| `OAuth-Client-Attestation-Assertion` | 是 | Base64 编码的 Assertion Object |
+| `App-Attest-Kid` | 是 | `generateKey()` 返回的 keyId |
+| `App-Attest-Challenge` | 是 | challenge 原始字符串 (**非** hash) |
+| `App-Attest-Assertion` | 是 | Base64 编码的 Assertion Object |
 | `Content-Type` | 是 | `application/x-www-form-urlencoded` |
+
+> 上表三个 `App-Attest-*` 头也可改用等价表单参数 `app_attest_kid` / `app_attest_challenge` / `app_attest_assertion` 承载(此时它们进请求体, 与 `grant_type` 并列); 两种承载不可混用.
 
 **请求体:** 仅 `grant_type` 与该 grant 自身要求的参数 (按对应 grant type 文档). `client_id` 可选: STATIC 无需提交, DYNAMIC 若提交则必须与步骤 3 所获取的值一致.
 
@@ -143,12 +143,13 @@ Token 过期后重复本步骤即可. 每次请求均需使用新的 challenge �
 
 | 已废弃用法 | 说明与替代 |
 |-----------|-----------|
-| 表单参数承载 | 将 `kid` / `challenge` / `assertion` 作为请求体表单参数提交. 改用请求头 |
+| `OAuth-Client-Attestation-Type: apple_app_attest` | 早期用于声明使用本变体的自定义头. 变体现由凭据载体判定, 新客户端**不应**携带; 仅为存量客户端保留(它们把凭据放在下表的旧表单参数名里, 那些名字过于通用、无法由载体识别) |
+| 旧表单参数名承载 | 将 `kid` / `challenge` / `assertion` / `attestation` 作为请求体表单参数提交. 改用 `App-Attest-*` 请求头或 `app_attest_*` 表单参数 |
 | 在 token 端点提交 `attestation` | 跳过 App 实例注册, 一次请求完成注册 + 认证 + 签发. 仅 STATIC 可用; DYNAMIC 返回 `unauthorized_client` (但 App Attest KEY 已登记成功, **无需重新 `attestKey()`**, 直接继续步骤 3). 改用步骤 2 的注册端点 |
 | `attestation` 与 `assertion` 同传 | 冗余: App 实例注册本身已完成客户端认证, 附加 assertion 不提升安全强度 |
 | `urn:ietf:params:oauth:grant-type:app_assertion` | 仅凭 assertion 续期, 依赖此前 attestation 请求建立的设备与用户关联; 关联缺失返回 `invalid_grant`, 且该 grant 会忽略请求携带的任何登录因素. 改用用户级 Grant Type 或 `refresh_token`, 详见 [OAuth2 Token Grant - App Attest](OAuth2-Token-Grant-%23-App-Attest.md) |
 
-> 表单参数承载与请求头承载**不可混用**: 只要出现 `OAuth-Client-Attestation-Assertion` 头, 服务端即整体按请求头读取, 忽略全部 App Attest 表单参数.
+> **承载优先级与回退**: 三种承载互不混用 —— 只要出现任一 `App-Attest-*` 头, 服务端即整体按请求头读取; 否则若出现任一 `app_attest_*` 表单参数, 整体按新表单参数读取; 两者都解析不到、且请求带了已废弃的 `OAuth-Client-Attestation-Type: apple_app_attest` 时, 才回退到上表已废弃的 `attestation` / `assertion` / `challenge` / `kid` 表单参数.
 
 ---
 
@@ -156,7 +157,7 @@ Token 过期后重复本步骤即可. 每次请求均需使用新的 challenge �
 
 | 错误码 | HTTP | 含义 | 客户端处理 |
 |--------|------|------|-----------|
-| `invalid_request` | 400 | 请求头缺失 (`-Kid` / `-Challenge` / `-Assertion` 任一) | 检查请求头 |
+| `invalid_request` | 400 | 凭据字段缺失 (`App-Attest-Kid` / `-Challenge` / `-Assertion` 任一) | 检查所用承载的字段是否齐全 |
 | `invalid_client_attestation` | 400 | challenge 过期或已被使用, 或 assertion 未通过验证 | 重新获取 challenge 并重新生成 assertion 后重试 |
 | `unauthorized_client` | 400 | 当前 App 类型不允许该用法: DYNAMIC 尚未完成客户端注册, 或 App 未开通 OAuth2 | DYNAMIC 需先完成步骤 3 |
 | `invalid_client` | 401 | `kid` 未注册, 或客户端不存在 | 重新执行步骤 2; 若仍失败请联系服务端 |
@@ -178,13 +179,17 @@ Token 过期后重复本步骤即可. 每次请求均需使用新的 challenge �
 
 ## 附: 与 IETF 草案的差异
 
-[draft-ietf-oauth-attestation-based-client-auth] 的标准做法需要一个 Client Attester 后端, 将 Apple 的证明转译为标准 JWT, 并要求客户端**额外**维护一对软件密钥用于签署 PoP JWT. 本实现通过 `OAuth-Client-Attestation-Type: apple_app_attest` 使服务端直接接受 Apple 原生格式. 对客户端而言意味着:
+[draft-ietf-oauth-attestation-based-client-auth] 的标准做法需要一个 **Client Attester** 把 Apple 的证明转译为标准 Client Attestation JWT(其 `cnf` claim 内嵌客户端公钥), 客户端再以对应私钥签署 PoP JWT(§4、§5.1 规则 3). 本实现使服务端直接接受 Apple 原生格式. 对客户端而言意味着:
 
-- 仅需 Secure Enclave 中的**一对**密钥, 无需额外生成密钥对
+- 仅需 Secure Enclave 中的**一对**密钥; 若自行充当 Client Attester 自签 Client Attestation JWT, 还需一对能被 AS 信任的签名密钥(§7.1 第 4 条要求该签名可用"已知且受信的 Client Attester"公钥验证)
 - 无需先访问中间端点换取 JWT, 减少一次网络往返
 - 每次请求均由硬件签名 (assertion), 硬件绑定贯穿整个生命周期, 而非仅限于注册阶段
 
-草案 Section 4 明确允许不存在 Client Attester 后端的变体, Section 5 亦为额外的 PoP 机制预留了扩展点, 因此本实现符合草案框架. 动态注册端点以 assertion 替代 initial access token 的做法, 对齐 IETF `draft-tschofenig-oauth-attested-dclient-reg`.
+草案 **§2** 明确本规范"即使在客户端没有充当 Client Attester 的后端时也可实现", 此时由每个客户端实例自行承担 Client Attester 的职责; **§5** 也为额外的 PoP 机制预留了扩展点, 并要求其注册自己的 token 端点认证方式值 —— 本实现据此使用独立的 `attest_appattest_client_auth`(该值**未在 IANA 注册**: 注册为 Specification Required 且需公开规范). 但仍有**一处未对齐**, 不得声称严格符合草案:
+
+Apple 变体不提交 Client Attestation JWT, 故 §7.1 / §7.2 中"用 `cnf` 公钥验 PoP 签名"这一标准路径不适用, 改为服务端按 `kid` 查已登记的 Apple 公钥.
+
+因此本实现是**草案框架下的自有扩展**. 动态注册端点以 assertion 替代 initial access token 的做法, 对齐 IETF `draft-tschofenig-oauth-attested-dclient-reg`.
 
 ---
 

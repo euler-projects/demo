@@ -5,10 +5,10 @@
 
 其中用户证明的方式统一以 `<user_grant>` 代指. 它可以是任意一种 OAuth 2.1 Grant Type, 例如:
 
-- 本认证服务支持的标准 OAuth 2.1 Grant Type, 例如 `authorization_code`
-- 本认证服务支持的扩展 Grant Type, 例如 `otp`, `user_assertion`
+- 本认证服务支持的标准 OAuth 2.1 Grant Type, 例如 `authorization_code`, `urn:ietf:params:oauth:grant-type:jwt-bearer`
+- 本认证服务支持的扩展 Grant Type, 例如 `otp`
 
-具体 `<user_grant>` 的接入细节由各自专项文档描述 (例如[短信 / 邮箱 OTP 接入细节](App-Attest-Login-%23-OTP.md)).
+具体 `<user_grant>` 的接入细节由各自专项文档描述 (例如[App Attest Login with OTP]).
 
 ---
 
@@ -23,7 +23,7 @@ graph TB
     C2 -- 否 --> D2[静默完成客户端注册<br>取得 client_id]
     C2 -- 是 --> P{本地存在用户身份数据?}
     D2 --> P
-    P -- 否, 未登录 --> LOGIN[登录取 Token<br>otp, user_assertion 等 user_grant]
+    P -- 否, 未登录 --> LOGIN[登录取 Token<br>otp, jwt-bearer 等 user_grant]
     P -- 是, 已登录 --> T{AT 是否临期/过期?}
     T -- 是, 已临期/过期 --> E[续期 AT<br>grant_type=refresh_token]
     T -- 否, 未临期/过期 --> U[正常使用]
@@ -123,9 +123,8 @@ App 安装实例首次启动时利用 Apple App Attest 的 Attestation 向认证
 
 ```http
 POST /app_attest/register
-Content-Type: application/x-www-form-urlencoded
-
-attestation={Base64(Attestation Object)}&challenge={challenge}
+App-Attest-Attestation: {Base64(Attestation Object)}
+App-Attest-Challenge: {challenge}
 ```
 
 时序图:
@@ -153,20 +152,19 @@ App 安装实例利用 Apple App Attest 的 Assertion
 ```http
 POST /oauth2/register
 Content-Type: application/json
-OAuth-Client-Attestation-Type: apple_app_attest
-OAuth-Client-Attestation-Kid: {kid}
-OAuth-Client-Attestation-Challenge: {challenge}
-OAuth-Client-Attestation-Assertion: {Base64(Assertion Object)}
+App-Attest-Kid: {kid}
+App-Attest-Challenge: {challenge}
+App-Attest-Assertion: {Base64(Assertion Object)}
 
 {
   "client_name": "com.example.app",
-  "grant_types": ["otp", "user_assertion", "refresh_token"],
+  "grant_types": ["otp", "urn:ietf:params:oauth:grant-type:jwt-bearer", "refresh_token"],
   "scope": "openid profile",
-  "token_endpoint_auth_method": "attest_jwt_client_auth"
+  "token_endpoint_auth_method": "attest_appattest_client_auth"
 }
 ```
 
-> ⚠️ 若需支持 3.3.1 的匿名试用, 需要在 grant_types 中包含 `user_assertion`.
+> ⚠️ 若需支持 3.3.1 的匿名试用, 需要在 grant_types 中包含 `urn:ietf:params:oauth:grant-type:jwt-bearer`.
 
 时序图:
 
@@ -181,58 +179,60 @@ sequenceDiagram
     Server -->> App: 201 {client_id} 回绑至 kid
 ```
 
-> ⚠️ 3.1 中 `generateKey` 产生的 `kid` 和 3.2 中 `POST /oauth2/register` 接口返回的 `client_id` 的生命周期应该都是 App 安装实例级的. 即不随用户退出登录而清除, 仅在 App 被卸载或 kid 被吊销时才清除.
+> ⚠️ 3.1 中 `generateKey` 产生的 `kid` 和 3.2 中 `POST /oauth2/register` 接口返回的 `client_id` 的生命周期应该都是 App
+> 安装实例级的. 即不随用户退出登录而清除, 仅在 App 被卸载或 kid 被吊销时才清除.
 
 ### 3.3 Token 申请与续期
 
-App 实例注册与客户端注册完成后 (本地已持有 `kid` 和 `client_id`), 使用 [OAuth2 Client Attestation-Based Authentication with Apple App Attest](../../OAuth2-Client-Authentication-%23-Attestation-Based-%23-Apple-App-Attest.md) 作为 OAuth Client 认证机制通过 `POST /oauth2/token` 接口使用不同的 `grant_type`
+App 实例注册与客户端注册完成后 (本地已持有 `kid` 和 `client_id`),
+使用 [OAuth2 Client Attestation-Based Authentication with Apple App Attest](../../OAuth2-Client-Authentication-%23-Attestation-Based-%23-Apple-App-Attest.md)
+作为 OAuth Client 认证机制通过 `POST /oauth2/token` 接口使用不同的 `grant_type`
 完成 Token 申请或续期.
 
 目前支持的 `grant_type`
 
-| Grant Type           | Credential 参数      | 用途                            | 参考文档                                                                             |
-|----------------------|----------------------|---------------------------------|--------------------------------------------------------------------------------------|
-| `otp`                | `otp_ticket` + `otp` | 邮箱 / 短信 验证码登录          | [App Attest Login with OTP](App-Attest-Login-%23-OTP.md)                             |
-| `refresh_token`      | `refresh_token`      | AT 续期                         | [The OAuth 2.0 Authorization Framework](https://www.rfc-editor.org/rfc/rfc6749.html) |
-| `user_assertion`     | `user_assertion`     | 匿名试用                        | [App Attest Login with User Assertion](App-Attest-Login-%23-User-Assertion.md)       |
-| `conflict_token`     | `conflict_token`     | 绑定冲突时一键切换到已绑定账号  | (本期不实现)                                                                         |
-| 其他标准 OAuth Grant | 标准参数             | 标准 Token 申请, App 暂时用不到 | [The OAuth 2.0 Authorization Framework](https://www.rfc-editor.org/rfc/rfc6749.html) |
+| Grant Type                                    | Credential 参数      | 用途                            | 参考文档                                        |
+|-----------------------------------------------|----------------------|---------------------------------|-------------------------------------------------|
+| `otp`                                         | `otp_ticket` + `otp` | 邮箱 / 短信 验证码登录          | [App Attest Login with OTP]                     |
+| `refresh_token`                               | `refresh_token`      | AT 续期                         | [The OAuth 2.1 Authorization Framework (Draft)] |
+| `urn:ietf:params:oauth:grant-type:jwt-bearer` | `assertion`          | 匿名试用                        | [App Attest Login with JWT Bearer]              |
+| `conflict_token`                              | `conflict_token`     | 绑定冲突时一键切换到已绑定账号  | (本期不实现)                                    |
+| 其他标准 OAuth Grant                          | 标准参数             | 标准 Token 申请, App 暂时用不到 | [The OAuth 2.1 Authorization Framework (Draft)] |
 
-> ⚠️ 本认证服务支持 OIDC, 请务必在 `scope` 参数中指定 `openid` 向认证服务申请 ID Token, 用于解析必要的用户数据, 例如 `sub`.
+> ⚠️ **注意事项:**
+> - 本认证服务支持 OIDC, 请务必在 `scope` 参数中指定 `openid` 向认证服务申请 ID Token, 用于解析必要的用户数据, 例如
+> `sub`.
+> - `urn:ietf:params:oauth:grant-type:jwt-bearer` 为了书写方便, 下文会简写为 `jwt-bearer`.
 
-#### 3.3.1 通过 `user_assertion` 进行匿名试用
+#### 3.3.1 通过 `jwt-bearer` 进行匿名试用
 
-用户认证服务支持一种特殊的用户身份认证方式: `user_assertion`. 该方式允许 App 静默生成一对非对称密钥, 使用私钥签名作为身份认证凭据完成用户身份认证. 此方式的安全性相对较低, 并不核验用户真实身份 (仅证明持有私钥), 仅适用于未绑定其他用户身份的账号使用. 若账号已绑定其他用户身份, 则无法再绑定 `user_assertion` 身份; 若已绑定 `user_assertion` 身份的账号绑定了其他用户身份, 则已绑定的 `user_assertion` 身份将变为不可用状态.
+用户认证服务支持以标准 `jwt-bearer` grant 完成一种低门槛的匿名登录: App 在设备安全区静默生成一对非对称密钥, 先把**公钥注册**到服务端, 之后每次登录用**私钥签发 jwt-bearer 断言**换取 Token. 此方式安全性相对较低, 并不核验用户真实身份(仅证明持有私钥), 仅适用于**未绑定其他用户身份**的账号; 账号一旦绑定其他用户身份, 该方式登录即失效(见 3.4).
 
-请求示例:
+> 公钥注册端点、断言完整格式与边界见 [App Attest Login with JWT Bearer]. 本节只给出取 Token 的概览.
 
-首次开通, JWS 头需要携带公钥 `jwk`:
+第一步 · **注册公钥**(一次性): 客户端向公钥注册端点上报公钥, 经 App Attest 客户端认证(端点从 App 安装实例认证服务的 `keys_endpoint` 发现, 默认 `/app_attest/keys`; 凭据用 `App-Attest-*` 请求头承载):
 
 ```http
-POST /oauth2/token
-Content-Type: application/x-www-form-urlencoded
-OAuth-Client-Attestation-Type: apple_app_attest
-OAuth-Client-Attestation-Kid: {kid}
-OAuth-Client-Attestation-Challenge: {challenge}
-OAuth-Client-Attestation-Assertion: {Base64(Assertion Object)}
+POST /app_attest/keys
+Content-Type: application/json
+App-Attest-Kid: {kid}
+App-Attest-Challenge: {challenge}
+App-Attest-Assertion: {Base64(Assertion Object)}
 
-grant_type=user_assertion
-&user_assertion={JWS: 头 alg + jwk(携带 kid 和公钥), payload 含 jti/iat/aud}
-&scope=openid
+{ "kty": "EC", "crv": "P-256", "x": "...", "y": "...", "alg": "ES256" }
 ```
 
-后续登录, 在 RT 可用时优先走 3.3.3 的续期路径, 若 RT 已过期则使用本地的私钥重签 JWS 申请新 AT 和 RT:
+第二步 · **取 Token**(jwt-bearer 登录): 首次登录断言**不带 `sub`**, 服务端自动开通匿名账号并在 Token 里带回 `sub`(客户端解析并持久化); 之后登录**带 `sub`**. RT 可用时优先走 3.3.3 续期, RT 失效再用私钥重签断言:
 
 ```http
 POST /oauth2/token
 Content-Type: application/x-www-form-urlencoded
-OAuth-Client-Attestation-Type: apple_app_attest
-OAuth-Client-Attestation-Kid: {kid}
-OAuth-Client-Attestation-Challenge: {challenge}
-OAuth-Client-Attestation-Assertion: {Base64(Assertion Object)}
+App-Attest-Kid: {kid}
+App-Attest-Challenge: {challenge}
+App-Attest-Assertion: {Base64(Assertion Object)}
 
-grant_type=user_assertion
-&user_assertion={JWS: 头 alg + kid, payload 含 sub/jti/iat/aud}
+grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer
+&assertion={JWS: 头 alg + kid, payload 含 iss/sub/aud/exp/iat/jti, 首次开通无 sub}
 &scope=openid
 ```
 
@@ -243,42 +243,44 @@ sequenceDiagram
     participant App as iOS App
     participant Server as Authorization Server
     App ->> App: 平台安全区生成密钥对 (仅首次), 得到公钥 JWK
+    App ->> Server: POST /app_attest/keys 注册公钥 (经 App Attest 客户端认证, 仅首次)
+    Server -->> App: 已登记公钥
     App ->> Server: POST /oauth2/challenge
     Server -->> App: challenge
     App ->> App: generateAssertion 对 challenge 签发 assertion (客户端认证)
-    App ->> App: 用私钥签发 user_assertion (登录带 sub, 首次开通无 sub 且头附公钥 jwk)
-    App ->> Server: POST /oauth2/token (头携 assertion, 体 grant_type=user_assertion 与 user_assertion)
-    Server ->> Server: 验证 assertion 完成客户端认证, 再校验 user_assertion (签名与 jti/iat/aud)
+    App ->> App: 用私钥签发 jwt-bearer 断言 (登录带 sub, 首次开通无 sub)
+    App ->> Server: POST /oauth2/token (头携客户端认证 assertion, 体 grant_type=jwt-bearer 与 assertion)
+    Server ->> Server: 验证客户端认证, 校验 jwt-bearer 断言 (iss/aud/exp/jti 并验签)
     alt 首次开通 (无 sub)
-        Server ->> Server: 用 jwk 验签, 自动开通新账号并存入公钥, 签发 Access Token / Refresh Token / ID Token
+        Server ->> Server: 该公钥未绑定其他账号则开通新账号并绑定, 签发 Access Token / Refresh Token / ID Token
     else 登录 (有 sub)
-        Server ->> Server: 由 sub 定位账号并用登记公钥验签, 校验账号仍仅有 public_key 身份 (否则 invalid_grant), 签发 Access Token / Refresh Token / ID Token
+        Server ->> Server: 由 sub 定位账号并验签, 校验账号仍仅有 public_key 身份 (否则 invalid_grant), 签发 Access Token / Refresh Token / ID Token
     end
     Server -->> App: Access Token / Refresh Token / ID Token
-    App ->> App: 解析 sub 并作为用户 ID 存储
+    App ->> App: 首次开通时解析 sub 并作为用户 ID 存储
 ```
 
-> ⚠️ **注意区分 `OAuth-Client-Attestation-Kid` 的 `kid` 和 `user_assertion` 中的 `kid`.**
+> ⚠️ **注意区分 `App-Attest-Kid` 的 `kid` 和 jwt-bearer 断言中的 `kid`.**
 >
 > 这是两把不同密钥的 `kid`, 二者的值不相同:
-> - `OAuth-Client-Attestation-Kid` 的 kid 是 Apple App Attest 的 kid, 用于生成 Apple App Assertion 完成客户端身份认证;
-> - `user_assertion` 的 kid 是 App 自行生成的非对称密钥的 kid, 用于生成 User Assertion 完成用户身份认证.
+> - `App-Attest-Kid` 的 kid 是 Apple App Attest 的 kid, 用于生成 Apple App Assertion 完成客户端身份认证;
+> - jwt-bearer 断言的 kid 是 App 自行生成、已注册到服务端的非对称密钥的 kid, 用于签发断言完成用户身份认证.
 
 #### 3.3.2 使用正式 `<user_grant>` 申请 Token
 
-本节讲述如何通过除 `user_assertion` 之外的正式 `<user_grant>` 完成真正的用户身份认证并申请 Token.
+本节讲述如何通过除 3.3.1 匿名试用的 `jwt-bearer` 之外的正式 `<user_grant>` 完成真正的用户身份认证并申请 Token.
 
-这些正式的 `<user_grant>` 与 `user_assertion` 最关键的区别是: 正式身份认证需要用户参与以证明其身份, 比如通过输入 OTP 证明其持有接收 OTP 的手机或邮箱.
+这些正式的 `<user_grant>` 与匿名试用的 `jwt-bearer` 最关键的区别是: 正式身份认证需要用户参与以证明其身份, 比如通过输入 OTP
+证明其持有接收 OTP 的手机或邮箱.
 
 请求示例:
 
 ```http
 POST /oauth2/token
 Content-Type: application/x-www-form-urlencoded
-OAuth-Client-Attestation-Type: apple_app_attest
-OAuth-Client-Attestation-Kid: {kid}
-OAuth-Client-Attestation-Challenge: {challenge}
-OAuth-Client-Attestation-Assertion: {Base64(Assertion Object)}
+App-Attest-Kid: {kid}
+App-Attest-Challenge: {challenge}
+App-Attest-Assertion: {Base64(Assertion Object)}
 
 grant_type=<user_grant>
 &<credential>
@@ -315,10 +317,9 @@ sequenceDiagram
 ```http
 POST /oauth2/token
 Content-Type: application/x-www-form-urlencoded
-OAuth-Client-Attestation-Type: apple_app_attest
-OAuth-Client-Attestation-Kid: {kid}
-OAuth-Client-Attestation-Challenge: {challenge}
-OAuth-Client-Attestation-Assertion: {Base64(Assertion Object)}
+App-Attest-Kid: {kid}
+App-Attest-Challenge: {challenge}
+App-Attest-Assertion: {Base64(Assertion Object)}
 
 grant_type=refresh_token
 &refresh_token={refresh_token}
@@ -345,15 +346,19 @@ sequenceDiagram
     end
 ```
 
-> 💬 **离线的判定**: "在线"指客户端有可用的 RT 来续期 AT. 但由于 RT 没有记录过期时刻, 所以客户端无法直接判定 RT 是否可用, 一个比较简单的办法就是在 AT 过期时直接用 RT 去尝试续期一次, 续期失败即视为离线.
+> 💬 **离线的判定**: "在线"指客户端有可用的 RT 来续期 AT. 但由于 RT 没有记录过期时刻, 所以客户端无法直接判定 RT 是否可用,
+> 一个比较简单的办法就是在 AT 过期时直接用 RT 去尝试续期一次, 续期失败即视为离线.
 
 ### 3.4 绑定用户身份
 
-一个账号可绑定多个用户身份 (手机 / 邮箱 / IdP 账号如 Google、微信 等). 匿名试用账号绑定其他用户身份后即**升级为正式账号**; 正式账号也可继续追加其他身份.
+一个账号可绑定多个用户身份 (手机 / 邮箱 / IdP 账号如 Google、微信 等). 匿名试用账号绑定其他用户身份后即
+**升级为正式账号**; 正式账号也可继续追加其他身份.
 
-绑定走账号服务接口 `POST /user/identities` (携 AT), 它只为**当前 AT 对应的账号**追加一条绑定, **不下发新 AT、也不改账号**; 绑定结果体现在后续会话 (下次续期时服务端返回反映已绑定身份的新 AT).
+绑定走账号服务接口 `POST /user/identities` (携 AT), 它只为 **当前 AT 对应的账号**追加一条绑定, **不下发新
+AT、也不改账号**; 绑定结果体现在后续会话 (下次续期时服务端返回反映已绑定身份的新 AT).
 
-> ⚠️ 绑定其他用户身份后, 该账号的 `user_assertion` 登录**随即失效** (返回 `invalid_grant`), 改由该身份登录, 数据无损; 无需删除原 `public_key` 身份数据.
+> ⚠️ 绑定其他用户身份后, 该账号的 `jwt-bearer` 登录 **随即失效** (返回 `invalid_grant`), 改由该身份登录, 数据无损;
+> 无需删除原 `public_key` 身份数据.
 
 请求示例:
 
@@ -366,7 +371,9 @@ identity_type=<identity_type>
 &<credential>
 ```
 
-`<identity_type>` 为要绑定的身份类型 (如 `phone` / `email` / `wechat` / `google`), `<credential>` 为该身份所需的用户凭据 (与同类型登录一致, 如 `phone` / `email` 用 `otp_ticket` + `otp`). 各身份类型的具体绑定参数见专项文档 (如 [OTP 接入细节 · 绑定场景](App-Attest-Login-%23-OTP.md#三-绑定场景-账号追加手机--邮箱绑定)、[绑定用户身份接口](../../APIs-%23-User-Identities-Create.md)).
+`<identity_type>` 为要绑定的身份类型 (如 `phone` / `email` / `wechat` / `google`), `<credential>` 为该身份所需的用户凭据
+(与同类型登录一致, 如 `phone` / `email` 用 `otp_ticket` + `otp`). 各身份类型的具体绑定参数见专项文档
+(如 [OTP 接入细节 · 绑定场景](App-Attest-Login-%23-OTP.md#三-绑定场景-账号追加手机--邮箱绑定)、[绑定用户身份接口](../../APIs-%23-User-Identities-Create.md)).
 
 时序图:
 
@@ -402,9 +409,12 @@ sequenceDiagram
 
 ### 3.5 异常处置: `kid` 被吊销
 
-触发 Apple 风控时服务端会吊销 `kid`, 此后所有携该 `kid` assertion 的请求 (取 Token、续期) 都会失败. 客户端应把失效的 `kid` + `client_id` 与会话数据一并清除. 下次启动时按本文档的完整流程重新注册 App 实例和 OAuth Client, 并引导用户重新登录.
+触发 Apple 风控时服务端会吊销 `kid`, 此后所有携该 `kid` assertion 的请求 (取 Token、续期) 都会失败. 客户端应把失效的
+`kid` + `client_id` 与会话数据一并清除. 下次启动时按本文档的完整流程重新注册 App 实例和 OAuth Client, 并引导用户重新登录.
 
-> ⚠️ 对于匿名试用账号由于清空会话数据会把 `user_assertion` 的私钥也一并清除, 所以原账号将不可恢复. 如果想保留原账号, 也有办法: 清会话数据时保留 `user_assertion` 的私钥和匿名账号的 `sub`, 下次启动时按本文档的完整流程重新注册 App 实例和 OAuth Client 后, 用原私钥静默重签 `user_assertion` 即可重新取 AT (无需用户参与), 账号数据无损.
+> ⚠️ 对于匿名试用账号由于清空会话数据会把 `jwt-bearer` 登录的私钥也一并清除, 所以原账号将不可恢复. 如果想保留原账号,
+> 也有办法: 清会话数据时保留该私钥和匿名账号的 `sub`, 下次启动时按本文档的完整流程重新注册 App 实例和
+> OAuth Client 后, 用原私钥静默重签 `jwt-bearer` 断言(带回原 `sub`)即可重新取 AT (无需用户参与), 账号数据无损.
 
 ---
 
@@ -493,46 +503,25 @@ App 实例注册与客户端注册的产物, **归属 App 实例、独立于用�
 | `$[*].bound_at`      | timestamp(3) | **公共字段 — 首次绑定时间**, 毫秒级 Unix 时间戳                                                                                                                          |
 
 > `identities` 中每个元素 = 公共字段 (`identity_id` / `identity_type` / `identifier` / `bound_at`) + 该类型的原生字段.
-> 原生字段因 `identity_type` 而异, 由各自专项文档定义 —— 例如 [OTP 接入细节](App-Attest-Login-%23-OTP.md) 的 `phone` /
-> `email` 元素、[user_assertion 接入细节](App-Attest-Login-%23-User-Assertion.md) 的 `public_key` 元素.
+> 原生字段因 `identity_type` 而异, 由各自专项文档定义 —— 例如 [OTP 接入细节][App Attest Login with OTP] 的 `phone` /
+> `email` 元素、[JWT Bearer 接入细节][App Attest Login with JWT Bearer] 的 `public_key` 元素.
 
 ---
 
 ## 五. 退出登录
 
-退出登录即清除本地所有生命周期为 `session` 的数据 (会话凭证与用户身份数据), 其余 `persistent` 数据 (App 实例注册信息) 保留.
+退出登录即清除本地所有生命周期为 `session` 的数据 (会话凭证与用户身份数据), 其余 `persistent` 数据 (App 实例注册信息)
+保留.
 
 ---
 
-## 六. 常见坑位
+## 六. 相关文档
 
-1. **AT 续期用 `refresh_token` + assertion 请求头**: 每次续期后以响应中的新 RT 覆盖本地保存的 (服务端开启 **轮换**时旧
-   RT 随即失效); RT 过期后只能引导用户重新登录.
-2. **绑定用户身份不下发新 AT, 也不改账号**: `POST /user/identities` 只为当前账号追加一条绑定, 客户端不要替换会话凭证;
-   绑定结果体现在后续续期返回的新 AT.
-3. **绑定用户身份与登录用不同接口**: 账号追加身份走 `POST /user/identities`(携 AT); 退出后重登走〈三.3〉 (App 实例级
-   `kid` / `client_id` 已保留, 直接取 Token); 仅 `kid` 被吊销时才需重新注册.
-4. **绑定返回 `409 identity_occupied` 时需用户抉择**: 响应附带 `conflict_token`, 客户端弹二选一 —— 换一个未被占用的身份继续绑定
-   (现行方式 A), 或一键切换到该身份对应的已有账号 (方式 B, **本期不实现**, 会使原账号成孤儿、数据不合并).
-5. **`assertion` vs `attestation` 不要混用**: `attestation` 只提交至 `/app_attest/register`(每 KEY 一次);
-   `/oauth2/register` 与 `/oauth2/token` 一律用 `assertion`(请求头承载). 退出登录 **不**重新生成 `kid`, 仅 `kid` 被吊销时才重新
-   `generateKey()` 并重走注册.
-6. **Challenge 一次性, 约 5 分钟过期**: 不要缓存跨请求复用; 每次生成 attestation / assertion 前都需重新获取.
-7. **机密数据必须存 Keychain**: 会话凭证 (AT / RT)与用户身份数据 (含 PII)属机密, 必须放 Keychain; App 实例注册信息
-   (`kid` / `client_id`)非机密 (私钥不可导出), 存储位置不强制.
-8. **三类数据生命周期不同**: App 实例注册信息 (`persistent`, 跨登录保留)、用户身份数据 (随账号切换变化)、会话凭证 (随每次
-   Token 刷新变化), 建议分开存储 (各自独立条目), 避免一次写入失败导致全部丢失.
-9. **`kid` 被吊销时的处理**: assertion 被拒且错误码指向 `kid` 失效时, 把失效的 `kid` + `client_id` 与会话数据一并清除 (匿名账号须保留 `user_assertion` 私钥 + `sub`),
-   下次启动静默重注册新 `kid` 后重新登录即可, 账号数据无损. 详见〈三.5〉.
-10. **`user_assertion` 保证级别低**: 只验客户端不验用户, 仅宜试用 / 低敏感场景; 账号绑定其他用户身份后 `user_assertion`
-    登录失效. 详见 [user_assertion 接入细节](App-Attest-Login-%23-User-Assertion.md).
-
----
-
-## 七. 相关文档
-
-- [短信 / 邮箱 OTP 接入细节](App-Attest-Login-%23-OTP.md) — 以手机号 / 邮箱 OTP 作为 `<user_grant>` 的落地
-- [user_assertion 接入细节](App-Attest-Login-%23-User-Assertion.md) — 匿名试用 (`user_assertion` 公钥持有证明)的落地
+- [The OAuth 2.0 Authorization Framework]
+- [The OAuth 2.1 Authorization Framework (Draft)]
+- [OAuth 2.0 Attestation-Based Client Authentication (Draft)]
+- [App Attest Login with OTP]
+- [App Attest Login with JWT Bearer]
 - [Apple App Attest 服务发现](../../App-Attest-Discovery.md) — `/.well-known/app-attest-configuration` 端点发现
 - [Apple App Attest 实例注册](../../App-Attest-Registration.md) — `POST /app_attest/register` 完整契约
 - [OAuth2 Client Registration - App Attest DYNAMIC](../../OAuth2-Client-Registration-%23-App-Attest-Dynamic.md) — RFC
@@ -541,4 +530,10 @@ App 实例注册与客户端注册的产物, **归属 App 实例、独立于用�
   token 端点的 assertion 客户端认证
 - [绑定用户身份](../../APIs-%23-User-Identities-Create.md) — `POST /user/identities` 契约
 - [OAuth2 Token Grant - App Attest](../../OAuth2-Token-Grant-%23-App-Attest.md) — 已废弃 `app_assertion` grant 的兼容说明
-- [v1 历史版本文档](../../app-attest-login/v1/App-Attest-Login.md) — 改造前的旧版流程 (已废弃)
+
+[The OAuth 2.0 Authorization Framework]: https://www.rfc-editor.org/rfc/rfc6749.html
+[The OAuth 2.1 Authorization Framework (Draft)]: https://www.ietf.org/archive/id/draft-ietf-oauth-v2-1-16.txt
+[OAuth 2.0 Attestation-Based Client Authentication (Draft)]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-11
+[App Attest Login with OTP]: App-Attest-Login-%23-OTP.md
+[App Attest Login with JWT Bearer]: App-Attest-Login-%23-Jwt-Bearer.md
+

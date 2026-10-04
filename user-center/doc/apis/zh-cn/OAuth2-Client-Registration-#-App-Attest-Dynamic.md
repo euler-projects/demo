@@ -18,7 +18,7 @@ DYNAMIC 流程的第一步是 **App 实例注册** (`POST /app_attest/register`)
 
 ## 二. 动态客户端注册 `POST /oauth2/register`
 
-**非匿名.** 面向 App 的凭据是 App Attest assertion, 不携带凭据的请求会被直接拒绝. 复用 [OAuth 2.0 Attestation-Based Client Authentication](OAuth2-Client-Authentication-%23-Attestation-Based.md) 的 `attest_jwt_client_auth` 消息族. App Attest 数据由 **HTTP 头**承载 (与 token 端点一致); 本端点注册体为 JSON, 亦无表单参数可用. 端点实际路径以授权服务元数据的 `client_registration_endpoint` 为准 (默认 `/oauth2/register`).
+**非匿名.** 面向 App 的凭据是 App Attest assertion, 不携带凭据的请求会被直接拒绝. 客户端认证方式为 `attest_appattest_client_auth`, 凭据承载与校验规则见 [Apple App Attest](OAuth2-Client-Authentication-%23-Attestation-Based-%23-Apple-App-Attest.md). App Attest 数据由 **HTTP 头**承载 (与 token 端点一致); 本端点注册体为 JSON, 亦无表单参数可用. 端点实际路径以授权服务元数据的 `client_registration_endpoint` 为准 (默认 `/oauth2/register`).
 
 > 设计对齐 IETF `draft-tschofenig-oauth-attested-dclient-reg` (用 attestation 替代 initial access token 鉴权动态注册).
 
@@ -26,10 +26,9 @@ DYNAMIC 流程的第一步是 **App 实例注册** (`POST /app_attest/register`)
 
 | 请求头 | 必需 | 说明 |
 |--------|------|------|
-| `OAuth-Client-Attestation-Type` | 是 | 固定 `apple_app_attest` |
-| `OAuth-Client-Attestation-Kid` | 是 | 已通过 `/app_attest/register` 注册的 App Attest KEY 标识 |
-| `OAuth-Client-Attestation-Challenge` | 是 | 一次性挑战值 |
-| `OAuth-Client-Attestation-Assertion` | 是 | `generateAssertion()` 产物的 Base64 编码 (证明持有已注册 KEY) |
+| `App-Attest-Kid` | 是 | 已通过 `/app_attest/register` 注册的 App Attest KEY 标识 |
+| `App-Attest-Challenge` | 是 | 一次性挑战值 |
+| `App-Attest-Assertion` | 是 | `generateAssertion()` 产物的 Base64 编码 (证明持有已注册 KEY) |
 
 > 本端点**不接受 attestation** —— attestation 只能提交至 `/app_attest/register`.
 
@@ -40,11 +39,11 @@ DYNAMIC 流程的第一步是 **App 实例注册** (`POST /app_attest/register`)
   "client_name": "com.example.app",
   "grant_types": ["otp", "refresh_token"],
   "scope": "openid profile",
-  "token_endpoint_auth_method": "attest_jwt_client_auth"
+  "token_endpoint_auth_method": "attest_appattest_client_auth"
 }
 ```
 
-无论请求体如何声明, 服务端对动态注册的客户端强制: `token_endpoint_auth_method=attest_jwt_client_auth` 且无 `client_secret`; 追加 `refresh_token` grant. 已废弃的 `urn:ietf:params:oauth:grant-type:app_assertion` grant 不再被静默移除, 而是在持久化层被拒绝: 请求一旦携带该 grant 即注册失败, 任何入口都无法再新建带此 grant 的客户端 (仅历史存量客户端保留).
+无论请求体如何声明, 服务端对动态注册的客户端强制: `token_endpoint_auth_method=attest_appattest_client_auth` 且无 `client_secret`; 追加 `refresh_token` grant. 已废弃的 `urn:ietf:params:oauth:grant-type:app_assertion` grant 不再被静默移除, 而是在持久化层被拒绝: 请求一旦携带该 grant 即注册失败, 任何入口都无法再新建带此 grant 的客户端 (仅历史存量客户端保留).
 
 ### 响应 (201)
 
@@ -55,7 +54,7 @@ DYNAMIC 流程的第一步是 **App 实例注册** (`POST /app_attest/register`)
   "client_name": "com.example.app",
   "grant_types": ["otp", "refresh_token"],
   "scope": "openid profile",
-  "token_endpoint_auth_method": "attest_jwt_client_auth"
+  "token_endpoint_auth_method": "attest_appattest_client_auth"
 }
 ```
 
@@ -66,7 +65,7 @@ DYNAMIC 流程的第一步是 **App 实例注册** (`POST /app_attest/register`)
 | HTTP | `error` | 场景 |
 |------|---------|------|
 | 401 | `invalid_token` | 未携带任何 App Attest 头 |
-| 400 | `invalid_client_attestation` | 缺失任一必需头, `OAuth-Client-Attestation-Type` 非 `apple_app_attest`, challenge 无效或已消费, assertion 校验失败 |
+| 400 | `invalid_client_attestation` | 缺失任一必需头, challenge 无效或已消费, assertion 校验失败 |
 | 400 | `unauthorized_client` | 该 KEY 所属 App 未启用 OAuth2 |
 | 401 | `invalid_client` | 已绑定的 `client_id` 已不存在 |
 | 400 | `invalid_request` | 请求体缺失或不是合法的 RFC 7591 JSON |

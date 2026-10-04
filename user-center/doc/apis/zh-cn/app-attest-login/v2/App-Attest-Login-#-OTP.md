@@ -1,8 +1,6 @@
 # App Attest 登录 - 短信 / 邮箱 OTP 接入细节
 
-> 本文档为 **v2 现行版本** (上位文档 [App-Attest-Login](App-Attest-Login.md) 的附录), 与 [Apple App Attest 实例注册](../../App-Attest-Registration.md)、[Attestation Based Client Authentication (Apple App Attest)](../../OAuth2-Client-Authentication-%23-Attestation-Based-%23-Apple-App-Attest.md) 描述的实现保持一致. 改造前的旧版流程见 [v1](../../app-attest-login/v1/App-Attest-Login-%23-OTP.md).
-
-本文档是 [Apple App Attest 登录完整流程文档](App-Attest-Login.md) 的配套附录, 专门描述**短信 / 邮箱 OTP**(One-Time Password, 一次性验证码)作为 `<user_grant>` 接入时的具体细节. 总流程、抽象概念、客户端持久化数据、异常处置、退出登录、常见坑位等均请参考上位文档, 本文只补充 OTP 侧的实例化内容.
+本文档是 [Apple App Attest 登录完整流程文档](App-Attest-Login.md) 的配套附录, 专门描述**短信 / 邮箱 OTP**(One-Time Password, 一次性验证码)作为 `<user_grant>` 接入时的具体细节. 总流程、抽象概念、客户端持久化数据、异常处置、退出登录等均请参考上位文档, 本文只补充 OTP 侧的实例化内容.
 
 ---
 
@@ -22,7 +20,7 @@
 |---|---|---|
 | `otp` | `otp_ticket` + `otp` | 标准 OTP 登录 (App Attest 数据经请求头承载) |
 
-> 注 1: v2 中 App Attest 数据一律经请求头 (`OAuth-Client-Attestation-*`) 承载, 请求体只放 `grant_type` 与该 grant 自身的参数; 设备注册已拆分为独立的 App 实例注册 + OAuth2 客户端注册前置步骤, 详见上位文档场景二.
+> 注 1: 取 Token 需携 Apple 凭据(`App-Attest-*` 请求头), 请求体只放 `grant_type` 与该 grant 自身的参数; 设备注册已拆分为独立的 App 实例注册 + OAuth2 客户端注册前置步骤, 详见上位文档 3.1 / 3.2.
 >
 > 注 2: 本平台自定义的 `grant_type=otp` 只负责"以 OTP 作为用户证明"这件事, 具体的通道类型(`sms` / `email` / 未来扩展)、下发目标(`recipient`)、业务用途(`purpose`)均在 `otp_ticket` 签发时记录于服务端, 客户端在 `/oauth2/token` 时无需重复提交.
 
@@ -182,10 +180,9 @@ channel=sms
 ```http
 POST /oauth2/token
 Content-Type: application/x-www-form-urlencoded
-OAuth-Client-Attestation-Type: apple_app_attest
-OAuth-Client-Attestation-Kid: {kid}
-OAuth-Client-Attestation-Challenge: {challenge}
-OAuth-Client-Attestation-Assertion: {Base64(Assertion Object)}
+App-Attest-Kid: {kid}
+App-Attest-Challenge: {challenge}
+App-Attest-Assertion: {Base64(Assertion Object)}
 
 grant_type=otp
 &otp_ticket={otp_ticket}
