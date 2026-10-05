@@ -23,12 +23,12 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 
 /**
- * Hashes an E.164 phone number into the stable, factor-scoped
- * {@code identifier} value used by the {@code phone} authentication factor.
+ * Hashes an E.164 phone number into the stable, identity-type-scoped
+ * {@code subject} value used by the {@code phone} user identity.
  * <p>
  * The output is the lowercase hex-encoded SHA-256 digest of the raw phone
  * number, matching the contract documented in
- * {@code Model-#-User-Authentication-Factor.md}: a one-way function used purely for
+ * {@code Model-#-User-Identity.md}: a one-way function used purely for
  * uniqueness checks across accounts; never surfaced to clients.
  */
 public final class PhoneIdentifierHasher {
@@ -37,7 +37,7 @@ public final class PhoneIdentifierHasher {
     }
 
     /**
-     * Compute the identifier for {@code phone}.
+     * Compute the subject for {@code phone}.
      *
      * @param phone the raw E.164 phone number; must be non-empty
      * @return the lowercase hex SHA-256 digest, always 64 characters

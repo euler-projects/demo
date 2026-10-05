@@ -37,13 +37,17 @@ DYNAMIC 流程的第一步是 **App 实例注册** (`POST /app_attest/register`)
 ```json
 {
   "client_name": "com.example.app",
-  "grant_types": ["otp", "refresh_token"],
+  "grant_types": ["otp", "urn:ietf:params:oauth:grant-type:jwt-bearer", "refresh_token"],
   "scope": "openid profile",
   "token_endpoint_auth_method": "attest_appattest_client_auth"
 }
 ```
 
 `token_endpoint_auth_method` 可省略或显式指定 `attest_appattest_client_auth`: 省略时服务端使用该默认值, 其他值以 `invalid_client_metadata` 拒绝. RFC 7591 将该字段定义为单个字符串, 一个注册客户端不能同时声明多种认证方式. 此流程不签发 `client_secret`; 服务端另会追加 `refresh_token` grant. 已废弃的 `urn:ietf:params:oauth:grant-type:app_assertion` grant 不再被静默移除, 而是在持久化层被拒绝: 请求一旦携带该 grant 即注册失败, 任何入口都无法再新建带此 grant 的客户端 (仅历史存量客户端保留).
+
+> ⚠️ **`grant_types` 必须按需显式声明, 服务端只追加 `refresh_token`.** 需要 [jwt-bearer 匿名试用登录](app-attest-login/v2/App-Attest-Login-%23-Jwt-Bearer.md) 的客户端**必须**在注册请求里带上 `urn:ietf:params:oauth:grant-type:jwt-bearer`, 否则该 grant 的每次请求都会以 `unauthorized_client` 被拒 (公钥仍可注册, 但注册了也用不上).
+>
+> 且此处**没有事后补救的机会**: 对同一 App Attest KEY 重复注册是幂等的, 返回的是既有 `client_id` 而不会更新它的 `grant_types`. 漏声明的客户端只能换一把新 KEY 重新走 `/app_attest/register` + 本端点, 或由管理端修改该客户端记录. 因此注册前就应确定要用的 `<user_grant>` 全集.
 
 ### 响应 (201)
 
@@ -52,7 +56,7 @@ DYNAMIC 流程的第一步是 **App 实例注册** (`POST /app_attest/register`)
   "client_id": "<随机 base64url>",
   "client_id_issued_at": "2026-05-10T12:34:56Z",
   "client_name": "com.example.app",
-  "grant_types": ["otp", "refresh_token"],
+  "grant_types": ["otp", "urn:ietf:params:oauth:grant-type:jwt-bearer", "refresh_token"],
   "scope": "openid profile",
   "token_endpoint_auth_method": "attest_appattest_client_auth"
 }

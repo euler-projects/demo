@@ -32,6 +32,25 @@ public interface UserIdentityRepository extends JpaRepository<UserIdentityEntity
 
     List<UserIdentityEntity> findAllByUserIdAndIdentityType(String userId, String identityType);
 
+    /**
+     * Whether the account already carries an identity of a type other than the given one.
+     *
+     * <p>Spans the parent table rather than one backend's rows because a backend has to
+     * refuse an account that is already identified some other way, and cannot see other
+     * backends' child tables.
+     */
+    boolean existsByUserIdAndIdentityTypeNot(String userId, String identityType);
+
+    /**
+     * Whether the account already carries an identity of the given type.
+     *
+     * <p>The complement of the above, for a backend that admits only one identity per
+     * account. {@code public_key} is such a backend: its single key is the whole credential,
+     * and a second one could only be asked for by a caller able to name the account rather
+     * than prove control of it.
+     */
+    boolean existsByUserIdAndIdentityType(String userId, String identityType);
+
     boolean existsByIdentityTypeAndSubject(String identityType, String subject);
 
     Optional<UserIdentityEntity> findByIdentityTypeAndSubject(String identityType, String subject);

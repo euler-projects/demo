@@ -182,6 +182,17 @@ public class DelegatingUserIdentityService implements UserIdentityService {
     public void deleteUserIdentity(String userId, String identityId) {
         Assert.hasText(userId, "userId must not be empty");
         Assert.hasText(identityId, "identityId must not be empty");
+        // TODO Refuse to delete the last identity an account has, whatever its type. An
+        //      account with no identity left has nothing that can authenticate it: every
+        //      login route resolves an account through one of its identities, so deleting the
+        //      only one strands the account and its data with no route back and no error at
+        //      the time. This is the place to enforce it rather than a per-type backend, since
+        //      only the fan-out sees the account's identities across every type; a backend
+        //      checking on its own could not tell "last public_key" from "last identity".
+        //      Left unimplemented for now: it needs a decision on what the wire layer reports
+        //      (a 4xx of its own, or the same not-yours silence the SPI contract asks for),
+        //      and on whether an administrative caller may override it to retire an account.
+        //
         // Per SPI contract each backend silently ignores ids it does
         // not own; fan-out delete is idempotent.
         for (UserIdentityService backend : this.backends.values()) {

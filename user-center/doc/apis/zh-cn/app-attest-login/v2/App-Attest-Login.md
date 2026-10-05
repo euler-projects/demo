@@ -224,6 +224,8 @@ App-Attest-Assertion: {Base64(Assertion Object)}
 
 第二步 · **取 Token**(jwt-bearer 登录): 首次登录断言**不带 `sub`**, 服务端自动开通匿名账号并在 Token 里带回 `sub`(客户端解析并持久化); 之后登录**带 `sub`**. RT 可用时优先走 3.3.3 续期, RT 失效再用私钥重签断言:
 
+> 带 `sub` 登录时, `kid` 必须是该账号**已持有**的那把公钥(只有一把时可省). 指向别的公钥一律 `invalid_grant`, 服务端**不会**把它追加到该账号上 —— 因为 `sub` 就是用户 ID、随每个 AT 下发, 不是机密, 不能拿"知道 `sub`"当账号控制权. 故一个账号只有一把公钥, 私钥丢失即账号不可恢复. 详见 [App Attest Login with JWT Bearer] 的〈六〉.
+
 ```http
 POST /oauth2/token
 Content-Type: application/x-www-form-urlencoded
@@ -264,7 +266,7 @@ sequenceDiagram
 >
 > 这是两把不同密钥的 `kid`, 二者的值不相同:
 > - `App-Attest-Kid` 的 kid 是 Apple App Attest 的 kid, 用于生成 Apple App Assertion 完成客户端身份认证;
-> - jwt-bearer 断言的 kid 是 App 自行生成、已注册到服务端的非对称密钥的 kid, 用于签发断言完成用户身份认证.
+> - jwt-bearer 断言的 kid 是 App 自行生成、已注册到服务端的非对称密钥的 kid, 用于签发断言完成用户身份认证. 它**由服务端在公钥注册时派生并返回**(即该公钥的 RFC 7638 JWK Thumbprint), 客户端不得自定, 登录时需原样回传.
 
 #### 3.3.2 使用正式 `<user_grant>` 申请 Token
 
@@ -415,6 +417,10 @@ sequenceDiagram
 > ⚠️ 对于匿名试用账号由于清空会话数据会把 `jwt-bearer` 登录的私钥也一并清除, 所以原账号将不可恢复. 如果想保留原账号,
 > 也有办法: 清会话数据时保留该私钥和匿名账号的 `sub`, 下次启动时按本文档的完整流程重新注册 App 实例和
 > OAuth Client 后, 用原私钥静默重签 `jwt-bearer` 断言(带回原 `sub`)即可重新取 AT (无需用户参与), 账号数据无损.
+>
+> ⚠️ 但若连私钥也丢了(重装 / 换机使安全区密钥消失), 仅保下 `sub` 也**无法恢复**: 服务端不允许用一把新公钥接管既有账号
+> —— 那等于把"知道 `sub`"当成账号凭据, 而 `sub` 随每个 AT 下发、并非机密. 原账号只能成为孤儿.
+> 见 [App Attest Login with JWT Bearer] 的〈六〉.
 
 ---
 
@@ -487,7 +493,7 @@ App 实例注册与客户端注册的产物, **归属 App 实例、独立于用�
   {
     "identity_id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
     "identity_type": "email",
-    "identifier": "3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b",
+    "subject": "3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b",
     "bound_at": 1778899139687,
     "email": "u**r@e*****e.com"
   }
@@ -499,10 +505,10 @@ App 实例注册与客户端注册的产物, **归属 App 实例、独立于用�
 | `$`                  | list         | **账号绑定的用户身份(手机 / 邮箱 / Apple / Google / public_key 等)列表**(根数组). 用 AT 调 `GET /user/identities` 获取; 每个元素含下述公共字段, 各类型可追加自身原生字段 |
 | `$[*].identity_id`   | string       | **公共字段 — 用户身份 ID**, 服务端生成的 UUID                                                                                                                            |
 | `$[*].identity_type` | string       | **公共字段 — 用户身份类型标识**, 如 `apple` / `google` / `phone` / `email` / `public_key`                                                                                |
-| `$[*].identifier`    | string       | **公共字段 — 该身份的稳定唯一标识**, 不同 `identity_type` 各自定义其含义(如 `phone` / `email` 为原值的哈希)                                                              |
+| `$[*].subject`       | string       | **公共字段 — 该身份的稳定唯一标识**, 不同 `identity_type` 各自定义其含义(如 `phone` / `email` 为原值的哈希)                                                              |
 | `$[*].bound_at`      | timestamp(3) | **公共字段 — 首次绑定时间**, 毫秒级 Unix 时间戳                                                                                                                          |
 
-> `identities` 中每个元素 = 公共字段 (`identity_id` / `identity_type` / `identifier` / `bound_at`) + 该类型的原生字段.
+> `identities` 中每个元素 = 公共字段 (`identity_id` / `identity_type` / `subject` / `bound_at`) + 该类型的原生字段.
 > 原生字段因 `identity_type` 而异, 由各自专项文档定义 —— 例如 [OTP 接入细节][App Attest Login with OTP] 的 `phone` /
 > `email` 元素、[JWT Bearer 接入细节][App Attest Login with JWT Bearer] 的 `public_key` 元素.
 
