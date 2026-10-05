@@ -43,7 +43,7 @@ DYNAMIC 流程的第一步是 **App 实例注册** (`POST /app_attest/register`)
 }
 ```
 
-无论请求体如何声明, 服务端对动态注册的客户端强制: `token_endpoint_auth_method=attest_appattest_client_auth` 且无 `client_secret`; 追加 `refresh_token` grant. 已废弃的 `urn:ietf:params:oauth:grant-type:app_assertion` grant 不再被静默移除, 而是在持久化层被拒绝: 请求一旦携带该 grant 即注册失败, 任何入口都无法再新建带此 grant 的客户端 (仅历史存量客户端保留).
+`token_endpoint_auth_method` 可省略或显式指定 `attest_appattest_client_auth`: 省略时服务端使用该默认值, 其他值以 `invalid_client_metadata` 拒绝. RFC 7591 将该字段定义为单个字符串, 一个注册客户端不能同时声明多种认证方式. 此流程不签发 `client_secret`; 服务端另会追加 `refresh_token` grant. 已废弃的 `urn:ietf:params:oauth:grant-type:app_assertion` grant 不再被静默移除, 而是在持久化层被拒绝: 请求一旦携带该 grant 即注册失败, 任何入口都无法再新建带此 grant 的客户端 (仅历史存量客户端保留).
 
 ### 响应 (201)
 
@@ -68,6 +68,7 @@ DYNAMIC 流程的第一步是 **App 实例注册** (`POST /app_attest/register`)
 | 400 | `invalid_client_attestation` | 缺失任一必需头, challenge 无效或已消费, assertion 校验失败 |
 | 400 | `unauthorized_client` | 该 KEY 所属 App 未启用 OAuth2 |
 | 401 | `invalid_client` | 已绑定的 `client_id` 已不存在 |
+| 400 | `invalid_client_metadata` | `token_endpoint_auth_method` 不是 `attest_appattest_client_auth` |
 | 400 | `invalid_request` | 请求体缺失或不是合法的 RFC 7591 JSON |
 
 错误响应为标准 OAuth2 错误格式, 其中 `error_description` 会指明具体原因 (例如缺失的头名).
