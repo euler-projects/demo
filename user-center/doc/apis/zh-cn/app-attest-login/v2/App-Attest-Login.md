@@ -224,7 +224,7 @@ App-Attest-Assertion: {Base64(Assertion Object)}
 
 第二步 · **取 Token**(jwt-bearer 登录): 首次登录断言**不带 `sub`**, 服务端自动开通匿名账号并在 Token 里带回 `sub`(客户端解析并持久化); 之后登录**带 `sub`**. RT 可用时优先走 3.3.3 续期, RT 失效再用私钥重签断言:
 
-> 带 `sub` 登录时, `kid` 必须是该账号**已持有**的那把公钥(只有一把时可省). 指向别的公钥一律 `invalid_grant`, 服务端**不会**把它追加到该账号上 —— 因为 `sub` 就是用户 ID、随每个 AT 下发, 不是机密, 不能拿"知道 `sub`"当账号控制权. 故一个账号只有一把公钥, 私钥丢失即账号不可恢复. 详见 [App Attest Login with JWT Bearer] 的〈六〉.
+> 带 `sub` 登录时, `kid` **必填**且必须是该账号**已持有**的那把公钥. 指向别的公钥一律 `invalid_grant`, 服务端**不会**把它追加到该账号上 —— 因为 `sub` 就是用户 ID、随每个 AT 下发, 不是机密, 不能拿"知道 `sub`"当账号控制权. 故一个账号只有一把公钥, 私钥丢失即账号不可恢复. 详见 [App Attest Login with JWT Bearer] 的〈六〉.
 
 ```http
 POST /oauth2/token
@@ -256,7 +256,7 @@ sequenceDiagram
     alt 首次开通 (无 sub)
         Server ->> Server: 该公钥未绑定其他账号则开通新账号并绑定, 签发 Access Token / Refresh Token / ID Token
     else 登录 (有 sub)
-        Server ->> Server: 由 sub 定位账号并验签, 校验账号仍仅有 public_key 身份 (否则 invalid_grant), 签发 Access Token / Refresh Token / ID Token
+        Server ->> Server: 由 sub 定位账号并验签, 校验账号仍仅有 app_attest_instance_key 身份 (否则 invalid_grant), 签发 Access Token / Refresh Token / ID Token
     end
     Server -->> App: Access Token / Refresh Token / ID Token
     App ->> App: 首次开通时解析 sub 并作为用户 ID 存储
@@ -360,7 +360,7 @@ sequenceDiagram
 AT、也不改账号**; 绑定结果体现在后续会话 (下次续期时服务端返回反映已绑定身份的新 AT).
 
 > ⚠️ 绑定其他用户身份后, 该账号的 `jwt-bearer` 登录 **随即失效** (返回 `invalid_grant`), 改由该身份登录, 数据无损;
-> 无需删除原 `public_key` 身份数据.
+> 无需删除原 `app_attest_instance_key` 身份数据.
 
 请求示例:
 
@@ -416,7 +416,8 @@ sequenceDiagram
 
 > ⚠️ 对于匿名试用账号由于清空会话数据会把 `jwt-bearer` 登录的私钥也一并清除, 所以原账号将不可恢复. 如果想保留原账号,
 > 也有办法: 清会话数据时保留该私钥和匿名账号的 `sub`, 下次启动时按本文档的完整流程重新注册 App 实例和
-> OAuth Client 后, 用原私钥静默重签 `jwt-bearer` 断言(带回原 `sub`)即可重新取 AT (无需用户参与), 账号数据无损.
+> OAuth Client、**并用原私钥重新登记一次公钥**(见 [App Attest Login with JWT Bearer] 的〈四〉)后, 用原私钥静默重签
+> `jwt-bearer` 断言(带回原 `sub`)即可重新取 AT (无需用户参与), 账号数据无损.
 >
 > ⚠️ 但若连私钥也丢了(重装 / 换机使安全区密钥消失), 仅保下 `sub` 也**无法恢复**: 服务端不允许用一把新公钥接管既有账号
 > —— 那等于把"知道 `sub`"当成账号凭据, 而 `sub` 随每个 AT 下发、并非机密. 原账号只能成为孤儿.
@@ -502,15 +503,15 @@ App 实例注册与客户端注册的产物, **归属 App 实例、独立于用�
 
 | 字段                 | 类型         | 含义                                                                                                                                                                     |
 |----------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `$`                  | list         | **账号绑定的用户身份(手机 / 邮箱 / Apple / Google / public_key 等)列表**(根数组). 用 AT 调 `GET /user/identities` 获取; 每个元素含下述公共字段, 各类型可追加自身原生字段 |
+| `$`                  | list         | **账号绑定的用户身份(手机 / 邮箱 / Apple / Google / app_attest_instance_key 等)列表**(根数组). 用 AT 调 `GET /user/identities` 获取; 每个元素含下述公共字段, 各类型可追加自身原生字段 |
 | `$[*].identity_id`   | string       | **公共字段 — 用户身份 ID**, 服务端生成的 UUID                                                                                                                            |
-| `$[*].identity_type` | string       | **公共字段 — 用户身份类型标识**, 如 `apple` / `google` / `phone` / `email` / `public_key`                                                                                |
+| `$[*].identity_type` | string       | **公共字段 — 用户身份类型标识**, 如 `apple` / `google` / `phone` / `email` / `app_attest_instance_key`                                                                                |
 | `$[*].subject`       | string       | **公共字段 — 该身份的稳定唯一标识**, 不同 `identity_type` 各自定义其含义(如 `phone` / `email` 为原值的哈希)                                                              |
 | `$[*].bound_at`      | timestamp(3) | **公共字段 — 首次绑定时间**, 毫秒级 Unix 时间戳                                                                                                                          |
 
 > `identities` 中每个元素 = 公共字段 (`identity_id` / `identity_type` / `subject` / `bound_at`) + 该类型的原生字段.
 > 原生字段因 `identity_type` 而异, 由各自专项文档定义 —— 例如 [OTP 接入细节][App Attest Login with OTP] 的 `phone` /
-> `email` 元素、[JWT Bearer 接入细节][App Attest Login with JWT Bearer] 的 `public_key` 元素.
+> `email` 元素、[JWT Bearer 接入细节][App Attest Login with JWT Bearer] 的 `app_attest_instance_key` 元素.
 
 ---
 

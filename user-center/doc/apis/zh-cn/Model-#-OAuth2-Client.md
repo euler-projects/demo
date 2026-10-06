@@ -169,7 +169,7 @@ TTL 类字段统一使用**秒**为单位.
 | `refresh_token`                                   | 使用 Refresh Token 换取新 Access Token ([RFC 6749 §6][RFC-6749-6]); **依赖**: 通常与其他 grant 同时启用 |
 | `client_credentials`                              | 客户端自身凭据获取 Token ([RFC 6749 §4.4][RFC-6749-4.4]), 服务端到服务端调用 |
 | `urn:ietf:params:oauth:grant-type:device_code`    | Device Authorization Grant ([RFC 8628][RFC-8628]), 面向输入受限的设备 (如 TV / CLI) |
-| `urn:ietf:params:oauth:grant-type:jwt-bearer`     | JWT Bearer Grant ([RFC 7523][RFC-7523]), 用一把已注册公钥对应的私钥签发 JWT 断言换取 Token; **依赖**: 验签公钥按断言的 `iss` 解析, **不取自本客户端的 `jwksUri` / `jwks`**. 当前内置的唯一 `iss` 是经 App Attest 认证的 App 实例(`iss` = 其 `client_id`), 公钥经 `POST /app_attest/keys` 预登记, 见 [JWT Bearer 接入细节][app-attest-jwt-bearer] |
+| `urn:ietf:params:oauth:grant-type:jwt-bearer`     | JWT Bearer Grant ([RFC 7523][RFC-7523]), 用一把已注册公钥对应的私钥签发 JWT 断言换取 Token; **依赖**: 验签公钥按断言的 `iss` 解析, **不取自本客户端的 `jwksUri` / `jwks`**. 当前内置的唯一 `iss` 是经 App Attest 认证的 App 实例(`iss` = 其 `client_id`), 公钥由该实例经 `POST /app_attest/keys` 预登记, 见 [JWT Bearer 接入细节][app-attest-jwt-bearer] |
 | `urn:ietf:params:oauth:grant-type:token-exchange` | Token 交换 ([RFC 8693][RFC-8693]), 用已有 Token 换取新 Token |
 
 [RFC-6749-2.3.1]: https://datatracker.ietf.org/doc/html/rfc6749#section-2.3.1

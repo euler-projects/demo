@@ -16,6 +16,7 @@
 package org.eulerframework.uc.service.identity;
 
 import com.nimbusds.jose.jwk.JWK;
+import org.eulerframework.security.authentication.appattest.AppAttestInstanceKeyRegistration;
 import org.eulerframework.security.core.identity.IdentityOccupiedException;
 import org.eulerframework.security.core.identity.InvalidUserIdentityException;
 import org.eulerframework.security.core.identity.UserIdentity;
@@ -23,8 +24,6 @@ import org.eulerframework.security.core.identity.UserIdentityNotFoundException;
 import org.eulerframework.security.core.identity.UserIdentityService;
 import org.eulerframework.security.util.JwkUtils;
 import org.eulerframework.uc.entity.UserIdentityEntity;
-import org.eulerframework.uc.entity.UserIdentityPublicKeyEntity;
-import org.eulerframework.uc.repository.UserIdentityPublicKeyRepository;
 import org.eulerframework.uc.repository.UserIdentityRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,22 +33,24 @@ import org.springframework.util.StringUtils;
 
 import java.text.ParseException;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 /**
- * {@code public_key} backend of {@link UserIdentityService}: an identity proved by
- * possession of a private key whose public half is registered here.
+ * {@code app_attest_instance_key} backend of {@link UserIdentityService}: an identity proved
+ * by possession of a private key whose public half the App instance registered with the
+ * server.
  *
- * <p>Persists a parent {@code t_user_identity} row plus a child
- * {@code t_user_identity_public_key} row holding the JWK. The cross-account unique key is
- * the key's RFC 7638 thumbprint, stored as {@link UserIdentity#getSubject()} on the parent
- * row and also written into the JWK's {@code kid}, so a login can check that the assertion
- * names the key this identity holds without this backend having to explain how that value
- * was derived.
+ * <p>Persists a parent {@code t_user_identity} row and nothing else. The whole of what this
+ * backend stores is the key's RFC 7638 thumbprint, as {@link UserIdentity#getSubject()}, which
+ * is both the cross-account unique key and the very value a jwt-bearer assertion names as its
+ * {@code kid}. The key material is deliberately <b>not</b> copied here: a login reads it from
+ * the App Attest instance-key registry, and does so on every login rather than only a first
+ * one, so a second copy would be a second answer to the same question with nothing keeping the
+ * two together. What the account has to contribute is which key is its own, and a thumbprint
+ * says that completely.
  *
  * <p>Three rules set this backend apart from the others:
  * <ul>
@@ -67,46 +68,38 @@ import java.util.Optional;
  *       would turn a public identifier into the account's credential, so the key an account
  *       was opened with is the only one it ever gets. The cost is stated plainly rather than
  *       engineered around: lose the private half and the account is unreachable.</li>
- *   <li><b>The key never changes.</b> There is no rotation and no update: a caller who
+ *   <li><b>The binding never changes.</b> There is no rotation and no update: a caller who
  *       loses the private half registers a new key and opens a new account, and the old one
- *       is left behind. Keeping the key immutable is what lets a login trust that the key
- *       it verified against is the one that was registered.</li>
+ *       is left behind. What is immutable here is the subject this row carries, which is what
+ *       lets a login trust that the key the issuer vouched for is the key the account was
+ *       opened with.</li>
  * </ul>
  *
  * <p>Creation via
  * {@link #createUserIdentity(String, MultiValueMap) form parameters} is not supported: a
  * key is only ever bound by a jwt-bearer login that has already verified a signature made
- * by it, which supplies a pre-verified prototype.
- *
- * <p>No length is checked on the way in. The key arrives either from the issued-key registry
- * or from a prototype the login flow built out of it, and the registration endpoint that
- * feeds both already bounds what it accepts; {@code t_user_identity_public_key.jwk} is a
- * TEXT column that holds anything reachable by that route. A bound named here would either
- * repeat that one or contradict it.
+ * by it, which supplies a pre-verified prototype. The prototype still carries the JWK, since
+ * the thumbprint has to be derived from the key itself; it is read, hashed, and not kept.
  */
 @Service
-public class PublicKeyUserIdentityService extends AbstractUserIdentityService {
+public class AppAttestInstanceKeyUserIdentityService extends AbstractUserIdentityService {
 
     private final UserIdentityRepository identityRepository;
-    private final UserIdentityPublicKeyRepository identityPublicKeyRepository;
 
-    public PublicKeyUserIdentityService(UserIdentityRepository identityRepository,
-                                        UserIdentityPublicKeyRepository identityPublicKeyRepository) {
+    public AppAttestInstanceKeyUserIdentityService(UserIdentityRepository identityRepository) {
         Assert.notNull(identityRepository, "identityRepository is required");
-        Assert.notNull(identityPublicKeyRepository, "identityPublicKeyRepository is required");
         this.identityRepository = identityRepository;
-        this.identityPublicKeyRepository = identityPublicKeyRepository;
     }
 
     @Override
     public String identityType() {
-        return UserIdentityService.IDENTITY_TYPE_PUBLIC_KEY;
+        return AppAttestInstanceKeyRegistration.USER_IDENTITY_TYPE;
     }
 
     @Override
     public UserIdentity createUserIdentity(String userId, MultiValueMap<String, String> params) {
         throw new InvalidUserIdentityException(
-                "A public_key identity is bound by a verified jwt-bearer login only; "
+                "An app_attest_instance_key identity is bound by a verified jwt-bearer login only; "
                         + "it cannot be created via form parameters");
     }
 
@@ -118,14 +111,13 @@ public class PublicKeyUserIdentityService extends AbstractUserIdentityService {
         if (!identityType().equals(prototype.getIdentityType())) {
             throw new InvalidUserIdentityException(
                     "identityType '" + prototype.getIdentityType()
-                            + "' is not supported by the public_key backend");
+                            + "' is not supported by the app_attest_instance_key backend");
         }
 
+        // The subject is the thumbprint: the cross-account unique key, and the same value the
+        // assertion header carries as its kid, which is how a login matches the two up.
         JWK publicKey = normalize(readPrototypeJwk(prototype));
         String subject = JwkUtils.computeThumbprint(publicKey);
-        // The kid is the thumbprint, forced rather than merely defaulted so that the value a
-        // login selects by and the value this row is unique on cannot disagree.
-        publicKey = JwkUtils.withKeyId(publicKey, subject);
 
         // Exclusivity by kind: the moment the account is also identified by something that
         // proves who the person is, this weak factor must stop authenticating it.
@@ -145,8 +137,6 @@ public class PublicKeyUserIdentityService extends AbstractUserIdentityService {
             throw new IdentityOccupiedException(identityType());
         }
 
-        String jwkJson = publicKey.toJSONString();
-
         Instant now = Instant.now();
         UserIdentityEntity identity = new UserIdentityEntity();
         identity.setUserId(userId);
@@ -155,12 +145,7 @@ public class PublicKeyUserIdentityService extends AbstractUserIdentityService {
         identity.setBoundAt(now);
         identity = this.identityRepository.save(identity);
 
-        UserIdentityPublicKeyEntity child = new UserIdentityPublicKeyEntity();
-        child.setIdentityId(identity.getId());
-        child.setJwk(jwkJson);
-        this.identityPublicKeyRepository.save(child);
-
-        return toModel(identity, publicKey);
+        return toModel(identity);
     }
 
     @Override
@@ -170,27 +155,16 @@ public class PublicKeyUserIdentityService extends AbstractUserIdentityService {
         Assert.hasText(identityId, "identityId must not be empty");
         return this.identityRepository
                 .findByIdAndUserIdAndIdentityType(identityId, userId, identityType())
-                .map(identity -> toModel(identity, loadJwk(identity.getId())));
+                .map(this::toModel);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<UserIdentity> listUserIdentities(String userId) {
         Assert.hasText(userId, "userId must not be empty");
-        List<UserIdentityEntity> identities = this.identityRepository
-                .findAllByUserIdAndIdentityType(userId, identityType());
-        if (identities.isEmpty()) {
-            return List.of();
-        }
-        Map<String, JWK> jwkByIdentityId = new HashMap<>(identities.size());
-        for (UserIdentityEntity identity : identities) {
-            JWK jwk = loadJwk(identity.getId());
-            if (jwk != null) {
-                jwkByIdentityId.put(identity.getId(), jwk);
-            }
-        }
-        return identities.stream()
-                .map(identity -> toModel(identity, jwkByIdentityId.get(identity.getId())))
+        return this.identityRepository.findAllByUserIdAndIdentityType(userId, identityType())
+                .stream()
+                .map(this::toModel)
                 .toList();
     }
 
@@ -205,13 +179,13 @@ public class PublicKeyUserIdentityService extends AbstractUserIdentityService {
     public UserIdentity updateUserIdentity(String userId, String identityId,
                                            MultiValueMap<String, String> params) {
         throw new InvalidUserIdentityException(
-                "A public_key identity cannot be updated; register a new key instead");
+                "An app_attest_instance_key identity cannot be updated; register a new key instead");
     }
 
     @Override
     public UserIdentity updateUserIdentity(String userId, String identityId, UserIdentity prototype) {
         throw new InvalidUserIdentityException(
-                "A public_key identity cannot be updated; register a new key instead");
+                "An app_attest_instance_key identity cannot be updated; register a new key instead");
     }
 
     @Override
@@ -227,12 +201,10 @@ public class PublicKeyUserIdentityService extends AbstractUserIdentityService {
         Optional<UserIdentityEntity> identity = this.identityRepository
                 .findByIdAndUserIdAndIdentityType(identityId, userId, identityType());
         if (identity.isEmpty()) {
-            // Not a public_key identity, or not owned by this user; per the SPI contract
-            // return silently so the wire layer cannot probe ownership.
+            // Not an app_attest_instance_key identity, or not owned by this user; per the SPI
+            // contract return silently so the wire layer cannot probe ownership.
             return;
         }
-        // Cascade the child row before the parent
-        this.identityPublicKeyRepository.deleteById(identityId);
         this.identityRepository.delete(identity.get());
     }
 
@@ -246,7 +218,7 @@ public class PublicKeyUserIdentityService extends AbstractUserIdentityService {
         // makes the lookup independent of how the caller serialised it.
         String subject = JwkUtils.computeThumbprint(parse(rawSubject));
         return this.identityRepository.findByIdentityTypeAndSubject(identityType(), subject)
-                .map(identity -> toModel(identity, loadJwk(identity.getId())));
+                .map(this::toModel);
     }
 
     @Override
@@ -307,22 +279,14 @@ public class PublicKeyUserIdentityService extends AbstractUserIdentityService {
         return (Map<String, Object>) members;
     }
 
-    private JWK loadJwk(String identityId) {
-        return this.identityPublicKeyRepository.findById(identityId)
-                .map(child -> parse(child.getJwk()))
-                .orElse(null);
-    }
-
     /**
-     * Project the identity. The key is handed back in its JSON object form rather than as a
-     * string, so a wire projection surfaces {@code "jwk": {...}} and not an escaped blob.
+     * Project the identity. It carries no extension: the subject <em>is</em> the key's
+     * thumbprint, and the key material lives in the App Attest instance-key registry, so there
+     * is nothing this backend holds that could be handed back here. A caller wanting the key
+     * asks the registry, which is where a login gets it too.
      */
-    private UserIdentity toModel(UserIdentityEntity identity, JWK jwk) {
-        Map<String, Object> extensions = new LinkedHashMap<>(1);
-        if (jwk != null) {
-            extensions.put(UserIdentityService.PROPERTY_JWK, jwk.toJSONObject());
-        }
-        return UserIdentity.withExtensions(extensions)
+    private UserIdentity toModel(UserIdentityEntity identity) {
+        return UserIdentity.withExtensions(new LinkedHashMap<>())
                 .identityId(identity.getId())
                 .identityType(identity.getIdentityType())
                 .subject(identity.getSubject())

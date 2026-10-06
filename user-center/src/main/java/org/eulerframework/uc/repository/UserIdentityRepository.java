@@ -45,9 +45,9 @@ public interface UserIdentityRepository extends JpaRepository<UserIdentityEntity
      * Whether the account already carries an identity of the given type.
      *
      * <p>The complement of the above, for a backend that admits only one identity per
-     * account. {@code public_key} is such a backend: its single key is the whole credential,
-     * and a second one could only be asked for by a caller able to name the account rather
-     * than prove control of it.
+     * account. {@code app_attest_instance_key} is such a backend: its single key is the whole
+     * credential, and a second one could only be asked for by a caller able to name the
+     * account rather than prove control of it.
      */
     boolean existsByUserIdAndIdentityType(String userId, String identityType);
 

@@ -19,14 +19,13 @@ import com.nimbusds.jose.jwk.Curve;
 import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator;
+import org.eulerframework.security.authentication.appattest.AppAttestInstanceKeyRegistration;
 import org.eulerframework.security.core.identity.IdentityOccupiedException;
 import org.eulerframework.security.core.identity.InvalidUserIdentityException;
 import org.eulerframework.security.core.identity.UserIdentity;
 import org.eulerframework.security.core.identity.UserIdentityService;
 import org.eulerframework.security.util.JwkUtils;
 import org.eulerframework.uc.entity.UserIdentityEntity;
-import org.eulerframework.uc.entity.UserIdentityPublicKeyEntity;
-import org.eulerframework.uc.repository.UserIdentityPublicKeyRepository;
 import org.eulerframework.uc.repository.UserIdentityRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,30 +49,26 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Tests for {@link PublicKeyUserIdentityService}, focused on the three rules that set this
+ * Tests for {@link AppAttestInstanceKeyUserIdentityService}, focused on the three rules that set this
  * backend apart: the key's thumbprint is its cross-account identity, it may not share an
  * account with another kind of identity, and an account gets exactly one of them.
  */
-class PublicKeyUserIdentityServiceTests {
+class AppAttestInstanceKeyUserIdentityServiceTests {
 
     private static final String USER_ID = "u-1";
 
     @Mock
     UserIdentityRepository identityRepository;
 
-    @Mock
-    UserIdentityPublicKeyRepository identityPublicKeyRepository;
-
     private AutoCloseable mocks;
-    private PublicKeyUserIdentityService service;
+    private AppAttestInstanceKeyUserIdentityService service;
     private ECKey key;
     private final AtomicInteger nextIdentityId = new AtomicInteger();
 
     @BeforeEach
     void setUp() throws Exception {
         this.mocks = MockitoAnnotations.openMocks(this);
-        this.service = new PublicKeyUserIdentityService(this.identityRepository,
-                this.identityPublicKeyRepository);
+        this.service = new AppAttestInstanceKeyUserIdentityService(this.identityRepository);
         this.key = new ECKeyGenerator(Curve.P_256).generate();
     }
 
@@ -83,12 +78,17 @@ class PublicKeyUserIdentityServiceTests {
     }
 
     @Test
-    void identityTypeIsPublicKey() {
-        assertThat(this.service.identityType()).isEqualTo(UserIdentityService.IDENTITY_TYPE_PUBLIC_KEY);
+    void identityTypeIsAppAttestInstanceKey() {
+        assertThat(this.service.identityType()).isEqualTo(AppAttestInstanceKeyRegistration.USER_IDENTITY_TYPE);
     }
 
+    /**
+     * The subject is the whole of what this backend stores, and it is the key's thumbprint: that
+     * is the value a jwt-bearer assertion names as its {@code kid}, so a login matches the account
+     * to its key by comparing the two and never has to be handed the key itself.
+     */
     @Test
-    void createDerivesSubjectAndKidFromTheKeyMaterial() throws Exception {
+    void createDerivesSubjectFromTheKeyMaterial() throws Exception {
         stubParentSave();
 
         UserIdentity persisted = this.service.createUserIdentity(USER_ID, prototype(this.key));
@@ -98,41 +98,38 @@ class PublicKeyUserIdentityServiceTests {
         assertThat(persisted.getUserId()).isEqualTo(USER_ID);
         assertThat(persisted.getIdentityId()).isEqualTo("id-1");
 
-        ArgumentCaptor<UserIdentityPublicKeyEntity> childCaptor =
-                ArgumentCaptor.forClass(UserIdentityPublicKeyEntity.class);
-        verify(this.identityPublicKeyRepository).save(childCaptor.capture());
-        JWK stored = JWK.parse(childCaptor.getValue().getJwk());
-        // The kid is forced to the thumbprint rather than merely defaulted, so the value a
-        // login selects by and the value this row is unique on cannot disagree.
-        assertThat(stored.getKeyID()).isEqualTo(thumbprint);
-        assertThat(stored.isPrivate()).isFalse();
+        ArgumentCaptor<UserIdentityEntity> parentCaptor = ArgumentCaptor.forClass(UserIdentityEntity.class);
+        verify(this.identityRepository).save(parentCaptor.capture());
+        assertThat(parentCaptor.getValue().getSubject()).isEqualTo(thumbprint);
+        assertThat(parentCaptor.getValue().getIdentityType())
+                .isEqualTo(AppAttestInstanceKeyRegistration.USER_IDENTITY_TYPE);
     }
 
+    /**
+     * A thumbprint covers a key's required members only, so whether the caller handed over the
+     * private half cannot change which key the identity is bound to. It is stripped on the way in
+     * regardless &mdash; a private member reaching a persisted row would be a secret stored where
+     * it is meant to be readable &mdash; but the subject is what has to stay stable.
+     */
     @Test
-    void createStripsPrivateMaterialBeforePersisting() throws Exception {
+    void createDerivesTheSameSubjectFromAPrivateKeyPrototype() throws Exception {
         stubParentSave();
 
-        this.service.createUserIdentity(USER_ID,
+        UserIdentity persisted = this.service.createUserIdentity(USER_ID,
                 prototypeWithExtensions(Map.of(UserIdentityService.PROPERTY_JWK, this.key.toJSONString())));
 
-        ArgumentCaptor<UserIdentityPublicKeyEntity> childCaptor =
-                ArgumentCaptor.forClass(UserIdentityPublicKeyEntity.class);
-        verify(this.identityPublicKeyRepository).save(childCaptor.capture());
-        // The column is meant to be readable, so no private member may reach it however the
-        // caller happened to serialise the key.
-        assertThat(JWK.parse(childCaptor.getValue().getJwk()).isPrivate()).isFalse();
+        assertThat(persisted.getSubject()).isEqualTo(JwkUtils.computeThumbprint(this.key));
     }
 
     @Test
     void createRefusesAnAccountThatAlreadyHasAnotherIdentity() {
         when(this.identityRepository.existsByUserIdAndIdentityTypeNot(
-                USER_ID, UserIdentityService.IDENTITY_TYPE_PUBLIC_KEY)).thenReturn(true);
+                USER_ID, AppAttestInstanceKeyRegistration.USER_IDENTITY_TYPE)).thenReturn(true);
 
         assertThatThrownBy(() -> this.service.createUserIdentity(USER_ID, prototype(this.key)))
                 .isInstanceOf(IdentityOccupiedException.class);
 
         verify(this.identityRepository, never()).save(any());
-        verify(this.identityPublicKeyRepository, never()).save(any());
     }
 
     /**
@@ -145,19 +142,18 @@ class PublicKeyUserIdentityServiceTests {
     @Test
     void createRefusesASecondKeyOnTheSameAccount() {
         when(this.identityRepository.existsByUserIdAndIdentityType(
-                USER_ID, UserIdentityService.IDENTITY_TYPE_PUBLIC_KEY)).thenReturn(true);
+                USER_ID, AppAttestInstanceKeyRegistration.USER_IDENTITY_TYPE)).thenReturn(true);
 
         assertThatThrownBy(() -> this.service.createUserIdentity(USER_ID, prototype(this.key)))
                 .isInstanceOf(IdentityOccupiedException.class);
 
         verify(this.identityRepository, never()).save(any());
-        verify(this.identityPublicKeyRepository, never()).save(any());
     }
 
     @Test
     void createRefusesAKeyAlreadyBoundToAnotherAccount() throws Exception {
         when(this.identityRepository.existsByIdentityTypeAndSubject(
-                UserIdentityService.IDENTITY_TYPE_PUBLIC_KEY, JwkUtils.computeThumbprint(this.key)))
+                AppAttestInstanceKeyRegistration.USER_IDENTITY_TYPE, JwkUtils.computeThumbprint(this.key)))
                 .thenReturn(true);
 
         assertThatThrownBy(() -> this.service.createUserIdentity(USER_ID, prototype(this.key)))
@@ -186,7 +182,7 @@ class PublicKeyUserIdentityServiceTests {
     @Test
     void createRejectsPrototypeWithoutAKey() {
         UserIdentity prototype = UserIdentity.withExtensions(Map.of())
-                .identityType(UserIdentityService.IDENTITY_TYPE_PUBLIC_KEY)
+                .identityType(AppAttestInstanceKeyRegistration.USER_IDENTITY_TYPE)
                 .build();
 
         assertThatThrownBy(() -> this.service.createUserIdentity(USER_ID, prototype))
@@ -209,7 +205,7 @@ class PublicKeyUserIdentityServiceTests {
     void findByRawSubjectIgnoresHowTheKeyWasSerialised() throws Exception {
         String thumbprint = JwkUtils.computeThumbprint(this.key);
         when(this.identityRepository.findByIdentityTypeAndSubject(
-                UserIdentityService.IDENTITY_TYPE_PUBLIC_KEY, thumbprint))
+                AppAttestInstanceKeyRegistration.USER_IDENTITY_TYPE, thumbprint))
                 .thenReturn(Optional.of(parent(thumbprint)));
 
         Map<String, Object> reordered = new LinkedHashMap<>();
@@ -217,10 +213,10 @@ class PublicKeyUserIdentityServiceTests {
         reordered.putAll(JwkUtils.toPublicJwk(this.key).toJSONObject());
 
         assertThat(this.service.findUserIdentityByRawSubject(
-                UserIdentityService.IDENTITY_TYPE_PUBLIC_KEY, this.key.toJSONString()))
+                AppAttestInstanceKeyRegistration.USER_IDENTITY_TYPE, this.key.toJSONString()))
                 .isPresent();
         assertThat(this.service.findUserIdentityByRawSubject(
-                UserIdentityService.IDENTITY_TYPE_PUBLIC_KEY, JWK.parse(reordered).toJSONString()))
+                AppAttestInstanceKeyRegistration.USER_IDENTITY_TYPE, JWK.parse(reordered).toJSONString()))
                 .isPresent();
     }
 
@@ -229,24 +225,22 @@ class PublicKeyUserIdentityServiceTests {
         assertThat(this.service.findUserIdentityByRawSubject("phone", "anything")).isEmpty();
     }
 
-    /** The projection hands the key back as a JSON object, not as an escaped string. */
+    /**
+     * No key material is projected: the subject is the key's thumbprint and the material lives in
+     * the App Attest instance-key registry, so there is nothing here to hand back. A caller that
+     * wants the key asks the registry, which is where a login reads it from too.
+     */
     @Test
-    void projectsTheKeyAsAJsonObject() throws Exception {
+    void projectsTheSubjectAndNoKeyMaterial() throws Exception {
         String thumbprint = JwkUtils.computeThumbprint(this.key);
         when(this.identityRepository.findByIdAndUserIdAndIdentityType("id-1", USER_ID,
-                UserIdentityService.IDENTITY_TYPE_PUBLIC_KEY))
+                AppAttestInstanceKeyRegistration.USER_IDENTITY_TYPE))
                 .thenReturn(Optional.of(parent(thumbprint)));
-        when(this.identityPublicKeyRepository.findById("id-1"))
-                .thenReturn(Optional.of(child(thumbprint, JwkUtils.withKeyId(
-                        JwkUtils.toPublicJwk(this.key), thumbprint).toJSONString())));
 
         UserIdentity read = this.service.getUserIdentity(USER_ID, "id-1").orElseThrow();
 
-        Object projected = read.getExtensions().get(UserIdentityService.PROPERTY_JWK);
-        assertThat(projected).isInstanceOf(Map.class);
-        Map<?, ?> projectedKey = (Map<?, ?>) projected;
-        assertThat(projectedKey.get("kty")).isEqualTo("EC");
-        assertThat(projectedKey.get("kid")).isEqualTo(thumbprint);
+        assertThat(read.getSubject()).isEqualTo(thumbprint);
+        assertThat(read.getExtensions()).doesNotContainKey(UserIdentityService.PROPERTY_JWK);
     }
 
     @Test
@@ -273,7 +267,7 @@ class PublicKeyUserIdentityServiceTests {
 
     private static UserIdentity prototypeWithExtensions(Map<String, Object> extensions) {
         return UserIdentity.withExtensions(extensions)
-                .identityType(UserIdentityService.IDENTITY_TYPE_PUBLIC_KEY)
+                .identityType(AppAttestInstanceKeyRegistration.USER_IDENTITY_TYPE)
                 .build();
     }
 
@@ -281,16 +275,9 @@ class PublicKeyUserIdentityServiceTests {
         UserIdentityEntity entity = new UserIdentityEntity();
         entity.setId("id-1");
         entity.setUserId(USER_ID);
-        entity.setIdentityType(UserIdentityService.IDENTITY_TYPE_PUBLIC_KEY);
+        entity.setIdentityType(AppAttestInstanceKeyRegistration.USER_IDENTITY_TYPE);
         entity.setSubject(subject);
         entity.setBoundAt(Instant.now());
-        return entity;
-    }
-
-    private static UserIdentityPublicKeyEntity child(String identityId, String jwk) {
-        UserIdentityPublicKeyEntity entity = new UserIdentityPublicKeyEntity();
-        entity.setIdentityId(identityId);
-        entity.setJwk(jwk);
         return entity;
     }
 }

@@ -188,7 +188,8 @@ public class DelegatingUserIdentityService implements UserIdentityService {
         //      only one strands the account and its data with no route back and no error at
         //      the time. This is the place to enforce it rather than a per-type backend, since
         //      only the fan-out sees the account's identities across every type; a backend
-        //      checking on its own could not tell "last public_key" from "last identity".
+        //      checking on its own could not tell "last app_attest_instance_key" from "last
+        //      identity".
         //      Left unimplemented for now: it needs a decision on what the wire layer reports
         //      (a 4xx of its own, or the same not-yours silence the SPI contract asks for),
         //      and on whether an administrative caller may override it to retire an account.

@@ -167,11 +167,16 @@ euler:
           default-authorities:
             - user
       # A jwt-bearer assertion carrying no sub opens an anonymous trial account bound to
-      # the public_key identity. The account proves only that a genuine app generated the
-      # key, not who holds the device, which is why this identity may not share an account
-      # with any other. Only a client that authenticated by App Attest may open one; that
-      # restriction is a property of the issuer and is enforced in code, not configured here.
-      public_key:
+      # the app_attest_instance_key identity. The account proves only that a genuine app
+      # generated the key, not who holds the device, which is why this identity may not
+      # share an account with any other. Only a client that authenticated by App Attest may
+      # open one; that restriction is a property of the issuer and is enforced in code, not
+      # configured here.
+      #
+      # This key must equal the issuer's identity type exactly: it is how that issuer's
+      # provisioning policy is looked up, and a key that does not match silently falls back
+      # to the default policy instead of failing.
+      app_attest_instance_key:
         jit-provisioning:
           enabled: true
           default-authorities:
