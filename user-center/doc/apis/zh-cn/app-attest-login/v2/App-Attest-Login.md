@@ -219,7 +219,7 @@ App-Attest-Kid: {kid}
 App-Attest-Challenge: {challenge}
 App-Attest-Assertion: {Base64(Assertion Object)}
 
-{ "kty": "EC", "crv": "P-256", "x": "...", "y": "...", "alg": "ES256" }
+{ "kty": "EC", "crv": "P-256", "x": "...", "y": "...", "alg": "ES256", "kid": "{你为这把公钥选的 kid}" }
 ```
 
 第二步 · **取 Token**(jwt-bearer 登录): 首次登录断言**不带 `sub`**, 服务端自动开通匿名账号并在 Token 里带回 `sub`(客户端解析并持久化); 之后登录**带 `sub`**. RT 可用时优先走 3.3.3 续期, RT 失效再用私钥重签断言:
@@ -266,7 +266,7 @@ sequenceDiagram
 >
 > 这是两把不同密钥的 `kid`, 二者的值不相同:
 > - `App-Attest-Kid` 的 kid 是 Apple App Attest 的 kid, 用于生成 Apple App Assertion 完成客户端身份认证;
-> - jwt-bearer 断言的 kid 是 App 自行生成、已注册到服务端的非对称密钥的 kid, 用于签发断言完成用户身份认证. 它**由服务端在公钥注册时派生并返回**(即该公钥的 RFC 7638 JWK Thumbprint), 客户端不得自定, 登录时需原样回传.
+> - jwt-bearer 断言的 kid 是 App 自行生成、已注册到服务端的非对称密钥的 kid, 用于签发断言完成用户身份认证. 它**由客户端在注册公钥时自行指定**(写在提交的 JWK 里, 建议用 UUID), 服务端不派生也不改写, 登录时需原样回传.
 
 #### 3.3.2 使用正式 `<user_grant>` 申请 Token
 

@@ -57,8 +57,8 @@ jwt-bearer 是一种**通用且符合标准**的 Token 申请方式: 客户端�
 `app_attest_instance_key` 身份的用户凭证是**一把非对称密钥**, 与 App Attest 的 `kid` **完全独立**.
 
 - **算法**: 服务端接受 **EC**(ES256 / ES384 / ES512) 与 **RSA**(RS / PS 系列) 两类公钥. iOS 上**请直接用 Secure Enclave 生成的 EC P-256 (ES256)** —— 它是唯一能把私钥真正锁在安全区、不可导出的选择, 也是本方式"持有私钥即在原设备"这一保证的来源; Keychain 软件钥与 CryptoKit 的 Curve25519 私钥均可导出, 会削弱该保证. **Ed25519 目前不接受**(注册即报错), 原因同上.
-- **公钥表达**: 一个标准 **JWK**(RFC 7517)(`kty` / `crv` / `x`,`y` | `n`,`e` / `alg`). 对称密钥(`kty=oct`)、私钥成员、以及上述两类之外的 `kty` 都会在注册时被拒.
-- **`kid` 由服务端派生**: 注册响应里的 `kid` 是该公钥的 **RFC 7638 JWK Thumbprint**, 不由客户端指定(请求里带了也会被覆盖). 因此断言 header 的 `kid` **必须原样回传注册所得的值**.
+- **公钥表达**: 一个标准 **JWK**(RFC 7517)(`kty` / `crv` / `x`,`y` | `n`,`e` / `alg`, 以及**必填的 `kid`**). 对称密钥(`kty=oct`)、私钥成员、缺 `kid`、以及上述两类之外的 `kty` 都会在注册时被拒.
+- **`kid` 由客户端指定**: 注册时写在 body 的 JWK 里, 它就是这把公钥的标识, 之后每次登录的断言 header 必须原样回传. 服务端不派生也不改写它, 只要求**必填、全局唯一、不超过 128 字符、不含控制字符**. **建议用 UUID**(每生成一把密钥对就新生成一个): `kid` 全局唯一, 被占用后任何人都不能再用, 而 UUID 不会撞上. 登记之后 `kid` 与该公钥的对应关系不可变.
 - **公钥固定不可改**: 公钥在注册时登记, 之后不可修改; 对应私钥一旦丢失, 该账号即无法再登录.
 - **私钥**: 平台安全区生成并保管, **不可导出**, 服务端只存公钥. 因不可导出, 能签出合法断言即意味着"就在注册它的那台设备上".
 
@@ -66,7 +66,7 @@ jwt-bearer 是一种**通用且符合标准**的 Token 申请方式: 客户端�
 
 登录用的 `assertion` 是一个 **JWS**(RFC 7515), 用 `app_attest_instance_key` 身份的私钥签名:
 
-- **header**: `alg` + `kid`(= 注册响应返回的 `kid`). **`kid` 必填**(首次开通与带 `sub` 登录都一样), 缺失即 `invalid_grant`.
+- **header**: `alg` + `kid`(= 注册时你自己指定的那个). **`kid` 必填**(首次开通与带 `sub` 登录都一样), 缺失即 `invalid_grant`.
 - **payload**: `iss`(= 该 App 实例的 `client_id`) + `aud` + `exp`(过期时刻) + `iat`(签发时刻) + `jti`(每次唯一) **均必填**; `aud` 取**本服务的 token 端点绝对 URL** 或其 **issuer** 二者之一; **登录时还须含 `sub`(用户名), 首次开通时无 `sub`**(见〈五〉).
 - 服务端会拒绝: 缺 `kid`、签名不匹配、`alg` 与公钥类型不符、`iss` 与本次客户端认证不符、缺 `aud`/`exp`/`iat`/`jti`、`exp` 已过期、`iat` 超出可接受窗口、`aud` 不指向本服务、`jti` 重用、`kid` 在该账号名下不存在.
 
@@ -87,7 +87,7 @@ jwt-bearer 是一种**通用且符合标准**的 Token 申请方式: 客户端�
 >
 > **客户端认证承载**: 用 `App-Attest-Kid` / `App-Attest-Challenge` / `App-Attest-Assertion` 请求头. assertion 不含 kid, 故 `kid` 必传(见 [Apple App Attest 实例注册](../../App-Attest-Registration.md)).
 >
-> **请求体**: 整个 JSON 体就是一把公钥 JWK(不带外层包装). 只应携公钥成员; 携了私钥成员会被剔除后才登记. 请求体有大小上限(远大于任何可登记的公钥 JWK), 超出即 `400`.
+> **请求体**: 整个 JSON 体就是一把公钥 JWK(不带外层包装), **必须含 `kid`**. 只应携公钥成员; 携了私钥成员会被剔除后才登记. 请求体有大小上限(远大于任何可登记的公钥 JWK), 超出即 `400`.
 
 请求示例:
 
@@ -98,21 +98,22 @@ App-Attest-Kid: {kid}
 App-Attest-Challenge: {challenge}
 App-Attest-Assertion: {Base64(App Attest Assertion)}
 
-{ "kty": "EC", "crv": "P-256", "x": "...", "y": "...", "alg": "ES256" }
+{ "kty": "EC", "crv": "P-256", "x": "...", "y": "...", "alg": "ES256", "kid": "{你为这把公钥选的 kid}" }
 ```
 
-响应 (201) —— 完整已注册 jwk, 含服务端派生的 `kid`(客户端应持久化它, 登录时置于断言 header):
+响应 (201) —— 已登记的 jwk, 即你提交的那把公钥(私钥成员已剔除), `kid` 原样保留:
 
 ```json
-{ "kty": "EC", "crv": "P-256", "x": "...", "y": "...", "alg": "ES256", "kid": "{该公钥的 RFC 7638 JWK Thumbprint}" }
+{ "kty": "EC", "crv": "P-256", "x": "...", "y": "...", "alg": "ES256", "kid": "{你为这把公钥选的 kid}" }
 ```
 
 错误响应:
 
 | HTTP | `error` | 含义 |
 |---|---|---|
-| 400 | `invalid_request` | 缺凭据头或请求体; 请求体过大; 或请求体不是可登记的 JWK(不是 JWK / 对称密钥 / 不支持的 `kty`) |
+| 400 | `invalid_request` | 缺凭据头或请求体; 请求体过大; 请求体不是可登记的 JWK(不是 JWK / 对称密钥 / 不支持的 `kty`); 或缺 `kid`、`kid` 超长、`kid` 含控制字符 |
 | 401 | `key_registration_failed` | challenge 无效或已消费, 或 assertion 验签失败 |
+| 409 | `kid_already_registered` | 该 `kid` 已被登记. 换一个新的 `kid` 重新登记; 若确信这是你自己的重试, 则该公钥已登记成功, 直接用原 `kid` 登录即可 |
 
 时序图:
 
@@ -120,18 +121,18 @@ App-Attest-Assertion: {Base64(App Attest Assertion)}
 sequenceDiagram
     participant App as iOS App
     participant Server as Authorization Server
-    App ->> App: 平台安全区生成密钥对, 得到公钥 JWK
+    App ->> App: 平台安全区生成密钥对, 选一个 kid(建议 UUID), 组成公钥 JWK
     App ->> Server: POST /app_attest/challenge
     Server -->> App: challenge
     App ->> App: generateAssertion 对 challenge 签发 App Attest assertion
-    App ->> Server: POST /app_attest/keys (头携 App Attest 客户端认证, 体 jwk)
+    App ->> Server: POST /app_attest/keys (头携 App Attest 客户端认证, 体 jwk 含 kid)
     Server ->> Server: 校验客户端认证, 将该公钥登记在当前 App 实例(App Attest KEY)名下
-    Server -->> App: 201 已注册 jwk (含 kid)
-    App ->> App: 持久化该私钥的 kid (登录时置于断言 header)
+    Server -->> App: 201 已登记 jwk
+    App ->> App: 持久化该私钥与其 kid (登录时置于断言 header)
 ```
 
 > - **可注册多把**: 同一 App 实例可多次 `POST /app_attest/keys` 注册多把公钥(集合语义). 但注意**一个账号只能有一把**(见〈六〉): 多注册一把不会让它追加到已有账号上, 用它做无 `sub` 登录只会开通另一个新账号.
-> - **幂等**: `kid` 由公钥材料派生, 所以重复注册同一把公钥落在同一条目上, 既不重复也不报错; 客户端可安全重试. 重复注册会**用本次提交的 jwk 覆盖**同一条目 —— 指纹相同已证明是同一把钥, 可被覆盖的只是 `alg` / `use` 等指纹不覆盖的可选成员, **密钥材料本身改不了**(换一把钥就是另一个 `kid`、另一条目). 响应回的是**覆盖后从库里读回的那份**, 所以客户端拿到的恒等于服务端持久化的内容.
+> - **不幂等**: `POST` 语义. 同一 `kid` 再次登记一律 `409`, **即使提交的是同一把公钥** —— 服务端不会用新提交覆盖已登记的行. 因此客户端要把 `kid` 与私钥一并持久化, 不要指望"重发一次把 `kid` 拿回来": `kid` 是你自己选的, 你本来就知道它, 响应丢了也可以直接用它登录.
 > - **不要求持有证明**: 注册时不需要额外证明你持有对应私钥 —— 私钥不可导出, 持有证明自然发生在首次登录(验签)时. 防刷依靠 App Attest 门禁与限频.
 
 ---
@@ -233,7 +234,7 @@ sequenceDiagram
 |---|---|---|
 | `identity_id` | string | **公共字段** — 用户身份 ID (UUID) |
 | `identity_type` | string | **公共字段** — 固定为 `app_attest_instance_key` |
-| `subject` | string | **公共字段** — 身份稳定标识(只读, 供参考); 对本类型而言它就是公钥的 RFC 7638 Thumbprint, 与登录时断言 header 的 `kid` 同值. 登录回传的是 `sub`, 不是它 |
+| `subject` | string | **公共字段** — 身份稳定标识(只读, 供参考); 对本类型而言它是该公钥的 RFC 7638 Thumbprint. 它与断言 header 的 `kid` **不是同一个值** —— `kid` 是你自选的标识, `subject` 是服务端从公钥材料派生的. 登录回传的是 `sub`, 不是它 |
 | `bound_at` | timestamp(3) | **公共字段** — 开通时间, 毫秒级 Unix 时间戳 |
 
 > **不下发公钥.** 本类型无特有字段; 公钥是客户端自己生成的, 无需从此接口取回.

@@ -22,17 +22,27 @@
 -- the kid of a public key that instance generated itself, of which it may register
 -- several. Reading one for the other is the mistake these names exist to prevent.
 --
--- The account side keeps no copy of the key. t_user_identity holds identity_type =
--- 'app_attest_instance_key' and subject = the same RFC 7638 thumbprint jwk_kid is, and that is
--- the whole of the binding: a login names its key by kid, checks it against the account's
--- subject, and reads the material from here. Two consequences worth stating where they will be
--- read - a row here must not be removed while an account is bound to the key it holds, and an
--- instance whose App Attest KEY is replaced has to register its keys again before the accounts
--- those keys opened can log in.
+-- jwk_kid is chosen by the registering instance and is opaque: a handle on this row and
+-- nothing more. It is deliberately not the key's RFC 7638 thumbprint, so that it stays a
+-- plain identifier and makes no second statement about the key that a reader could mistake
+-- for the one that matters. What binds an account to a key is that thumbprint, which the
+-- account's own identity row derives and stores; what verifies a signature is the key
+-- material. The identifier takes part in neither.
 --
--- The composite primary key is what makes registration idempotent: jwk_kid is the RFC
--- 7638 thumbprint of jwk, derived by the server rather than supplied by the client, so
--- re-registering the same key lands on the same row instead of adding a second one.
+-- It is unique across the whole registry rather than within one instance, so one identifier
+-- means one key everywhere. A collision is refused rather than settled by overwriting: the
+-- row already there may belong to another instance, and replacing it could discard the key
+-- an account is bound to, leaving that account unreachable with nothing recording why. Rows
+-- are therefore immutable once written - which is also why there is no modified_date, and
+-- why nothing in a row is rewritable by whoever can authenticate as its instance.
+--
+-- The account side keeps no copy of the key. t_user_identity holds identity_type =
+-- 'app_attest_instance_key' and subject = the RFC 7638 thumbprint of the key, and that is
+-- the whole of the binding: a login names its key by kid, resolves the material from here,
+-- and compares that material's thumbprint with the account's subject. Two consequences
+-- worth stating where they will be read - a row here must not be removed while an account
+-- is bound to the key it holds, and an instance whose App Attest KEY is replaced has to
+-- register its keys again before the accounts those keys opened can log in.
 --
 -- jwk is TEXT rather than VARCHAR or JSON:
 --   - VARCHAR would have to name a bound, and any bound narrow enough to be worth naming
@@ -48,19 +58,24 @@
 --   - TEXT stores verbatim, is bounded far above anything reachable here (64 KiB against a
 --     4 KiB request limit), and is not a MySQL-specific type.
 --
--- Column style, suffix and audit-column names match app_attest_attestation_registration (V001):
--- both are `app_attest_<registered thing>_registration` tables, and both leave the App instance
--- out of the name - there it is what the row is, here it is what the row hangs off, and in both
--- the primary key supplies it.
+-- jwk_kid is varchar(128), matching oauth2_jwk.kid (V001), which is likewise a caller-chosen
+-- identifier rather than a derived one. The registration endpoint enforces the same bound and
+-- also refuses control characters, since the value is echoed into a JSON response and written
+-- into log lines.
+--
+-- Table naming follows app_attest_attestation_registration (V001): both are
+-- `app_attest_<registered thing>_registration` tables, and both leave the App instance out of
+-- the name - there it is what the row is, here it is what the row hangs off, and in both a
+-- column supplies it.
 
 create table app_attest_instance_key_registration
 (
+    jwk_kid        varchar(128) not null comment 'kid of the registered public key, chosen by the registering instance; opaque, globally unique, never reassigned',
     app_attest_kid varchar(255) not null comment 'app_attest_attestation_registration.key_id of the App Attest KEY that proved the registering instance',
-    jwk_kid        varchar(255) not null comment 'kid of the registered public key: RFC 7638 JWK Thumbprint of jwk, server-derived',
-    jwk            text         not null comment 'The public key as a JWK (RFC 7517), JSON, stored verbatim; carries the same kid',
+    jwk            text         not null comment 'The public key as a JWK (RFC 7517), JSON, stored verbatim; its kid member equals jwk_kid',
     created_date   datetime(3)  not null comment 'Created time',
-    modified_date  datetime(3)  not null comment 'Last modified time; differs from created_date once a key has been re-registered',
-    primary key (app_attest_kid, jwk_kid)
+    primary key (jwk_kid),
+    key idx_app_attest_instance_key_app_attest_kid (app_attest_kid)
 ) engine = innodb
   default character set utf8mb4
   default collate utf8mb4_bin
