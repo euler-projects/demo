@@ -4,6 +4,10 @@ server:
   # connection. Required for HSTS, Secure cookies, and any OAuth2 redirect
   # construction to behave correctly behind the proxy.
   forward-headers-strategy: framework
+  # App Attest credentials (e.g. the base64 attestation carried in the
+  # App-Attest-Attestation header) can exceed Tomcat's default 8KB request
+  # header limit, so the header carriage needs a larger budget.
+  max-http-request-header-size: 32KB
   servlet:
     session:
       cookie:
