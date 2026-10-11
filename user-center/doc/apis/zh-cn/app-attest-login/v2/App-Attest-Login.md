@@ -5,8 +5,8 @@
 
 其中用户证明的方式统一以 `<user_grant>` 代指. 它可以是任意一种 OAuth 2.1 Grant Type, 例如:
 
-- 本认证服务支持的标准 OAuth 2.1 Grant Type, 例如 `authorization_code`, `urn:ietf:params:oauth:grant-type:jwt-bearer`
-- 本认证服务支持的扩展 Grant Type, 例如 `otp`
+- 本认证服务支持的标准 OAuth 2.1 Grant Type, 例如 `authorization_code` (OTP 登录经[授权挑战端点](../../OAuth2-FiPA.md)换取授权码), `urn:ietf:params:oauth:grant-type:jwt-bearer`
+- 本认证服务支持的扩展 Grant Type, 例如已废弃的 `otp` (直发 Token 的旧链路, 仅为兼容旧客户端保留)
 
 具体 `<user_grant>` 的接入细节由各自专项文档描述 (例如[App Attest Login with OTP]).
 
@@ -23,7 +23,7 @@ graph TB
     C2 -- 否 --> D2[静默完成客户端注册<br>取得 client_id]
     C2 -- 是 --> P{本地存在用户身份数据?}
     D2 --> P
-    P -- 否, 未登录 --> LOGIN[登录取 Token<br>otp, jwt-bearer 等 user_grant]
+    P -- 否, 未登录 --> LOGIN[登录取 Token<br>authorization_code, jwt-bearer 等 user_grant]
     P -- 是, 已登录 --> T{AT 是否临期/过期?}
     T -- 是, 已临期/过期 --> E[续期 AT<br>grant_type=refresh_token]
     T -- 否, 未临期/过期 --> U[正常使用]
@@ -158,7 +158,7 @@ App-Attest-Assertion: {Base64(Assertion Object)}
 
 {
   "client_name": "com.example.app",
-  "grant_types": ["otp", "urn:ietf:params:oauth:grant-type:jwt-bearer", "refresh_token"],
+  "grant_types": ["authorization_code", "urn:ietf:params:oauth:grant-type:jwt-bearer", "refresh_token"],
   "scope": "openid profile",
   "token_endpoint_auth_method": "attest_appattest_client_auth"
 }
@@ -193,7 +193,8 @@ App 实例注册与客户端注册完成后 (本地已持有 `kid` 和 `client_i
 
 | Grant Type                                    | Credential 参数      | 用途                            | 参考文档                                        |
 |-----------------------------------------------|----------------------|---------------------------------|-------------------------------------------------|
-| `otp`                                         | `otp_ticket` + `otp` | 邮箱 / 短信 验证码登录          | [App Attest Login with OTP]                     |
+| `authorization_code`                          | `code`               | 邮箱 / 短信 验证码登录 (经授权挑战端点用 `otp_ticket`+`otp` 换取 `code`, 推荐) | [OAuth2 FiPA](../../OAuth2-FiPA.md) / [App Attest Login with OTP] |
+| `otp` (已废弃)                                | `otp_ticket` + `otp` | 验证码登录旧链路, 直发 Token, 仅兼容旧客户端 | [App Attest Login with OTP]                     |
 | `refresh_token`                               | `refresh_token`      | AT 续期                         | [The OAuth 2.1 Authorization Framework (Draft)] |
 | `urn:ietf:params:oauth:grant-type:jwt-bearer` | `assertion`          | 匿名试用                        | [App Attest Login with JWT Bearer]              |
 | `conflict_token`                              | `conflict_token`     | 绑定冲突时一键切换到已绑定账号  | (本期不实现)                                    |
@@ -274,6 +275,8 @@ sequenceDiagram
 
 这些正式的 `<user_grant>` 与匿名试用的 `jwt-bearer` 最关键的区别是: 正式身份认证需要用户参与以证明其身份, 比如通过输入 OTP
 证明其持有接收 OTP 的手机或邮箱.
+
+> ⚠️ OTP 登录的 `<user_grant>` 为 `authorization_code`: 客户端先经[授权挑战端点](../../OAuth2-FiPA.md) `POST /authorize-challenge` 用 `otp_ticket`+`otp` 换取 `<credential>` (授权码 `code`), 再以下述 `POST /oauth2/token` 兑换 Token (携带与 `code_challenge` 配对的 `code_verifier`, 不带 `redirect_uri`). 下述通用请求形态对 `authorization_code` 同样适用, 区别仅在于 `<credential>` 来自授权挑战端点而非浏览器重定向.
 
 请求示例:
 
@@ -527,6 +530,7 @@ App 实例注册与客户端注册的产物, **归属 App 实例、独立于用�
 - [The OAuth 2.0 Authorization Framework]
 - [The OAuth 2.1 Authorization Framework (Draft)]
 - [OAuth 2.0 Attestation-Based Client Authentication (Draft)]
+- [OAuth2 FiPA (授权挑战端点)](../../OAuth2-FiPA.md) — OTP 换取 `authorization_code` 的无浏览器授权发起
 - [App Attest Login with OTP]
 - [App Attest Login with JWT Bearer]
 - [Apple App Attest 服务发现](../../App-Attest-Discovery.md) — `/.well-known/app-attest-configuration` 端点发现

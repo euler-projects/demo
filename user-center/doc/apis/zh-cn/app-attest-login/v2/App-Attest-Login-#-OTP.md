@@ -8,21 +8,24 @@
 
 | 总文档抽象 | OTP 落地 |
 |---|---|
-| `<user_grant>` | `otp`(自定义 grant type, 统一承载所有 OTP 通道) |
-| `<credential>` | `otp_ticket` + `otp` 二元组 |
+| `<user_grant>` | `authorization_code`(经[授权挑战端点](../../OAuth2-FiPA.md)用 OTP 换取授权码) |
+| `<credential>` | 授权码 `code`(由 `otp_ticket` + `otp` 经 `POST /authorize-challenge` 换取) |
 | `identity_type` | `phone`(短信通道绑定结果) / `email`(邮箱通道绑定结果) |
 | 唯一标识 | E.164 手机号 / 邮箱地址 |
 | CP(Credential Provider) | 用户本人(在设备上输入 OTP) + 平台下发通道(SMS / SMTP) |
 
-落到 `/oauth2/token` 请求矩阵:
+落到请求矩阵 (两步):
 
-| `grant_type` | 请求体关键参数 | 用途 |
-|---|---|---|
-| `otp` | `otp_ticket` + `otp` | 标准 OTP 登录 (App Attest 数据经请求头承载) |
+| 步骤 | 端点 | 请求体关键参数 | 用途 |
+|---|---|---|---|
+| 1 | `POST /authorize-challenge` | `response_type=code` + `code_challenge` + `otp_ticket` + `otp` | 用 OTP 换取 `authorization_code` |
+| 2 | `POST /oauth2/token` | `grant_type=authorization_code` + `code` + `code_verifier` | 用授权码换取 Token |
 
-> 注 1: 取 Token 需携 Apple 凭据(`App-Attest-*` 请求头), 请求体只放 `grant_type` 与该 grant 自身的参数; 设备注册已拆分为独立的 App 实例注册 + OAuth2 客户端注册前置步骤, 详见上位文档 3.1 / 3.2.
+> 注 1: 两个请求都需携 Apple 凭据(`App-Attest-*` 请求头)完成客户端认证; 设备注册已拆分为独立的 App 实例注册 + OAuth2 客户端注册前置步骤, 详见上位文档 3.1 / 3.2.
 >
-> 注 2: 本平台自定义的 `grant_type=otp` 只负责"以 OTP 作为用户证明"这件事, 具体的通道类型(`sms` / `email` / 未来扩展)、下发目标(`recipient`)、业务用途(`purpose`)均在 `otp_ticket` 签发时记录于服务端, 客户端在 `/oauth2/token` 时无需重复提交.
+> 注 2: 通道类型(`sms` / `email` / 未来扩展)、下发目标(`recipient`)、业务用途(`purpose`)均在 `otp_ticket` 签发时记录于服务端, 客户端在授权挑战请求时无需重复提交.
+>
+> 注 3: 授权挑战端点的完整参数、响应与错误码详见 [OAuth2 FiPA (授权挑战端点)](../../OAuth2-FiPA.md).
 
 ### OTP 侧关键角色
 
@@ -111,7 +114,7 @@ sequenceDiagram
 
 ## 四. 标准 OTP 登录完整流程
 
-本场景对应[总文档〈三.3 Token 申请与续期〉](App-Attest-Login.md#33-token-申请与续期). 客户端先走 `POST /otp/tickets`(无 `purpose`)拿到 `otp_ticket` 并等待用户输入 OTP; 若本地尚无可用 `kid` + `client_id`, 先完成 App 实例注册与 OAuth2 客户端注册(见总文档〈三.1〉〈三.2〉); 最后以 `grant_type=otp` + `otp_ticket` + `otp` + assertion 请求头上行 `/oauth2/token`, 服务端一次性完成"客户端认证 + OTP 验证". 对于新注册(`recipient` 尚未绑定任何账号)的分支, 服务端将 `recipient` 写入新账号的 `identities`; 已绑定账号的分支直接复用原有 `identities`.
+本场景对应[总文档〈三.3 Token 申请与续期〉](App-Attest-Login.md#33-token-申请与续期). 客户端先走 `POST /otp/tickets`(无 `purpose`)拿到 `otp_ticket` 并等待用户输入 OTP; 若本地尚无可用 `kid` + `client_id`, 先完成 App 实例注册与 OAuth2 客户端注册(见总文档〈三.1〉〈三.2〉); 随后以 `otp_ticket` + `otp` + `code_challenge` + assertion 请求头上行 `POST /authorize-challenge` 换取 `authorization_code`(服务端完成"客户端认证 + OTP 验证 + 绑定 code_challenge"), 再以 `grant_type=authorization_code` + `code` + `code_verifier` + assertion 请求头上行 `POST /oauth2/token` 兑换 Token. 对于新注册(`recipient` 尚未绑定任何账号)的分支, 服务端将 `recipient` 写入新账号的 `identities`; 已绑定账号的分支直接复用原有 `identities`.
 
 ```mermaid
 sequenceDiagram
@@ -140,26 +143,31 @@ sequenceDiagram
     App->>Server: POST /oauth2/register 头携带 kid+assertion+challenge2, 体为 RFC7591 JSON
     Server-->>App: 201 {client_id} 已回绑至 kid
 
-    Note over App,Server: 3. 一次完成 客户端认证 加 用户认证
+    Note over App,Server: 3. 授权挑战: 客户端认证 加 OTP 验证, 换取授权码
     App->>Server: POST /oauth2/challenge
     Server-->>App: challenge3
     App->>App: generateAssertion 对 challenge3 签发 assertion
-    App->>Server: POST /oauth2/token<br/>头携带 kid+assertion+challenge3<br/>grant_type=otp 和 otp_ticket 和 otp
+    App->>Server: POST /authorize-challenge<br/>头携带 kid+assertion+challenge3<br/>response_type=code 和 code_challenge 和 otp_ticket 和 otp
     Server->>Server: 校验 assertion 解析出 per-KEY 客户端
-    Server->>Server: 校验 ticket 未过期未使用
-    Server->>Server: 校验 otp 与 ticket 关联的验证码一致
-    Server->>Server: 标记 otp_ticket 已使用
+    Server->>Server: 校验 ticket 未过期未使用, 校验 otp 一致, 标记 otp_ticket 已使用
 
     alt recipient 未绑定任何账号
         Server->>Server: 新建正式账号 账号_new 并写入 identities 的 phone/email 元素
-        Server-->>App: AT 和 RT 归属 账号_new
     else recipient 已绑定某个 账号_2
         Server->>Server: 登录到 账号_2
-        Server-->>App: AT 和 RT 归属 账号_2
     end
+    Server->>Server: 绑定 code_challenge 并签发 authorization_code
+    Server-->>App: 200 authorization_code
+
+    Note over App,Server: 4. 令牌兑换: 标准 authorization_code 加 PKCE
+    App->>Server: POST /oauth2/token<br/>头携带 App-Attest assertion<br/>grant_type=authorization_code 和 code 和 code_verifier
+    Server->>Server: 校验客户端认证与 code_verifier, 兑换授权码
+    Server-->>App: AT 和 RT 归属解析出的账号
 
     App->>App: 用新 AT 拉取用户身份数据并写回本地
 ```
+
+> ⚠️ **兼容说明**: 旧客户端使用的 `grant_type=otp` 直发 Token 流程(在 `POST /oauth2/token` 一次性提交 `otp_ticket`+`otp` 直接换 Token)已废弃, 服务端仍保留以兼容存量客户端. 新接入一律改用上述"授权挑战端点换 `authorization_code` → 标准 authorization_code + PKCE 兑换 Token"两步流程.
 
 ---
 
@@ -177,6 +185,29 @@ channel=sms
 
 ### 5.2 标准 OTP 登录
 
+第一步 · 授权挑战(换取授权码):
+
+```http
+POST /authorize-challenge
+Content-Type: application/x-www-form-urlencoded
+App-Attest-Kid: {kid}
+App-Attest-Challenge: {challenge}
+App-Attest-Assertion: {Base64(Assertion Object)}
+
+response_type=code
+&scope=openid
+&code_challenge={S256(code_verifier)}
+&code_challenge_method=S256
+&otp_ticket={otp_ticket}
+&otp={用户输入的验证码}
+```
+
+```json
+{ "authorization_code": "uY29tL2F1dGhlbnRpY" }
+```
+
+第二步 · 令牌兑换:
+
 ```http
 POST /oauth2/token
 Content-Type: application/x-www-form-urlencoded
@@ -184,10 +215,9 @@ App-Attest-Kid: {kid}
 App-Attest-Challenge: {challenge}
 App-Attest-Assertion: {Base64(Assertion Object)}
 
-grant_type=otp
-&otp_ticket={otp_ticket}
-&otp={用户输入的验证码}
-&scope=openid
+grant_type=authorization_code
+&code={authorization_code}
+&code_verifier={code_verifier}
 ```
 
 ### 5.3 绑定手机 / 邮箱(使用当前 AT)
@@ -243,6 +273,7 @@ identity_type=phone
 ## 七. 相关文档
 
 - [Apple App Attest 登录完整流程文档](App-Attest-Login.md) — 本文档的上位文档, 描述抽象的完整流程
+- [OAuth2 FiPA (授权挑战端点)](../../OAuth2-FiPA.md) — `POST /authorize-challenge` 端点契约: OTP 换取 `authorization_code`
 - [Apple App Attest 服务发现](../../App-Attest-Discovery.md) / [Apple App Attest 实例注册](../../App-Attest-Registration.md) — App 实例注册前置步骤契约
 - [OAuth2 Client Registration - App Attest DYNAMIC](../../OAuth2-Client-Registration-%23-App-Attest-Dynamic.md) — RFC 7591 动态客户端注册契约
 - [Attestation Based Client Authentication (Apple App Attest)](../../OAuth2-Client-Authentication-%23-Attestation-Based-%23-Apple-App-Attest.md) — token 端点的 assertion 客户端认证

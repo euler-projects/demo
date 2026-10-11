@@ -73,7 +73,7 @@ App-Attest-Kid: <keyId>
 App-Attest-Challenge: <challenge>
 App-Attest-Assertion: <Base64 assertion>
 
-grant_type=otp&otp=...
+grant_type=authorization_code&code=...&code_verifier=...
 ```
 
 > 详见 [Apple App Attest 子文档](OAuth2-Client-Authentication-%23-Attestation-Based-%23-Apple-App-Attest.md).
