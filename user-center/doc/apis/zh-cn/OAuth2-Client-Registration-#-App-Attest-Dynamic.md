@@ -38,6 +38,7 @@ DYNAMIC 流程的第一步是 **App 实例注册** (`POST /app_attest/register`)
 {
   "client_name": "com.example.app",
   "grant_types": ["authorization_code", "urn:ietf:params:oauth:grant-type:jwt-bearer", "refresh_token"],
+  "redirect_uris": ["myapp://callback"],
   "scope": "openid profile",
   "token_endpoint_auth_method": "attest_appattest_client_auth"
 }
@@ -45,9 +46,9 @@ DYNAMIC 流程的第一步是 **App 实例注册** (`POST /app_attest/register`)
 
 `token_endpoint_auth_method` 可省略或显式指定 `attest_appattest_client_auth`: 省略时服务端使用该默认值, 其他值以 `invalid_client_metadata` 拒绝. RFC 7591 将该字段定义为单个字符串, 一个注册客户端不能同时声明多种认证方式. 此流程不签发 `client_secret`; 服务端另会追加 `refresh_token` grant. 已废弃的 `urn:ietf:params:oauth:grant-type:app_assertion` grant 不再被静默移除, 而是在持久化层被拒绝: 请求一旦携带该 grant 即注册失败, 任何入口都无法再新建带此 grant 的客户端 (仅历史存量客户端保留).
 
-> ⚠️ **`grant_types` 必须按需显式声明, 服务端只追加 `refresh_token`.** 需要 OTP 登录 (经[授权挑战端点](OAuth2-FiPA.md)换取 `authorization_code`) 的客户端**必须**声明 `authorization_code`; 需要 [jwt-bearer 匿名试用登录](app-attest-login/v2/App-Attest-Login-%23-Jwt-Bearer.md) 的客户端**必须**带上 `urn:ietf:params:oauth:grant-type:jwt-bearer`, 否则对应 grant 的每次请求都会以 `unauthorized_client` 被拒 (公钥仍可注册, 但注册了也用不上).
+> ⚠️ **`grant_types` 必须按需显式声明, 服务端只追加 `refresh_token`.** 需要 OTP 登录 (经[授权挑战端点](OAuth2-FiPA.md)换取 `authorization_code`) 的客户端**必须**声明 `authorization_code`; 需要 [jwt-bearer 匿名试用登录](app-attest-login/v2/App-Attest-Login-%23-Jwt-Bearer.md) 的客户端**必须**带上 `urn:ietf:params:oauth:grant-type:jwt-bearer`, 否则对应 grant 的每次请求都会以 `unauthorized_client` 被拒 (公钥仍可注册, 但注册了也用不上). 其中声明 `authorization_code` 还**必须**同时登记至少一个 `redirect_uris` (授权服务器对授权码客户端的固有校验; 授权挑战流程自身不重定向, 该值不参与请求, 详见[授权挑战端点](OAuth2-FiPA.md)).
 >
-> 且此处**没有事后补救的机会**: 对同一 App Attest KEY 重复注册是幂等的, 返回的是既有 `client_id` 而不会更新它的 `grant_types`. 漏声明的客户端只能换一把新 KEY 重新走 `/app_attest/register` + 本端点, 或由管理端修改该客户端记录. 因此注册前就应确定要用的 `<user_grant>` 全集.
+> 漏声明**可以事后补救**: 对同一 App Attest KEY 重复注册走 **PUT 语义** —— `client_id` 保持不变, 其余元数据 (`grant_types` / `redirect_uris` / `scope` 等) 以本次请求为准**全量覆盖**既有记录. 因此补一个漏掉的 grant, 只需用**完整的目标全集**重新注册一次即可, 无需更换 KEY. 注意 PUT 是整体替换而非增量合并: 本次请求未出现的字段会被清除, 每次重注册都应提交完整元数据.
 
 ### 响应 (201)
 
@@ -57,12 +58,14 @@ DYNAMIC 流程的第一步是 **App 实例注册** (`POST /app_attest/register`)
   "client_id_issued_at": "2026-05-10T12:34:56Z",
   "client_name": "com.example.app",
   "grant_types": ["authorization_code", "urn:ietf:params:oauth:grant-type:jwt-bearer", "refresh_token"],
+  "redirect_uris": ["myapp://callback"],
+  "response_types": ["code"],
   "scope": "openid profile",
   "token_endpoint_auth_method": "attest_appattest_client_auth"
 }
 ```
 
-`client_id` 已回绑到该 KEY, 后续 assertion 客户端认证据此解析出客户端. 对同一 KEY 重复注册 (已绑定) 幂等返回既有 `client_id`.
+`client_id` 已回绑到该 KEY, 后续 assertion 客户端认证据此解析出客户端. 对同一 KEY 重复注册 (已绑定) 保持 `client_id` 不变, 并按 PUT 语义用本次请求全量覆盖其余元数据.
 
 ### 错误
 
